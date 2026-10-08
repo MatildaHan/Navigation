@@ -115,8 +115,3 @@
 主文本色：#ffffff
 次文本色：rgba(255, 255, 255, 0.7)
 
-
-# ---------------- 其他设置 ----------------
---- settings ---
-搜索引擎：https://www.google.com/search?q={query}
-记住锁屏状态：true
