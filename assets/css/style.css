@@ -1,254 +1,421 @@
-:root {
-    --bg-color: #e0e8f0;
-    --glass-bg: rgba(255, 255, 255, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --dark-card-bg: rgba(25, 25, 30, 0.75);
-    --text-dark: #333;
-    --text-light: #fff;
-    --accent-pink: #ff7eb3;
-    --accent-green: #a3c4bc;
-}
+/* ==========================================================================
+   页面样式
+   本文件只负责布局与视觉表现，内容由 script.js 从 config.md 读取后填充
+   ========================================================================== */
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Noto Sans SC', sans-serif;
 }
 
 body {
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     overflow: hidden;
-    background-color: #a3c4bc;
+    background-color: #1a1a1a;
+    color: var(--text-primary);
 }
 
-.background {
-    position: absolute;
-    top: -10px; left: -10px; right: -10px; bottom: -10px;
-    /* 替换为你的背景图链接 */
-    background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+/* ---------- 锁屏 ---------- */
+.lockscreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-wallpaper) center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    z-index: 1000;
+    cursor: pointer;
+    transition: opacity 0.6s ease;
+}
+.lockscreen.unlocked {
+    opacity: 0;
+    pointer-events: none;
+}
+.lock-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    object-fit: cover;
+}
+.lock-clock {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 4rem;
+    color: #fff;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.lock-date {
+    color: rgba(255,255,255,0.85);
+    font-size: 1.1rem;
+}
+.lock-hint {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    margin-top: 20px;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ---------- 背景 ---------- */
+body::before {
+    content: '';
+    position: fixed;
+    inset: -10px;
+    background: var(--bg-wallpaper) center/cover no-repeat;
     filter: blur(8px);
     z-index: -1;
 }
 
-.glass {
+/* ---------- 玻璃态通用 ---------- */
+.glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    box-shadow: var(--glass-shadow);
+    border-radius: 24px;
 }
 
-.glass-dark {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 20px;
-    color: var(--text-light);
-}
-
-.dark-card {
-    background: var(--dark-card-bg);
-    color: var(--text-light);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.app-container {
+/* ---------- 桌面主容器 ---------- */
+.desktop-container {
     display: flex;
     gap: 20px;
-    height: 85vh;
-    width: 92vw;
-    max-width: 1300px;
+    height: 88vh;
+    width: 94vw;
+    max-width: 1400px;
+    margin: 4vh auto;
 }
 
+/* ---------- 侧边栏 ---------- */
 .sidebar {
-    width: 75px;
-    border-radius: 37.5px;
+    width: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 25px 0;
-    gap: 20px;
+    padding: 20px 0;
+    gap: 15px;
 }
-
-.sidebar a, .search-icon {
-    width: 48px;
-    height: 48px;
+.sidebar-btn {
+    width: 44px;
+    height: 44px;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    color: var(--text-dark);
+    color: var(--text-primary);
     text-decoration: none;
+    font-size: 1.1rem;
+    cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.2rem;
 }
-
-.sidebar a:hover, .sidebar a.active {
-    background: var(--dark-card-bg);
-    color: #fff;
+.sidebar-btn:hover {
+    background: rgba(255,255,255,0.2);
     transform: translateY(-2px);
 }
 
-.sidebar-bottom { margin-top: auto; }
-
-.main-content {
+/* ---------- 主面板 ---------- */
+.main-board {
     flex: 1;
-    border-radius: 30px;
     padding: 30px;
+    position: relative;
+    display: flex;
+    gap: 20px;
+    overflow: hidden;
+}
+.character-bg-inside {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 90%;
+    opacity: 0.6;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.left-col, .right-col {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
+.left-col { width: 280px; }
+.right-col { flex: 1; }
+.center-spacer { flex: 0 0 auto; }
 
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.time-date h1 {
-    font-size: 4.5rem;
-    color: #fff;
+/* ---------- 时钟 ---------- */
+.clock-widget .time {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 3.5rem;
     line-height: 1;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    color: var(--text-primary);
+    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.clock-widget .date {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 5px;
 }
 
-.time-date p {
-    color: rgba(255, 255, 255, 0.9);
+/* ---------- 日历 ---------- */
+.calendar-widget {
+    background: rgba(0,0,0,0.3);
+    border-radius: 16px;
+    padding: 15px;
+}
+.calendar-header {
+    text-align: center;
     font-weight: 500;
-    font-size: 1.1rem;
-    margin-top: 5px;
+    margin-bottom: 10px;
 }
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    text-align: right;
-}
-
-.greeting h2 {
-    color: #fff;
-    font-size: 1.4rem;
-    font-weight: 600;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.signature-text {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.9rem;
-    margin-top: 5px;
-    font-style: italic;
-}
-
-.avatar-lg { 
-    width: 70px; 
-    height: 70px; 
-    border-radius: 50%; 
-    border: 3px solid rgba(255,255,255,0.6);
-    background: #fff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.middle-section {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 20px;
-    flex: 1;
-}
-
-.calendar-card { display: flex; flex-direction: column; }
-.calendar-card h3 { font-size: 1.1rem; margin-bottom: 15px; text-align: center; }
-
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    font-size: 0.9rem;
+    gap: 4px;
     text-align: center;
+    font-size: 0.8rem;
 }
-
-.calendar-grid span { padding: 8px 0; border-radius: 8px; transition: 0.2s; }
-.calendar-grid span:not(.empty):hover { background: rgba(255,255,255,0.1); }
-.calendar-grid .today {
-    background: var(--accent-pink);
+.calendar-grid span {
+    padding: 5px 0;
+    border-radius: 6px;
+}
+.calendar-grid .day-name {
+    opacity: 0.5;
+    font-size: 0.7rem;
+}
+.calendar-grid .active {
+    background: hsl(var(--accent-hue), 70%, 60%);
     color: #fff;
     font-weight: bold;
-    box-shadow: 0 2px 8px rgba(255, 126, 179, 0.5);
 }
 
-.right-middle-col { display: flex; flex-direction: column; gap: 20px; }
-.anniversary-card, .quote-card { flex: 1; display: flex; flex-direction: column; }
+/* ---------- 音乐播放器 ---------- */
+.music-player {
+    background: rgba(0,0,0,0.3);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.album-art {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1) center/cover;
+    flex-shrink: 0;
+}
+.track-info {
+    flex: 1;
+    overflow: hidden;
+}
+.track-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.player-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+.player-controls i {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.player-controls i:hover,
+.player-controls i.active-btn,
+.player-controls i.liked {
+    color: hsl(var(--accent-hue), 70%, 60%);
+}
 
-.anniversary-card h3, .quote-card h3 {
-    font-size: 1rem;
-    margin-bottom: 15px;
+/* ---------- 右上角 ---------- */
+.header-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+.mini-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    color: var(--text-primary);
+    background: rgba(0,0,0,0.4);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.user-tag {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.4);
+    padding: 5px 12px 5px 15px;
+    border-radius: 20px;
+}
+.user-tag span {
+    font-size: 0.85rem;
+}
+.user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff center/cover;
 }
 
-.anniversary-card ul { list-style: none; overflow-y: auto; }
-.anniversary-card li {
+/* ---------- 问候语 ---------- */
+.greeting {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.greeting-sub {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: -8px;
+}
+
+/* ---------- 画廊 ---------- */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    height: 200px;
+}
+.gallery-item {
+    border-radius: 14px;
+    background: rgba(0,0,0,0.3) center/cover;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.gallery-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.item-large {
+    grid-row: span 2;
+    background-image: var(--bg-gallery1);
+}
+.item-top { background-image: var(--bg-gallery2); }
+.item-bottom { background-image: var(--bg-gallery3); }
+
+/* ---------- 格言 ---------- */
+.quotes-widget {
+    background: rgba(0,0,0,0.35);
+    border-radius: 14px;
+    padding: 15px;
+}
+.quotes-header {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.quotes-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+.quotes-author {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-top: 6px;
+}
+
+/* ---------- 扩展面板（纪念日/书架/观影） ---------- */
+.extra-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.extra-block {
+    background: rgba(0,0,0,0.35);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.75rem;
+    max-height: 130px;
+    overflow-y: auto;
+}
+.extra-block h4 {
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.extra-block ul {
+    list-style: none;
+}
+.extra-block li {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
-    padding-bottom: 8px;
+    padding: 3px 0;
     border-bottom: 1px dashed rgba(255,255,255,0.1);
 }
 
-.quote-content { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.85); }
-
-.bottom-section {
-    display: grid;
-    grid-template-columns: 300px 1fr 1fr;
-    gap: 20px;
-    height: 220px;
-}
-
-.music-card { display: flex; align-items: center; gap: 15px; }
-.music-icon { font-size: 2.5rem; color: var(--accent-pink); }
-.music-info { display: flex; flex-direction: column; flex: 1; }
-.music-info span { font-weight: bold; font-size: 0.95rem; }
-.music-info small { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
-
-.controls {
+/* ---------- 底部 Dock ---------- */
+.bottom-dock {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    color: rgba(255,255,255,0.7);
-    font-size: 0.9rem;
-    cursor: pointer;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 30px;
 }
-
-.list-card h3 {
-    font-size: 1rem;
-    margin-bottom: 15px;
+.dock-icon {
+    width: 44px;
+    height: 44px;
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
+    border-radius: 50%;
     color: #fff;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: transform 0.3s;
 }
-
-.md-content {
-    font-size: 0.85rem;
-    line-height: 1.5;
-    overflow-y: auto;
-    flex: 1;
-    padding-right: 5px;
+.dock-icon:hover {
+    transform: translateY(-5px) scale(1.1);
 }
+.icon-blog { background: #4CAF50; }
+.icon-bilibili { background: #FB7299; }
+.icon-github { background: #333; }
+.icon-qq { background: #12B7F5; }
+.icon-email { background: #EA4335; }
+.icon-rss { background: #FF9800; }
 
+/* ---------- 滚动条 ---------- */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
