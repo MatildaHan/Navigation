@@ -102,7 +102,7 @@ body::before {
     display: flex;
     gap: 20px;
     width: 1000px;
-    height: 540px;
+    height: 560px;
     max-width: calc(100vw - 32px);
     align-items: center;
 }
@@ -152,7 +152,7 @@ body::before {
 .main-board {
     flex: 0 0 900px;
     width: 900px;
-    height: 540px;
+    height: 560px;
     padding: 16px;
     position: relative;
     overflow: hidden;
