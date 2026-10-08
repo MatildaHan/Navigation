@@ -106,16 +106,6 @@ body::before {
     gap: 20px;
     overflow: hidden;
 }
-.character-bg-inside {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 90%;
-    opacity: 0.6;
-    z-index: 0;
-    pointer-events: none;
-}
 
 .left-col, .right-col {
     position: relative;
@@ -268,34 +258,6 @@ body::before {
     font-style: italic;
     margin-top: -8px;
 }
-
-/* ---------- 画廊 ---------- */
-.gallery-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    height: 200px;
-}
-.gallery-item {
-    border-radius: 14px;
-    background: rgba(0,0,0,0.3) center/cover;
-    cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.gallery-item:hover {
-    transform: scale(1.02);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-.item-large {
-    grid-row: span 2;
-    background-image: var(--bg-gallery1);
-}
-.item-top { background-image: var(--bg-gallery2); }
-.item-bottom { background-image: var(--bg-gallery3); }
 
 /* ---------- 格言 ---------- */
 .quotes-widget {
