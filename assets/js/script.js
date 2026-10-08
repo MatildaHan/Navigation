@@ -84,12 +84,11 @@ function parseMdToObjects(mdText) {
 async function loadAllConfigurations() {
     
     // --- 加载个人基础信息 (结合动态问候语) ---
-    fetch('config_profile.md').then(r => r.text()).then(md => {
+    fetch('../../config/profile.md').then(r => r.text()).then(md => {
         const profile = parseMdToObjects(md)[0] || {};
         const nickname = profile['昵称'] || '用户';
         const greetingWord = getGreeting(); // 调用动态问候语
         
-        // 格式：早上好，这里是北冥！
         document.getElementById('greeting-title').innerText = `${greetingWord}，这里是${nickname}！`;
         document.getElementById('profile-signature').innerText = profile['个人签名'] || '';
         
@@ -99,7 +98,7 @@ async function loadAllConfigurations() {
     }).catch(e => console.error("读取 profile 失败", e));
 
     // --- 加载格言与笔记 ---
-    fetch('config_note.md').then(r => r.text()).then(md => {
+    fetch('../../config/note.md').then(r => r.text()).then(md => {
         const noteData = parseMdToObjects(md)[0] || {};
         const quoteContent = document.querySelector('.quote-content');
         if (quoteContent) {
@@ -111,7 +110,7 @@ async function loadAllConfigurations() {
     });
 
     // --- 加载书架 ---
-    fetch('config_book.md').then(r => r.text()).then(md => {
+    fetch('../../config/book.md').then(r => r.text()).then(md => {
         const books = parseMdToObjects(md);
         const container = document.getElementById('book-list');
         container.innerHTML = books.map(b => `
@@ -128,7 +127,7 @@ async function loadAllConfigurations() {
     });
 
     // --- 加载观影 ---
-    fetch('config_movie.md').then(r => r.text()).then(md => {
+    fetch('../../config/movie.md').then(r => r.text()).then(md => {
         const movies = parseMdToObjects(md);
         const container = document.getElementById('movie-list');
         container.innerHTML = movies.map(m => `
@@ -145,7 +144,7 @@ async function loadAllConfigurations() {
     });
 
     // --- 加载纪念日 ---
-    fetch('config_anniversary.md').then(r => r.text()).then(md => {
+    fetch('../../config/anniversary.md').then(r => r.text()).then(md => {
         const events = parseMdToObjects(md);
         const listEl = document.getElementById('anniversary-list').querySelector('ul');
         listEl.innerHTML = '';
@@ -177,7 +176,7 @@ async function loadAllConfigurations() {
     });
 
     // --- 加载导航标签 ---
-    fetch('config_nav.md').then(r => r.text()).then(md => {
+    fetch('../../config/nav.md').then(r => r.text()).then(md => {
         const navItems = parseMdToObjects(md);
         const navEl = document.getElementById('nav-links');
         navEl.innerHTML = ''; 
