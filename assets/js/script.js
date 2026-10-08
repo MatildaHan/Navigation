@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
     let CFG = {};
     try {
-        CFG = parseConfig(await loadConfig());
+        CFG = await loadModules(parseConfig(await loadConfig()));
         if (IS_DEV) window.CFG = CFG;
         log('已加载配置：', CFG);
     } catch (e) {
@@ -38,7 +38,7 @@ async function init() {
     const steps = [
         applyText, applyLinkHref, applyAvatar, applyWallpaper, applyTheme,
         applyDocumentMeta, renderLinks, initClockAndCalendar,
-        initMusicPlayer, initSearch, renderBooks, renderMovies,
+        initMusicPlayer, initSearch, renderBooks, renderMovies, initDetailViews,
     ];
     steps.forEach(fn => {
         try { fn(CFG); } catch (e) { console.error(`[${fn.name}] 执行出错`, e); }
@@ -51,6 +51,29 @@ async function loadConfig() {
     const res = await fetch('config.md', { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.text();
+}
+
+const MODULE_FILES = {
+    greeting: ['greetings'], calendar: ['calendar', 'todos'], quote: ['quote', 'quotes'],
+    music: ['playlist'], anniversary: ['anniversary'], books: ['books'], movies: ['movies'],
+};
+
+async function loadModules(base) {
+    const missing = [];
+    const modules = await Promise.all(Object.entries(MODULE_FILES).map(async ([name, sections]) => {
+        try {
+            const res = await fetch(`configs/${name}.md`, { cache: 'no-cache' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const parsed = parseConfig(await res.text());
+            return Object.fromEntries(sections.filter(key => Object.hasOwn(parsed, key)).map(key => [key, parsed[key]]));
+        } catch (error) {
+            console.warn(`无法读取 configs/${name}.md`, error);
+            missing.push(name);
+            return {};
+        }
+    }));
+    if (missing.length) showNotice(`部分卡片配置未能读取：${missing.join('、')}。请检查 configs/ 中的文件；已保留可用内容。`);
+    return Object.assign(base, ...modules);
 }
 
 /* ============================================================
@@ -98,7 +121,7 @@ function isExternal(href) {
 /* ============================================================
  *  配置解析器
  * ============================================================ */
-const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist']);
+const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist', 'todos', 'quotes']);
 
 function parseConfig(mdText) {
     const result = {};
@@ -431,6 +454,7 @@ function initMusicPlayer(CFG) {
         }
         if (playerArt) playerArt.style.backgroundImage = t.art ? cssUrl(t.art) : '';
         syncHeart();
+        audio.dispatchEvent(new CustomEvent('trackchange', { detail: current }));
     }
 
     async function play() {
@@ -473,6 +497,12 @@ function initMusicPlayer(CFG) {
         const list = readLiked();
         writeLiked(list.includes(url) ? list.filter(u => u !== url) : [...list, url]);
         syncHeart();
+    });
+    audio.addEventListener('selecttrack', event => {
+        const index = event.detail;
+        if (!Number.isInteger(index) || index < 0 || index >= playlist.length) return;
+        loadTrack(index);
+        play();
     });
 
     loadTrack(0);
@@ -628,4 +658,253 @@ function renderMovies(CFG) {
         const rating = item['评分'];
         return buildItem(item['片名'] || '未知片名', sub, rating ? `★ ${rating}` : '', true);
     }, '还没有观影记录');
+}
+
+/* ============================================================
+ *  卡片详情：hash 路由共享页面外壳，保留原播放器节点
+ * ============================================================ */
+function dateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function initDetailViews(CFG) {
+    const titles = { calendar: CFG.calendar?.标题 || '日历与待办', quote: '格言', music: '音乐', anniversary: '纪念日', books: '书架', movies: '观影' };
+    const home = document.getElementById('home-grid');
+    const view = document.getElementById('detail-view');
+    const body = document.getElementById('detail-body');
+    const heading = document.getElementById('detail-title');
+    const music = document.querySelector('.card-music');
+    const audio = document.getElementById('main-audio');
+    const musicMarker = document.createComment('music home position');
+    music.before(musicMarker);
+    let active = '';
+    let homeScroll = 0;
+    const links = new Map();
+
+    document.querySelectorAll('[data-detail]').forEach(card => {
+        const key = card.dataset.detail;
+        const link = el('a', 'card-open');
+        link.href = `#${key}`;
+        link.setAttribute('aria-label', `查看${titles[key]}详情`);
+        card.appendChild(link);
+        links.set(key, link);
+        card.addEventListener('click', event => {
+            if (!home.contains(card) || event.target.closest('a, button, input, select, textarea')) return;
+            if (window.getSelection()?.toString()) return;
+            link.click();
+        });
+    });
+
+    function route() {
+        const key = location.hash.slice(1);
+        const previous = active;
+        const isDetail = Object.hasOwn(titles, key);
+        if (isDetail && !active) homeScroll = window.scrollY;
+        music.classList.remove('detail-player');
+        musicMarker.after(music);
+        body.replaceChildren();
+        home.hidden = isDetail;
+        view.hidden = !isDetail;
+        active = isDetail ? key : '';
+        const name = CFG.profile?.昵称 || '个人主页';
+        document.title = isDetail ? `${titles[key]} - ${name}` : `${name} - 个人主页`;
+        if (!isDetail) {
+            if (previous) {
+                links.get(previous)?.focus({ preventScroll: true });
+                window.scrollTo(0, homeScroll);
+            }
+            return;
+        }
+        heading.textContent = titles[key];
+        if (key === 'calendar') renderCalendarDetail(body, CFG);
+        else if (key === 'music') {
+            music.classList.add('detail-player');
+            body.appendChild(music);
+            renderMusicDetail(body, CFG, audio);
+        } else renderContentDetail(body, CFG, key);
+        body.scrollTop = 0;
+        window.scrollTo(0, 0);
+        heading.focus({ preventScroll: true });
+    }
+
+    audio.addEventListener('trackchange', () => {
+        body.querySelectorAll('[data-track-url]').forEach(button => {
+            const current = button.dataset.trackUrl === audio.src;
+            button.classList.toggle('is-current', current);
+            if (current) button.setAttribute('aria-current', 'true');
+            else button.removeAttribute('aria-current');
+        });
+    });
+    window.addEventListener('hashchange', route);
+    route();
+}
+
+function detailEntry(title, metadata, note, cover) {
+    const entry = el('article', 'detail-entry');
+    const url = safeUrl(cover, MEDIA_PROTOCOLS);
+    if (url) {
+        const img = el('img', 'detail-cover');
+        img.src = url;
+        img.alt = `${title}封面`;
+        img.loading = 'lazy';
+        img.addEventListener('error', () => { img.hidden = true; });
+        entry.appendChild(img);
+    }
+    const text = el('div', 'detail-entry-text');
+    text.appendChild(el('h2', '', title));
+    if (metadata) text.appendChild(el('p', 'detail-meta', metadata));
+    if (note) text.appendChild(el('p', 'detail-note', note));
+    entry.appendChild(text);
+    return entry;
+}
+
+function renderContentDetail(body, CFG, key) {
+    const items = key === 'quote'
+        ? [CFG.quote, ...(CFG.quotes || [])].filter(item => item?.格言)
+        : (CFG[key] || []);
+    body.appendChild(el('p', 'detail-summary', `共 ${items.length} ${key === 'quote' ? '则格言' : '条记录'}`));
+    const list = el('div', 'detail-entries');
+    items.forEach(item => {
+        let entry;
+        if (key === 'quote') {
+            entry = detailEntry(item.格言, [item.作者, item.出处].filter(Boolean).join(' · '), item.说明);
+            entry.classList.add('detail-quote');
+        } else if (key === 'books') {
+            entry = detailEntry(item.书名 || '未知书名', [item.作者, item.状态, item.进度].filter(Boolean).join(' · '), item.说明, item.封面);
+            const value = parseFloat(item.进度);
+            if (Number.isFinite(value)) {
+                const progress = el('progress', 'reading-progress');
+                progress.max = 100;
+                progress.value = Math.min(100, Math.max(0, value));
+                progress.setAttribute('aria-label', `${item.书名 || '书籍'}阅读进度`);
+                entry.querySelector('.detail-entry-text').appendChild(progress);
+            }
+        } else if (key === 'movies') {
+            entry = detailEntry(item.片名 || '未知片名', [item.类型, item.状态, item.评分 ? `★ ${item.评分}` : ''].filter(Boolean).join(' · '), item.说明, item.封面);
+        } else {
+            const description = describeAnniversary(item, new Date());
+            entry = detailEntry(item.事件 || '未命名', [item.日期, item.类型, item.重复].filter(Boolean).join(' · '), item.说明);
+            if (description) entry.querySelector('.detail-entry-text').appendChild(el('p', description.accent ? 'detail-count is-accent' : 'detail-count', description.text));
+        }
+        list.appendChild(entry);
+    });
+    if (!items.length) list.appendChild(el('p', 'detail-empty', '暂无内容'));
+    body.appendChild(list);
+}
+
+function renderMusicDetail(body, CFG, audio) {
+    const tracks = (CFG.playlist || []).filter(item => safeUrl(item.音频, MEDIA_PROTOCOLS));
+    body.appendChild(el('p', 'detail-summary', `播放列表 · ${tracks.length} 首曲目`));
+    const list = el('div', 'detail-entries');
+    tracks.forEach((track, index) => {
+        const button = el('button', 'track-row');
+        button.type = 'button';
+        button.dataset.trackUrl = safeUrl(track.音频, MEDIA_PROTOCOLS);
+        button.setAttribute('aria-label', `播放${track.歌曲名 || '未知曲目'}`);
+        button.appendChild(el('span', 'track-number', String(index + 1).padStart(2, '0')));
+        const text = el('span', 'track-row-text');
+        text.appendChild(el('span', '', track.歌曲名 || '未知曲目'));
+        if (track.说明) text.appendChild(el('small', 'detail-meta', track.说明));
+        button.appendChild(text);
+        button.appendChild(el('span', 'track-action', '播放'));
+        if (button.dataset.trackUrl === audio.src) {
+            button.classList.add('is-current');
+            button.setAttribute('aria-current', 'true');
+        }
+        button.addEventListener('click', () => audio.dispatchEvent(new CustomEvent('selecttrack', { detail: index })));
+        list.appendChild(button);
+    });
+    if (!tracks.length) list.appendChild(el('p', 'detail-empty', '暂无曲目'));
+    body.appendChild(list);
+}
+
+function renderCalendarDetail(body, CFG) {
+    let selected = new Date();
+    let month = new Date(selected.getFullYear(), selected.getMonth(), 1);
+    const today = dateKey(selected);
+    const layout = el('div', 'calendar-detail-layout');
+    const left = el('section', 'detail-calendar');
+    left.setAttribute('aria-label', '选择日期');
+    const right = el('section', 'detail-todos');
+    right.setAttribute('aria-label', '当天待办');
+    layout.append(left, right);
+    body.appendChild(layout);
+
+    function showTodos() {
+        right.replaceChildren();
+        const date = dateKey(selected);
+        right.appendChild(el('p', 'detail-summary', selected.toLocaleDateString('zh-CN', { weekday: 'long' })));
+        right.appendChild(el('h2', 'selected-date', date));
+        const tasks = (CFG.todos || []).filter(task => task.日期 === date);
+        right.appendChild(el('p', 'detail-meta', `${tasks.length} 项待办`));
+        const list = el('ul', 'todo-list');
+        tasks.forEach(task => {
+            const done = task.状态 === '已完成';
+            const row = el('li', done ? 'todo-item is-done' : 'todo-item');
+            const mark = el('span', 'todo-mark', done ? '✓' : '○');
+            mark.setAttribute('aria-label', done ? '已完成' : '待办');
+            row.appendChild(mark);
+            const text = el('div');
+            text.appendChild(el('h3', '', task.内容 || '未命名待办'));
+            if (task.时间) text.appendChild(el('p', 'detail-meta', task.时间));
+            if (task.说明) text.appendChild(el('p', 'detail-note', task.说明));
+            row.appendChild(text);
+            list.appendChild(row);
+        });
+        if (!tasks.length) list.appendChild(el('li', 'detail-empty', '这一天暂无待办'));
+        right.appendChild(list);
+    }
+
+    function draw(focusDate = false) {
+        left.replaceChildren();
+        const toolbar = el('div', 'calendar-toolbar');
+        const label = el('h2', '', `${month.getFullYear()} 年 ${month.getMonth() + 1} 月`);
+        const controls = el('div', 'calendar-nav');
+        [['上一月', '‹', -1], ['下一月', '›', 1]].forEach(([name, text, delta]) => {
+            const button = el('button', '', text);
+            button.type = 'button';
+            button.setAttribute('aria-label', name);
+            button.addEventListener('click', () => {
+                month = new Date(month.getFullYear(), month.getMonth() + delta, 1);
+                selected = new Date(month.getFullYear(), month.getMonth(), 1);
+                draw(true);
+            });
+            controls.appendChild(button);
+        });
+        const reset = el('button', 'today-button', '今天');
+        reset.type = 'button';
+        reset.addEventListener('click', () => {
+            selected = new Date();
+            month = new Date(selected.getFullYear(), selected.getMonth(), 1);
+            draw(true);
+        });
+        controls.appendChild(reset);
+        toolbar.append(label, controls);
+        left.appendChild(toolbar);
+        const grid = el('div', 'detail-date-grid');
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(day => grid.appendChild(el('span', 'day-name', day)));
+        const first = month.getDay();
+        const total = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+        for (let i = 0; i < first; i++) grid.appendChild(el('span'));
+        for (let day = 1; day <= total; day++) {
+            const date = new Date(month.getFullYear(), month.getMonth(), day);
+            const key = dateKey(date);
+            const button = el('button', 'date-button', String(day));
+            button.type = 'button';
+            button.dataset.date = key;
+            button.setAttribute('aria-label', key);
+            button.setAttribute('aria-pressed', String(key === dateKey(selected)));
+            if (key === today) button.setAttribute('aria-current', 'date');
+            if ((CFG.todos || []).some(task => task.日期 === key)) {
+                button.classList.add('has-todos');
+                button.setAttribute('aria-label', `${key}，有待办`);
+            }
+            button.addEventListener('click', () => { selected = date; draw(true); });
+            grid.appendChild(button);
+        }
+        left.appendChild(grid);
+        showTodos();
+        if (focusDate) grid.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
+    }
+    draw();
 }

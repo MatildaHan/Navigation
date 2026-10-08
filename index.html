@@ -40,7 +40,7 @@
         <main class="main-board glass-panel">
 
             <!-- Bento 网格 -->
-            <div class="bento-grid">
+            <div class="bento-grid" id="home-grid">
 
                 <!-- 问候语 + 时钟 + 个人介绍：占 2 列 -->
                 <article class="bento-card card-greeting" data-span="2">
@@ -53,7 +53,7 @@
                 </article>
 
                 <!-- 日历：占 1 列 -->
-                <article class="bento-card card-calendar" data-span="1">
+                <article class="bento-card card-calendar" data-span="1" data-detail="calendar">
                     <div class="calendar-header" id="calendar-month">月份</div>
                     <div class="calendar-grid" id="calendar-grid">
                         <span class="day-name">日</span><span class="day-name">一</span><span class="day-name">二</span><span class="day-name">三</span><span class="day-name">四</span><span class="day-name">五</span><span class="day-name">六</span>
@@ -61,14 +61,14 @@
                 </article>
 
                 <!-- 格言：占 1 列 -->
-                <article class="bento-card card-quote" data-span="1">
+                <article class="bento-card card-quote" data-span="1" data-detail="quote">
                     <div class="quote-mark"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></div>
                     <div class="quotes-text" data-cfg-text="quote.text"></div>
                     <div class="quotes-author" data-cfg-text="quote.author"></div>
                 </article>
 
                 <!-- 音乐：占 1 列 -->
-                <article class="bento-card card-music" data-span="1">
+                <article class="bento-card card-music" data-span="1" data-detail="music">
                     <audio id="main-audio" preload="none"></audio>
                     <div class="album-art" id="player-art"></div>
                     <div class="track-info">
@@ -84,7 +84,7 @@
                 </article>
 
                 <!-- 纪念日：占 1 列 -->
-                <article class="bento-card card-list" data-span="1">
+                <article class="bento-card card-list" data-span="1" data-detail="anniversary">
                     <header class="card-header">
                         <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
                         <span>纪念日</span>
@@ -93,7 +93,7 @@
                 </article>
 
                 <!-- 书架：占 1 列 -->
-                <article class="bento-card card-list" data-span="1">
+                <article class="bento-card card-list" data-span="1" data-detail="books">
                     <header class="card-header">
                         <i class="fa-solid fa-book" aria-hidden="true"></i>
                         <span>书架</span>
@@ -102,7 +102,7 @@
                 </article>
 
                 <!-- 观影：占 2 列 -->
-                <article class="bento-card card-list" data-span="2">
+                <article class="bento-card card-list" data-span="2" data-detail="movies">
                     <header class="card-header">
                         <i class="fa-solid fa-film" aria-hidden="true"></i>
                         <span>观影</span>
@@ -111,6 +111,13 @@
                 </article>
 
             </div>
+            <section class="detail-view" id="detail-view" hidden aria-labelledby="detail-title">
+                <header class="detail-header">
+                    <a class="back-link" href="#" aria-label="返回主页"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>返回</span></a>
+                    <h1 id="detail-title" tabindex="-1"></h1>
+                </header>
+                <div class="detail-body" id="detail-body"></div>
+            </section>
         </main>
     </div>
 

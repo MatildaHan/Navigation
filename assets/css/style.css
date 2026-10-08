@@ -208,6 +208,14 @@ body::before {
 .bento-card[data-span="2"] { grid-column: span 2; }
 .bento-card[data-span="3"] { grid-column: span 3; }
 
+.card-open { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; z-index: 3; display: grid; place-items: center; border-radius: 8px; }
+.card-open::after { content: '↗'; color: var(--text-secondary); font-size: 0.7rem; }
+.card-open:focus-visible { outline-offset: -2px; }
+.card-music .player-controls { position: relative; z-index: 2; }
+.bento-card[data-detail] { cursor: pointer; }
+.card-list ul { position: relative; z-index: 2; }
+.detail-player { cursor: default; }
+
 /* ---------- 问候语 + 时钟 ---------- */
 .card-greeting {
     justify-content: center;
@@ -569,6 +577,81 @@ body::before {
     .card-greeting .clock-inline .time {
         font-size: 1.8rem;
     }
+}
+
+/* ==========================================================================
+   详情视图：共享主页的玻璃外壳和卡片背景
+   ========================================================================== */
+.detail-view { height: 100%; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.detail-header { display: flex; align-items: center; gap: 18px; min-height: 38px; flex-shrink: 0; }
+.detail-header h1 { font-size: 1.15rem; font-weight: 500; overflow-wrap: anywhere; }
+.back-link { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; font-size: 0.8rem; text-decoration: none; flex-shrink: 0; }
+.back-link:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
+.detail-body { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow-wrap: anywhere; }
+.detail-summary { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 18px; }
+.detail-entry { display: flex; gap: 18px; padding: 20px 0; border-bottom: 1px dashed rgba(255,255,255,0.14); }
+.detail-entry:first-child { padding-top: 0; }
+.detail-entry:last-child { border-bottom: 0; }
+.detail-entry-text { min-width: 0; flex: 1; }
+.detail-entry h2 { font-size: 1.05rem; font-weight: 500; line-height: 1.7; }
+.detail-meta { font-size: 0.8rem; line-height: 1.7; color: var(--text-secondary); margin-top: 6px; }
+.detail-note { font-size: 0.9rem; line-height: 1.9; margin-top: 12px; white-space: pre-line; }
+.detail-cover { width: 64px; height: 88px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.detail-quote { padding: 26px 0; }
+.detail-quote h2 { font-size: 1.2rem; font-weight: 400; }
+.detail-count { margin-top: 14px; font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; }
+.is-accent { color: var(--accent); }
+.reading-progress { display: block; width: min(260px, 100%); height: 6px; margin-top: 14px; accent-color: var(--accent); }
+.detail-empty { padding: 24px 0; font-size: 0.85rem; color: var(--text-secondary); }
+.detail-player { padding: 16px; margin-bottom: 24px; }
+.detail-player:hover { transform: none; }
+.detail-player .card-open { display: none; }
+.detail-player .album-art { width: 72px; height: 72px; border-radius: 14px; }
+.detail-player .track-title { font-size: 1rem; }
+.detail-player .player-controls { gap: 6px; margin-top: 8px; }
+.detail-player .player-controls button { width: 32px; height: 32px; font-size: 0.85rem; }
+.track-row { width: 100%; display: flex; align-items: center; gap: 16px; text-align: left; padding: 16px 12px; border-bottom: 1px dashed rgba(255,255,255,0.14); border-radius: 8px; }
+.track-row:hover, .track-row.is-current { background: rgba(255,255,255,0.06); }
+.track-row.is-current { color: var(--accent); }
+.track-number { font-family: 'Share Tech Mono', monospace; color: var(--text-secondary); }
+.track-row-text { flex: 1; min-width: 0; font-size: 0.9rem; }
+.track-row-text small { display: block; }
+.track-action { font-size: 0.75rem; color: var(--text-secondary); flex-shrink: 0; }
+.calendar-detail-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; min-height: 100%; }
+.detail-calendar { min-width: 0; }
+.calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+.calendar-toolbar h2 { font-size: 1rem; font-weight: 500; }
+.calendar-nav { display: flex; align-items: center; gap: 4px; }
+.calendar-nav button { min-width: 32px; height: 32px; border-radius: 8px; }
+.calendar-nav button:hover { background: rgba(255,255,255,0.1); }
+.calendar-nav .today-button { font-size: 0.75rem; padding: 0 8px; }
+.detail-date-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }
+.detail-date-grid .day-name { font-size: 0.72rem; color: var(--text-secondary); padding-bottom: 12px; }
+.date-button { position: relative; min-height: 38px; border-radius: 10px; font-size: 0.85rem; }
+.date-button:hover { background: rgba(255,255,255,0.1); }
+.date-button[aria-current="date"] { border: 1px solid var(--accent); }
+.date-button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.date-button.has-todos::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: currentColor; bottom: 4px; left: calc(50% - 2px); }
+.detail-todos { min-width: 0; border-left: 1px solid rgba(255,255,255,0.12); padding-left: 28px; }
+.detail-todos .detail-summary { margin-bottom: 6px; }
+.selected-date { font-family: 'Share Tech Mono', monospace; font-size: 1.8rem; font-weight: 400; letter-spacing: 1px; }
+.todo-list { list-style: none; margin-top: 22px; }
+.todo-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px dashed rgba(255,255,255,0.12); }
+.todo-item h3 { font-size: 0.9rem; font-weight: 400; }
+.todo-mark { color: var(--accent); }
+.todo-item.is-done h3 { text-decoration: line-through; color: var(--text-secondary); }
+
+@media (max-width: 860px) {
+    .detail-view { min-height: 500px; height: auto; }
+    .detail-body { flex: none; overflow: visible; padding: 18px; }
+    .detail-header { gap: 10px; }
+    .detail-header h1 { font-size: 1rem; }
+    .calendar-detail-layout { grid-template-columns: 1fr; gap: 28px; }
+    .detail-todos { border-left: 0; border-top: 1px solid rgba(255,255,255,0.12); padding-left: 0; padding-top: 24px; }
+    .detail-player { flex-direction: column; align-items: flex-start; }
+    .detail-player .track-info { width: 100%; }
+    .detail-player .player-controls { gap: 4px; }
+    .track-row { gap: 10px; padding: 14px 0; }
 }
 
 /* 减少动效 */
