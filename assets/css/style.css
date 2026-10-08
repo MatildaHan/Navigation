@@ -18,9 +18,6 @@
     /* 图片资源默认路径（JS 启动后会被 config.md 里的 assets 覆盖；
        注意：style.css 在 assets/css/ 目录里，所以引用 images 需要用 ../ */
     --bg-wallpaper: url('../images/background.jpg');
-    --bg-gallery1:  url('../images/background.jpg');
-    --bg-gallery2:  url('../images/background.jpg');
-    --bg-gallery3:  url('../images/background.jpg');
 }
 
 /* ==========================================================================
