@@ -1,5 +1,8 @@
 /* ============================================================
- *  页面运行逻辑
+ *  个人主页运行逻辑
+ *  - 读取 config.md → 解析为对象
+ *  - 各模块独立执行，单点错误不拖垮整页
+ *  - 所有 URL 走白名单校验，防 XSS
  * ============================================================ */
 'use strict';
 
@@ -22,7 +25,6 @@ const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-    // ---------- 1. 读取并解析 config.md ----------
     let CFG = {};
     try {
         CFG = parseConfig(await loadConfig());
@@ -33,7 +35,6 @@ async function init() {
         showNotice('无法读取 config.md。请通过 Web 服务器访问本页（如 VS Code Live Server、npx serve，或部署到线上）；直接双击打开 index.html 会被浏览器拦截。');
     }
 
-    // ---------- 2. 各模块相互隔离：某一块出错不会拖垮整页 ----------
     const steps = [
         applyText, applyLinkHref, applyAvatar, applyWallpaper, applyTheme,
         applyDocumentMeta, renderLinks, initClockAndCalendar,
@@ -47,14 +48,13 @@ async function init() {
 }
 
 async function loadConfig() {
-    // no-cache：每次都向服务器校验，保证「改完 config.md 刷新即生效」
     const res = await fetch('config.md', { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.text();
 }
 
 /* ============================================================
- *  工具函数
+ *  工具
  * ============================================================ */
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -70,19 +70,12 @@ function showNotice(msg) {
     box.hidden = false;
 }
 
-/**
- * 把配置里的路径/网址解析成「绝对 URL」，并按协议白名单校验。
- * - 相对路径（assets/x.jpg）按页面所在目录解析，子目录部署也正常
- * - 以 / 开头的按站点根目录解析
- * - javascript:、data: 等协议一律拒绝（含 "java\tscript:" 这类变形写法）
- */
 function safeUrl(raw, allowed = LINK_PROTOCOLS) {
     if (raw == null) return null;
     const s = String(raw).trim();
     if (!s) return null;
     try {
         const u = new URL(s, document.baseURI);
-        // 页面本身在 file:// 下时，相对路径会解析为 file:，同样放行
         return (allowed.includes(u.protocol) || u.protocol === location.protocol) ? u.href : null;
     } catch {
         return null;
@@ -109,8 +102,8 @@ const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playl
 
 function parseConfig(mdText) {
     const result = {};
-    let section = null;   // 列表段落为数组，其余为对象
-    let block = null;     // 列表段落中正在收集的条目
+    let section = null;
+    let block = null;
 
     const flush = () => {
         if (block && Array.isArray(section) && Object.keys(block).length) section.push(block);
@@ -142,7 +135,6 @@ function parseConfig(mdText) {
         const value = kv[2].trim();
 
         if (Array.isArray(section)) {
-            // 漏写空行时：同一个键再次出现，说明已经是下一条了
             if (block && Object.prototype.hasOwnProperty.call(block, key)) flush();
             if (!block) block = {};
             block[key] = value;
@@ -171,7 +163,6 @@ function applyText(CFG) {
     });
 }
 
-/** 把 HTML 里 data-cfg-link="名称" 的 <a> 指向 config.md 中同名链接 */
 function applyLinkHref(CFG) {
     const links = CFG.links || [];
     document.querySelectorAll('[data-cfg-link]').forEach(a => {
@@ -194,13 +185,12 @@ function applyAvatar(CFG) {
     if (!url) { set(FALLBACK_IMG); return; }
     set(url);
     const probe = new Image();
-    probe.onerror = () => set(FALLBACK_IMG);   // 路径错误/图片损坏时用占位头像
+    probe.onerror = () => set(FALLBACK_IMG);
     probe.src = url;
 }
 
 function applyWallpaper(CFG) {
     const url = safeUrl(CFG.assets?.壁纸, MEDIA_PROTOCOLS);
-    // 写入绝对 URL：自定义属性里的相对路径会按 style.css 所在目录解析，容易错位
     if (url) document.documentElement.style.setProperty('--bg-wallpaper', cssUrl(url));
 }
 
@@ -218,13 +208,20 @@ function applyTheme(CFG) {
     if (t.主文本色) root.style.setProperty('--text-primary', t.主文本色);
     if (t.次文本色) root.style.setProperty('--text-secondary', t.次文本色);
 
+    const px = v => {
+        const m = String(v).trim().match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
+        return m ? m[1] + (m[2] || 'px') : null;
+    };
     if (t.壁纸模糊) {
-        const m = String(t.壁纸模糊).trim().match(/^(\d+(?:\.\d+)?)(px|rem|em)?$/);
-        if (m) root.style.setProperty('--bg-blur', m[1] + (m[2] || 'px'));
+        const v = px(t.壁纸模糊);
+        if (v) root.style.setProperty('--bg-blur', v);
+    }
+    if (t.玻璃模糊) {
+        const v = px(t.玻璃模糊);
+        if (v) root.style.setProperty('--glass-blur', v);
     }
 }
 
-/** 标题 + 网站图标取自配置 */
 function applyDocumentMeta(CFG) {
     const name = CFG.profile?.昵称;
     if (name) document.title = `${name} - 个人主页`;
@@ -242,10 +239,9 @@ function applyDocumentMeta(CFG) {
 }
 
 /* ============================================================
- *  社交链接：由 config.md 的 links 同时渲染侧边栏与底部栏
+ *  渲染链接
  * ============================================================ */
 function sanitizeIcon(icon) {
-    // 只允许 Font Awesome 的 class 名，避免把任意字符串写进 class
     return /^[a-z0-9 -]+$/i.test(icon || '') ? icon : 'fa-solid fa-link';
 }
 
@@ -257,10 +253,7 @@ function renderLinks(CFG) {
             icon: sanitizeIcon(item['图标']),
             raw: item['网址'] || '',
         }))
-        .filter(l => {
-            if (!l.url) log(`链接「${l.name}」的网址无效，已跳过：`, l.raw);
-            return l.url;
-        });
+        .filter(l => l.url);
 
     links.forEach(l => {
         if (PLACEHOLDER_RE.test(l.raw)) log(`链接「${l.name}」仍是占位地址，记得改成真实地址：`, l.raw);
@@ -291,7 +284,6 @@ function renderLinks(CFG) {
 /* ============================================================
  *  日期工具
  * ============================================================ */
-/** 把 YYYY-MM-DD 解析为「本地时区」的零点；非法日期（如 2024-02-31）返回 null */
 function parseLocalDate(str) {
     const m = String(str || '').trim().match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
     if (!m) return null;
@@ -301,14 +293,13 @@ function parseLocalDate(str) {
     return date;
 }
 
-/** to 比 from 晚几天（可为负）。用 UTC 计算，不受夏令时影响 */
 function daysBetween(from, to) {
     const utc = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
     return Math.round((utc(to) - utc(from)) / 86400000);
 }
 
 /* ============================================================
- *  时钟 + 日历（跨天自动刷新日历与纪念日）
+ *  时钟 + 日历
  * ============================================================ */
 function initClockAndCalendar(CFG) {
     const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -321,11 +312,11 @@ function initClockAndCalendar(CFG) {
     let lastHour = -1;
     let lastDayKey = '';
 
-    const greetingFor = hour => {
-        if (hour >= 5 && hour < 11) return '早上好';
-        if (hour >= 11 && hour < 13) return '中午好';
-        if (hour >= 13 && hour < 18) return '下午好';
-        if (hour >= 18 && hour < 23) return '晚上好';
+    const greetingFor = h => {
+        if (h >= 5 && h < 11) return '早上好';
+        if (h >= 11 && h < 13) return '中午好';
+        if (h >= 13 && h < 18) return '下午好';
+        if (h >= 18 && h < 23) return '晚上好';
         return '夜深了';
     };
 
@@ -409,13 +400,12 @@ function initMusicPlayer(CFG) {
         if (btnNext) btnNext.disabled = true;
     }
 
-    // 「喜欢」状态按音频地址保存在本地
     const LIKE_KEY = 'homepage-liked-tracks';
     const readLiked = () => {
         try { return JSON.parse(localStorage.getItem(LIKE_KEY)) || []; } catch { return []; }
     };
     const writeLiked = list => {
-        try { localStorage.setItem(LIKE_KEY, JSON.stringify(list)); } catch { /* 隐私模式等：忽略 */ }
+        try { localStorage.setItem(LIKE_KEY, JSON.stringify(list)); } catch {}
     };
 
     let current = 0;
@@ -435,7 +425,6 @@ function initMusicPlayer(CFG) {
             trackTitle.textContent = t.title;
             trackTitle.title = t.title;
         }
-        // 没有封面时要清掉上一首的封面
         if (playerArt) playerArt.style.backgroundImage = t.art ? cssUrl(t.art) : '';
         syncHeart();
     }
@@ -444,7 +433,6 @@ function initMusicPlayer(CFG) {
         try {
             await audio.play();
         } catch (e) {
-            // AbortError：快速切歌时上一次 play() 被打断，属于正常情况
             if (e.name !== 'AbortError') console.warn('播放被浏览器阻止或失败：', e);
         }
     }
@@ -454,7 +442,6 @@ function initMusicPlayer(CFG) {
         play();
     }
 
-    // 图标与播放状态由媒体事件驱动，不再手动同步，避免状态错位
     const icon = playBtn.querySelector('i');
     const setPlayingUi = playing => {
         if (icon) icon.className = playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
@@ -467,7 +454,6 @@ function initMusicPlayer(CFG) {
         if (trackTitle) trackTitle.textContent = '⚠️ 音频加载失败';
     });
     audio.addEventListener('ended', () => {
-        // 单曲且未开启循环：播完即停；多曲：自动下一首
         if (playlist.length > 1) step(1);
     });
 
@@ -489,7 +475,7 @@ function initMusicPlayer(CFG) {
 }
 
 /* ============================================================
- *  搜索（浮层，替代原来的 prompt()）
+ *  搜索
  * ============================================================ */
 function initSearch(CFG) {
     const btn = document.getElementById('btn-search');
@@ -514,7 +500,6 @@ function initSearch(CFG) {
 
     function buildUrl(q) {
         const encoded = encodeURIComponent(q);
-        // 模板里没写 {query} 时，视为「前缀」，直接把关键词接在后面
         const raw = tmpl.includes('{query}') ? tmpl.replaceAll('{query}', encoded) : tmpl + encoded;
         return safeUrl(raw, ['http:', 'https:']);
     }
@@ -541,7 +526,6 @@ function initSearch(CFG) {
             close();
             return;
         }
-        // 按 "/" 快速唤起搜索（正在输入时不触发）
         const typing = e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]');
         if (e.key === '/' && overlay.hidden && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
             e.preventDefault();
@@ -551,7 +535,7 @@ function initSearch(CFG) {
 }
 
 /* ============================================================
- *  纪念日 / 书架 / 观影（用 DOM API 构建，配置文本不会被当作 HTML 解析）
+ *  列表渲染
  * ============================================================ */
 function renderList(ul, items, build, emptyText) {
     if (!ul) return;
@@ -573,18 +557,12 @@ function buildItem(main, sub, side, accent) {
     return li;
 }
 
-/**
- * 计算纪念日显示文案。
- *  - 已过日：日期在过去 → 「已经历 N 天」；日期在未来 → 「还有 N 天」
- *  - 倒数日：日期在未来 → 「还有 N 天」；过去 → 「已过 N 天」
- *  - 可选字段「重复：每年」：倒数日/生日这类每年重复的日子，自动滚动到下一次
- */
 function describeAnniversary(item, today) {
     const date = parseLocalDate(item['日期']);
     if (!date) return null;
 
     const type = item['类型'] || '已过日';
-    let diff = daysBetween(today, date);   // 正数 = 在未来，负数 = 已过去
+    let diff = daysBetween(today, date);
 
     if (type === '倒数日') {
         if (item['重复'] === '每年' && diff < 0) {
@@ -622,7 +600,6 @@ function renderBooks(CFG) {
     renderList(document.getElementById('book-list'), CFG.books, item => {
         const status = item['状态'] || '';
         const progress = item['进度'] || '';
-        // 只有「在读」才有意义显示进度；已读 100% / 想读 0% 是冗余信息
         const side = status === '在读' && progress ? `${status} ${progress}` : status;
         return buildItem(item['书名'] || '未知书名', item['作者'] || '佚名', side, true);
     }, '书架是空的');
