@@ -153,41 +153,10 @@ body::before {
     flex: 0 0 900px;
     width: 900px;
     height: 540px;
-    padding: 20px;
+    padding: 16px;
     position: relative;
     overflow: hidden;
     display: block;
-}
-
-/* ---------- 悬浮用户标签 ---------- */
-.user-tag {
-    position: absolute;
-    top: 14px;
-    right: 18px;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 4px 5px 4px 12px;
-    border-radius: 22px;
-    color: var(--text-primary);
-    text-decoration: none;
-    font-size: 0.8rem;
-    transition: background 0.25s, transform 0.25s;
-}
-.user-tag[href]:hover {
-    background: rgba(0, 0, 0, 0.55);
-    transform: translateY(-2px);
-}
-.user-avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: #fff center/cover;
-    flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -199,7 +168,7 @@ body::before {
     grid-template-rows: repeat(3, minmax(0, 1fr));
     gap: 12px;
     height: 100%;
-    padding-top: 44px;   /* 给右上角用户标签留位置 */
+    padding-top: 0px;  
 }
 
 .bento-card {
