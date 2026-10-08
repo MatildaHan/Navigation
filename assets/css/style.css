@@ -1,69 +1,49 @@
 /* ==========================================================================
-   Theme Variables
-   这些值会被 config.md 里的 --- theme --- 覆盖
+   主题变量
    ========================================================================== */
 :root {
-    /* 强调色相（0-360），165 是青色系 */
     --accent-hue: 165;
     --accent: hsl(var(--accent-hue), 70%, 60%);
-    /* 强调色底上的文字色（深色，保证对比度） */
     --accent-ink: #06201a;
 
-    /* 玻璃态面板 */
-    --glass-bg: rgba(255, 255, 255, 0.10);
-    --glass-border: rgba(255, 255, 255, 0.28);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.18);
     --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 
-    /* 文本颜色 */
     --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-secondary: rgba(255, 255, 255, 0.75);
 
-    /* 壁纸：JS 会写入绝对 URL；此处是 JS 不可用时的兜底
-       （style.css 在 assets/css/ 里，所以引用 images 要用 ../） */
     --bg-wallpaper: url('../images/background.jpg');
     --bg-blur: 8px;
+    --glass-blur: 10px;
 }
 
 /* ==========================================================================
    基础
    ========================================================================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 [hidden] { display: none !important; }
 
 body {
-    height: 100vh;
-    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    padding: clamp(12px, 4vh, 40px) 3vw;
+    padding: 20px;
     background-color: #1a1a1a;
     color: var(--text-primary);
     font-family: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
-button,
-input {
-    font: inherit;
-    color: inherit;
-}
-button {
-    background: none;
-    border: 0;
-    cursor: pointer;
-}
+button, input { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
 a { color: inherit; }
 
-:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- 整页背景 ---------- */
 body::before {
@@ -75,10 +55,10 @@ body::before {
     z-index: -1;
 }
 
-/* ---------- 首屏淡入（仅 JS 可用时启用） ---------- */
+/* ---------- 首屏淡入 ---------- */
 .desktop-container,
 .bottom-dock {
-    transition: opacity 0.35s ease;
+    transition: opacity 0.4s ease;
 }
 .js .is-loading .desktop-container,
 .js .is-loading .bottom-dock {
@@ -88,8 +68,8 @@ body::before {
 /* ---------- 玻璃态通用 ---------- */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
     border-radius: 24px;
@@ -98,7 +78,7 @@ body::before {
     .glass-panel { background: rgba(30, 30, 30, 0.72); }
 }
 
-/* ---------- 错误 / 提示条 ---------- */
+/* ---------- 错误提示 ---------- */
 .notice {
     position: fixed;
     top: 12px;
@@ -116,299 +96,369 @@ body::before {
 }
 
 /* ==========================================================================
-   布局
+   布局：侧边栏 80×500 + 主面板 900×540
    ========================================================================== */
 .desktop-container {
-    flex: 1;
-    min-height: 0;
     display: flex;
     gap: 20px;
-    width: 100%;
-    max-width: 1100px;
+    width: 1000px;
+    height: 540px;
+    max-width: calc(100vw - 32px);
+    align-items: center;
 }
 
 /* ---------- 侧边栏 ---------- */
 .sidebar {
-    flex: 0 0 70px;
+    flex: 0 0 80px;
+    width: 80px;
+    height: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 0;
-    gap: 15px;
+    padding: 18px 0;
+    gap: 12px;
     overflow-y: auto;
+    align-self: center;
 }
 .link-group {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .sidebar-btn,
 .dock-icon {
     flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
     color: var(--text-primary);
     text-decoration: none;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
+    transition: background 0.25s, transform 0.25s, color 0.25s;
 }
 .sidebar-btn:hover,
 .dock-icon:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.16);
     transform: translateY(-2px);
 }
 
 /* ---------- 主面板 ---------- */
 .main-board {
-    flex: 1;
-    min-width: 0;
-    padding: 30px;
-    display: flex;
-    gap: 20px;
+    flex: 0 0 900px;
+    width: 900px;
+    height: 540px;
+    padding: 20px;
+    position: relative;
     overflow: hidden;
+    display: block;
 }
 
-.left-col,
-.right-col {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    min-height: 0;
-    overflow-y: auto;
-}
-.left-col { flex: 0 0 280px; }
-.right-col {
-    flex: 1;
-    min-width: 0;
-    padding-right: 4px;
-}
-
-/* ---------- 时钟 ---------- */
-.clock-widget .time {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 3.5rem;
-    line-height: 1;
-    color: var(--text-primary);
-    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-.clock-widget .date {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-top: 5px;
-}
-
-/* ---------- 日历 ---------- */
-.calendar-widget {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
-    padding: 15px;
-}
-.calendar-header {
-    text-align: center;
-    font-weight: 500;
-    margin-bottom: 10px;
-}
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    text-align: center;
-    font-size: 0.8rem;
-}
-.calendar-grid span {
-    padding: 5px 0;
-    border-radius: 6px;
-}
-.calendar-grid .day-name {
-    opacity: 0.6;
-    font-size: 0.7rem;
-}
-.calendar-grid .active {
-    background: var(--accent);
-    color: var(--accent-ink);
-    font-weight: 700;
-}
-
-/* ---------- 音乐播放器 ---------- */
-.music-player {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.album-art {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1) center/cover;
-    flex-shrink: 0;
-}
-.track-info {
-    flex: 1;
-    min-width: 0;
-}
-.track-title {
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.player-controls {
-    display: flex;
-    gap: 4px;
-    margin-top: 2px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-}
-.player-controls button {
-    width: 26px;
-    height: 26px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: inherit;
-    transition: color 0.2s;
-}
-.player-controls button:hover:not(:disabled),
-.player-controls button[aria-pressed="true"] {
-    color: var(--accent);
-}
-.player-controls button:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
-/* ---------- 右上角 ---------- */
-.header-right {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
+/* ---------- 悬浮用户标签 ---------- */
 .user-tag {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    z-index: 10;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 5px 12px 5px 15px;
-    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 4px 5px 4px 12px;
+    border-radius: 22px;
     color: var(--text-primary);
     text-decoration: none;
-    transition: background 0.2s;
+    font-size: 0.8rem;
+    transition: background 0.25s, transform 0.25s;
 }
-.user-tag[href]:hover { background: rgba(0, 0, 0, 0.55); }
-.user-tag span { font-size: 0.85rem; }
+.user-tag[href]:hover {
+    background: rgba(0, 0, 0, 0.55);
+    transform: translateY(-2px);
+}
 .user-avatar {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: #fff center/cover;
+    flex-shrink: 0;
 }
 
-/* ---------- 问候语 ---------- */
-.greeting {
-    font-size: 1.6rem;
+/* ==========================================================================
+   Bento 网格：3 列 × 3 行
+   ========================================================================== */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    height: 100%;
+    padding-top: 44px;   /* 给右上角用户标签留位置 */
+}
+
+.bento-card {
+    position: relative;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bento-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 45%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+.bento-card:hover {
+    background: rgba(0, 0, 0, 0.42);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.bento-card[data-span="2"] { grid-column: span 2; }
+.bento-card[data-span="3"] { grid-column: span 3; }
+
+/* ---------- 问候语 + 时钟 ---------- */
+.card-greeting {
+    justify-content: center;
+    padding: 16px 18px;
+    gap: 4px;
+}
+.card-greeting .clock-inline {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+.card-greeting .clock-inline .time {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.9rem;
+    line-height: 1;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+}
+.card-greeting .clock-inline .date {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.card-greeting .greeting {
+    font-size: 1.05rem;
     font-weight: 600;
     color: var(--text-primary);
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    margin-top: 2px;
 }
-.greeting-sub {
-    font-size: 0.85rem;
+.card-greeting .greeting-sub {
+    font-size: 0.78rem;
     color: var(--text-secondary);
     font-style: italic;
-    margin-top: -8px;
+}
+
+/* ---------- 日历 ---------- */
+.card-calendar {
+    padding: 12px;
+}
+.card-calendar .calendar-header {
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+.card-calendar .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 0.68rem;
+}
+.card-calendar .calendar-grid span {
+    padding: 3px 0;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.card-calendar .calendar-grid span:not(.day-name):not(.active):hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.card-calendar .calendar-grid .day-name {
+    opacity: 0.55;
+    font-size: 0.62rem;
+}
+.card-calendar .calendar-grid .active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    box-shadow: 0 0 10px hsl(var(--accent-hue), 70%, 60%, 0.5);
 }
 
 /* ---------- 格言 ---------- */
-.quotes-widget {
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 14px;
-    padding: 15px;
+.card-quote {
+    justify-content: center;
+    padding: 16px 18px;
 }
-.quotes-header {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.card-quote .quote-mark {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 1.1rem;
+    color: var(--accent);
+    opacity: 0.35;
 }
-.quotes-text {
-    font-size: 0.9rem;
+.card-quote .quotes-text {
+    font-size: 0.88rem;
     line-height: 1.5;
     color: var(--text-primary);
+    padding-left: 6px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
 }
-.quotes-author {
-    font-size: 0.75rem;
+.card-quote .quotes-author {
+    font-size: 0.72rem;
     color: var(--text-secondary);
     text-align: right;
     margin-top: 6px;
 }
 
-/* ---------- 扩展面板（纪念日/书架/观影） ---------- */
-.extra-panel {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+/* ---------- 音乐 ---------- */
+.card-music {
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
-    margin-top: 10px;
-}
-.extra-block {
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 12px;
     padding: 12px;
-    font-size: 0.75rem;
-    max-height: 150px;
-    overflow-y: auto;
 }
-.extra-block h4 {
-    font-size: 0.8rem;
-    margin-bottom: 8px;
+.card-music .album-art {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08) center/cover;
+    flex-shrink: 0;
+}
+.card-music .track-info {
+    flex: 1;
+    min-width: 0;
+}
+.card-music .track-title {
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+.card-music .player-controls {
+    display: flex;
+    gap: 1px;
+    margin-top: 2px;
     color: var(--text-secondary);
+}
+.card-music .player-controls button {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: inherit;
+    font-size: 0.68rem;
+    transition: color 0.2s, background 0.2s;
+}
+.card-music .player-controls button:hover:not(:disabled),
+.card-music .player-controls button[aria-pressed="true"] {
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+}
+.card-music .player-controls button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* ---------- 列表卡片 ---------- */
+.card-list {
+    padding: 12px;
+    gap: 4px;
+}
+.card-list .card-header {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    flex-shrink: 0;
 }
-.extra-block ul { list-style: none; }
-.extra-block li {
+.card-list .card-header i {
+    color: var(--accent);
+}
+.card-list ul {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 2px;
+}
+.card-list li {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;
-    padding: 4px 0;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 0.72rem;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
 }
-.extra-block li:last-child { border-bottom: 0; }
-.item-main {
+.card-list li:last-child {
+    border-bottom: 0;
+}
+.card-list .item-main {
     min-width: 0;
     overflow-wrap: anywhere;
+    color: var(--text-primary);
 }
-.item-main small {
+.card-list .item-main small {
     display: block;
+    font-size: 0.64rem;
     opacity: 0.6;
+    margin-top: 1px;
 }
-.item-side {
+.card-list .item-side {
     flex-shrink: 0;
     text-align: right;
     white-space: nowrap;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.6);
+    font-size: 0.76rem;
 }
-.item-side.is-accent { color: var(--accent); }
-.extra-block li.empty {
+.card-list .item-side.is-accent {
+    color: var(--accent);
+}
+.card-list li.empty {
     justify-content: center;
     color: var(--text-secondary);
+    border: 0;
 }
 
-/* ---------- 底部栏（窄屏） ---------- */
+/* ==========================================================================
+   底部栏（窄屏）
+   ========================================================================== */
 .bottom-dock {
     display: none;
     position: fixed;
@@ -423,7 +473,9 @@ body::before {
     overflow-x: auto;
 }
 
-/* ---------- 搜索浮层 ---------- */
+/* ==========================================================================
+   搜索浮层
+   ========================================================================== */
 .search-overlay {
     position: fixed;
     inset: 0;
@@ -453,52 +505,94 @@ body::before {
     outline: none;
     font-size: 1rem;
 }
-.search-box input::placeholder { color: var(--text-secondary); }
-.search-box:focus-within { border-color: var(--accent); }
+.search-box input::placeholder {
+    color: var(--text-secondary);
+}
+.search-box:focus-within {
+    border-color: var(--accent);
+}
 
-/* ---------- 滚动条 ---------- */
+/* ==========================================================================
+   滚动条
+   ========================================================================== */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
 
 /* ==========================================================================
-   响应式：≤ 860px 切换为纵向滚动布局，侧边栏换成底部栏
+   响应式：小屏时收缩（保持大致比例）
    ========================================================================== */
+@media (max-width: 1080px) {
+    .desktop-container {
+        width: 100%;
+        max-width: calc(100vw - 24px);
+        height: auto;
+        min-height: 480px;
+    }
+    .sidebar {
+        flex: 0 0 70px;
+        width: 70px;
+        height: 440px;
+    }
+    .main-board {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        height: 520px;
+    }
+}
+
+/* 移动端：纵向堆叠 */
 @media (max-width: 860px) {
     body {
         height: auto;
         min-height: 100dvh;
         overflow: auto;
-        padding-bottom: 96px;
+        padding: 16px 12px 96px;
+        align-items: flex-start;
     }
     .desktop-container {
-        flex: none;
         flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        gap: 16px;
     }
     .sidebar { display: none; }
     .bottom-dock { display: flex; }
 
     .main-board {
-        flex-direction: column;
-        overflow: visible;
-        padding: 20px;
-    }
-    .left-col,
-    .right-col {
         flex: none;
-        overflow: visible;
-        padding-right: 0;
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        padding: 16px;
     }
-    .right-col { order: -1; }
-    .extra-block { max-height: none; }
+    .bento-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        grid-auto-rows: minmax(140px, auto);
+        padding-top: 52px;
+        height: auto;
+    }
+    .bento-card[data-span="2"],
+    .bento-card[data-span="3"] {
+        grid-column: span 1;
+    }
+    .card-greeting .clock-inline .time {
+        font-size: 1.8rem;
+    }
 }
 
-/* ---------- 减少动效 ---------- */
+/* 减少动效 */
 @media (prefers-reduced-motion: reduce) {
-    * {
+    *, *::before, *::after {
         transition: none !important;
         animation: none !important;
     }
