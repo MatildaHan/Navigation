@@ -8,11 +8,9 @@
 #  - 以 "#" 开头的行是注释，不会被读取
 #
 #  路径说明：
-#  - 图片/音频写 "assets/images/xxx.jpg"（相对页面所在目录）
-#    或 "/assets/images/xxx.jpg"（相对网站根目录）都可以。
-#  - 网络图片直接写 "https://..." 即可。
-#  - 必须通过 Web 服务器访问（本地可用 VS Code Live Server / npx serve），
-#    直接双击 index.html 无法读取本文件。
+#  - 图片/音频写 "assets/images/xxx.jpg" 或 "/assets/images/xxx.jpg" 都可以
+#  - 网络图片直接写 "https://..." 即可
+#  - 必须通过 Web 服务器访问（本地可用 VS Code Live Server / npx serve）
 # ============================================================
 
 
@@ -28,15 +26,12 @@
 
 
 # ---------------- 社交链接 ----------------
-# 侧边栏与（手机端）底部栏会按这里的顺序自动生成图标，
-# 想增删链接只改这里即可，不用动 HTML。
-# 图标：Font Awesome 6 的 class 名，例如 "fa-brands fa-github"
-# ⚠️ 名称为「博客」的那一条，同时是右上角昵称标签的跳转地址，请保留该名称。
-# ⚠️ 下面的 yourid / yourusername / xxxxxx / your-email 都是占位，请改成真实地址。
+# 图标：Font Awesome 6 的 class 名
+# ⚠️ 名称为「博客」的那一条，同时是右上角昵称标签的跳转地址
 --- links ---
 名称：博客
 图标：fa-solid fa-house
-网址：firefly-8vy.pages.dev
+网址：https://fqzlr.com
 
 名称：B站
 图标：fa-brands fa-bilibili
@@ -44,12 +39,19 @@
 
 名称：GitHub
 图标：fa-brands fa-github
-网址：https://github.com/MatildaHan
+网址：https://github.com/yourusername
+
+名称：QQ群
+图标：fa-brands fa-qq
+网址：https://qm.qq.com/q/xxxxxx
 
 名称：邮箱
 图标：fa-solid fa-envelope
-网址：matildasnow99@gmail.com
+网址：mailto:your-email@example.com
 
+名称：RSS
+图标：fa-solid fa-rss
+网址：/feed.xml
 
 
 # ---------------- 今日格言 ----------------
@@ -59,22 +61,21 @@
 
 
 # ---------------- 纪念日与倒数日 ----------------
-# 类型：「已过日」（已经历 N 天）或「倒数日」（还有 N 天）
+# 类型：「已过日」或「倒数日」
 # 日期格式：YYYY-MM-DD
-# 重复：可选，填「每年」则每年重复（生日等），倒数日会自动滚动到下一次
+# 重复：可选，填「每年」则自动滚动到下一次
 --- anniversary ---
 事件：相识纪念日
 日期：2021-05-20
 类型：已过日
 
 事件：北冥的生日
-日期：1990-01-01
+日期：2024-12-25
 类型：倒数日
 重复：每年
 
 
 # ---------------- 书架 ----------------
-# 状态建议：已读 / 在读 / 想读（只有「在读」会显示进度）
 --- books ---
 书名：三体
 作者：刘慈欣
@@ -109,15 +110,8 @@
 评分：9.0
 状态：已看
 
-片名：怪奇物语
-类型：剧集
-评分：8.5
-状态：在看
-
 
 # ---------------- 音乐播放列表 ----------------
-# 把 mp3 放进 assets/music/ 后修改 "音频" 路径；"封面" 可选
-# 可以写多首，条目之间空一行
 --- playlist ---
 歌曲名：神狐的祝福
 音频：assets/music/1.mp3
@@ -144,16 +138,15 @@
 # ---------------- 主题配置 ----------------
 --- theme ---
 强调色相：165
-玻璃背景：rgba(255, 255, 255, 0.02)
-玻璃边框：rgba(255, 255, 255, 0.10)
+玻璃背景：rgba(255, 255, 255, 0.08)
+玻璃边框：rgba(255, 255, 255, 0.08)
 玻璃阴影：0 20px 40px rgba(0, 0, 0, 0.3)
 主文本色：#ffffff
-次文本色：rgba(255, 255, 255, 0.7)
-壁纸模糊：1px
+次文本色：rgba(255, 255, 255, 0.75)
+壁纸模糊：4px
+玻璃模糊：4px
 
 
 # ---------------- 其他设置 ----------------
-# 搜索引擎：用 {query} 代表关键词；
-# 例如 https://www.baidu.com/s?wd={query} 或 https://cn.bing.com/search?q={query}
 --- settings ---
 搜索引擎：https://www.google.com/search?q={query}
