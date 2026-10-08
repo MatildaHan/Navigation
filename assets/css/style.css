@@ -315,39 +315,6 @@ body::before {
     border-bottom: 1px dashed rgba(255,255,255,0.1);
 }
 
-/* ---------- 底部 Dock ---------- */
-.bottom-dock {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 12px;
-    padding: 12px 20px;
-    border-radius: 30px;
-}
-.dock-icon {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%;
-    color: #fff;
-    text-decoration: none;
-    font-size: 1.1rem;
-    transition: transform 0.3s;
-}
-.dock-icon:hover {
-    transform: translateY(-5px) scale(1.1);
-}
-.icon-blog { background: #4CAF50; }
-.icon-bilibili { background: #FB7299; }
-.icon-github { background: #333; }
-.icon-qq { background: #12B7F5; }
-.icon-email { background: #EA4335; }
-.icon-rss { background: #FF9800; }
-
 /* ---------- 滚动条 ---------- */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
