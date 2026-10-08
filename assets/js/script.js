@@ -1,5 +1,12 @@
 /* ============================================================
- *  页面运行逻辑（已移除锁屏）
+ *  页面运行逻辑（无锁屏 + 路径自动规范化版）
+ * ============================================================
+ *  关键特性：
+ *  - 不需要锁屏，打开即进入主界面
+ *  - 所有图片路径自动规范化：无论 config.md 里写不写 "/"，
+ *    都会自动补全为从网站根目录出发的绝对路径
+ *  - 兼容绝对路径（/xxx.jpg）、相对路径（assets/xxx.jpg）、
+ *    网络图片（https://...）
  * ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const CFG = parseConfig(rawConfig);
     console.log('已加载配置：', CFG);
-    window.CFG = CFG;   // 挂到 window 上，方便在 Console 里调试
+    window.CFG = CFG;   // 挂到 window，方便在 F12 Console 里调试
 
     // ---------- 2. 应用配置到 DOM ----------
     applyText(CFG);
@@ -40,10 +47,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ============================================================
+ *  🧰 通用工具函数
+ * ============================================================ */
+
+/**
+ * 路径规范化：
+ * - 空值 → null
+ * - 已带 "/" 或 "http" 开头 → 原样返回
+ * - 其他情况（相对路径）→ 前面自动加 "/"
+ *
+ * 目的：让 config.md 里写 "assets/xxx.jpg" 或 "/assets/xxx.jpg"
+ *      都能正确解析为从网站根目录出发的绝对路径。
+ */
+function normalizePath(p) {
+    if (!p) return null;
+    const s = String(p).trim();
+    if (!s) return null;
+    if (s.startsWith('http') || s.startsWith('/')) return s;
+    return '/' + s;
+}
+
+/* ============================================================
  *  配置解析器
  *  支持两种结构：
  *  1. 键值型（如 profile / quote / theme）→ 返回对象
- *  2. 列表型（如 anniversary / books / movies / playlist / links）→ 返回对象数组
+ *  2. 列表型（如 links / anniversary / books / movies / playlist）→ 返回对象数组
  * ============================================================ */
 function parseConfig(mdText) {
     const lines = mdText.split('\n');
@@ -69,7 +97,7 @@ function parseConfig(mdText) {
         // 注释行：跳过
         if (trimmed.startsWith('#')) return;
 
-        // 检测 --- xxx --- 格式的模块分隔
+        // 检测 --- xxx --- 模块分隔
         const sectionMatch = trimmed.match(/^---\s*(.+?)\s*---$/);
         if (sectionMatch) {
             if (currentBlock && Array.isArray(currentSection)) {
@@ -150,10 +178,16 @@ function applyHref(CFG) {
 }
 
 function applyImg(CFG) {
-    const map = {
+    // 头像和角色图也走路径规范化
+    const rawMap = {
         'profile.avatar': CFG.profile?.头像网址,
         'assets.character': CFG.assets?.角色图,
     };
+    const map = {};
+    Object.keys(rawMap).forEach(k => {
+        map[k] = normalizePath(rawMap[k]);
+    });
+
     document.querySelectorAll('[data-cfg-img]').forEach(el => {
         const v = map[el.dataset.cfgImg];
         if (v) el.src = v;
@@ -161,19 +195,28 @@ function applyImg(CFG) {
 }
 
 function applyBg(CFG) {
-    const map = {
-        'profile.avatar': CFG.profile?.头像网址,
-    };
+    // 头像背景
+    const avatar = normalizePath(CFG.profile?.头像网址);
     document.querySelectorAll('[data-cfg-bg]').forEach(el => {
-        const v = map[el.dataset.cfgBg];
+        const rawMap = { 'profile.avatar': avatar };
+        const v = rawMap[el.dataset.cfgBg];
         if (v) el.style.backgroundImage = `url('${v}')`;
     });
 
+    // 写入 CSS 变量（全部规范化）
     const root = document.documentElement;
-    if (CFG.assets?.壁纸) root.style.setProperty('--bg-wallpaper', `url('${CFG.assets.壁纸}')`);
-    if (CFG.assets?.画廊1) root.style.setProperty('--bg-gallery1', `url('${CFG.assets.画廊1}')`);
-    if (CFG.assets?.画廊2) root.style.setProperty('--bg-gallery2', `url('${CFG.assets.画廊2}')`);
-    if (CFG.assets?.画廊3) root.style.setProperty('--bg-gallery3', `url('${CFG.assets.画廊3}')`);
+
+    const wallpaper = normalizePath(CFG.assets?.壁纸);
+    if (wallpaper) root.style.setProperty('--bg-wallpaper', `url('${wallpaper}')`);
+
+    const g1 = normalizePath(CFG.assets?.画廊1);
+    if (g1) root.style.setProperty('--bg-gallery1', `url('${g1}')`);
+
+    const g2 = normalizePath(CFG.assets?.画廊2);
+    if (g2) root.style.setProperty('--bg-gallery2', `url('${g2}')`);
+
+    const g3 = normalizePath(CFG.assets?.画廊3);
+    if (g3) root.style.setProperty('--bg-gallery3', `url('${g3}')`);
 }
 
 /* ============================================================
@@ -201,24 +244,34 @@ function initClockAndCalendar(CFG) {
         const mm = now.getMinutes().toString().padStart(2, '0');
         const hour = now.getHours();
 
-        document.getElementById('live-clock').textContent = `${hh}:${mm}`;
-        document.getElementById('live-date').textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: '2-digit', day: '2-digit' });
+        const clockEl = document.getElementById('live-clock');
+        const dateEl = document.getElementById('live-date');
+        if (clockEl) clockEl.textContent = `${hh}:${mm}`;
+        if (dateEl) dateEl.textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: '2-digit', day: '2-digit' });
 
+        // 按时间动态问候
         const name = CFG.profile?.昵称 || '';
         let greeting = '';
         if (hour >= 5 && hour < 11) greeting = '早上好';
         else if (hour >= 11 && hour < 13) greeting = '中午好';
         else if (hour >= 13 && hour < 18) greeting = '下午好';
         else greeting = '晚上好';
-        document.getElementById('dynamic-greeting').textContent = `${greeting}，这里是${name}！`;
+
+        const greetEl = document.getElementById('dynamic-greeting');
+        if (greetEl) greetEl.textContent = `${greeting}，这里是${name}！`;
     }
     updateClock();
     setInterval(updateClock, 1000);
 
+    // 生成当月日历
     const now = new Date();
     const monthNames = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
-    document.getElementById('calendar-month').textContent = monthNames[now.getMonth()];
+    const monthEl = document.getElementById('calendar-month');
     const grid = document.getElementById('calendar-grid');
+    if (!grid) return;
+
+    if (monthEl) monthEl.textContent = monthNames[now.getMonth()];
+
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
     const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
@@ -237,8 +290,8 @@ function initClockAndCalendar(CFG) {
 function initMusicPlayer(CFG) {
     const playlist = (CFG.playlist || []).map(item => ({
         title: item['歌曲名'],
-        url: item['音频'],
-        art: item['封面']
+        url: normalizePath(item['音频']),
+        art: normalizePath(item['封面'])
     }));
     if (playlist.length === 0) return;
 
@@ -248,15 +301,18 @@ function initMusicPlayer(CFG) {
     const playerArt = document.getElementById('player-art');
     const btnRepeat = document.getElementById('btn-repeat');
     const btnHeart = document.getElementById('btn-heart');
+
+    if (!audio || !playBtn) return;
+
     let current = 0;
     let isLooping = false;
 
     function loadTrack(i) {
         const t = playlist[i];
         if (!t) return;
-        audio.src = t.url;
-        trackTitle.textContent = t.title;
-        if (t.art) playerArt.style.backgroundImage = `url('${t.art}')`;
+        if (t.url) audio.src = t.url;
+        if (trackTitle) trackTitle.textContent = t.title;
+        if (t.art && playerArt) playerArt.style.backgroundImage = `url('${t.art}')`;
     }
 
     function togglePlay() {
@@ -269,27 +325,30 @@ function initMusicPlayer(CFG) {
     }
 
     playBtn.addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
-    document.getElementById('btn-next').addEventListener('click', e => {
+
+    const btnNext = document.getElementById('btn-next');
+    const btnPrev = document.getElementById('btn-prev');
+    if (btnNext) btnNext.addEventListener('click', e => {
         e.stopPropagation();
         current = (current + 1) % playlist.length;
         loadTrack(current); togglePlay();
     });
-    document.getElementById('btn-prev').addEventListener('click', e => {
+    if (btnPrev) btnPrev.addEventListener('click', e => {
         e.stopPropagation();
         current = (current - 1 + playlist.length) % playlist.length;
         loadTrack(current); togglePlay();
     });
-    btnRepeat.addEventListener('click', e => {
+    if (btnRepeat) btnRepeat.addEventListener('click', e => {
         e.stopPropagation();
         isLooping = !isLooping;
         audio.loop = isLooping;
         btnRepeat.classList.toggle('active-btn', isLooping);
     });
-    btnHeart.addEventListener('click', e => {
+    if (btnHeart) btnHeart.addEventListener('click', e => {
         e.stopPropagation();
         btnHeart.classList.toggle('liked');
     });
-    audio.addEventListener('ended', () => { if (!isLooping) document.getElementById('btn-next').click(); });
+    audio.addEventListener('ended', () => { if (!isLooping && btnNext) btnNext.click(); });
 
     loadTrack(current);
 }
