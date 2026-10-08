@@ -36,7 +36,7 @@
 --- links ---
 名称：博客
 图标：fa-solid fa-house
-网址：https://fqzlr.com
+网址：firefly-8vy.pages.dev
 
 名称：B站
 图标：fa-brands fa-bilibili
@@ -44,19 +44,12 @@
 
 名称：GitHub
 图标：fa-brands fa-github
-网址：https://github.com/yourusername
-
-名称：QQ群
-图标：fa-brands fa-qq
-网址：https://qm.qq.com/q/xxxxxx
+网址：https://github.com/MatildaHan
 
 名称：邮箱
 图标：fa-solid fa-envelope
-网址：mailto:your-email@example.com
+网址：matildasnow99@gmail.com
 
-名称：RSS
-图标：fa-solid fa-rss
-网址：/feed.xml
 
 
 # ---------------- 今日格言 ----------------
@@ -75,7 +68,7 @@
 类型：已过日
 
 事件：北冥的生日
-日期：2024-12-25
+日期：1990-01-01
 类型：倒数日
 重复：每年
 
@@ -126,8 +119,20 @@
 # 把 mp3 放进 assets/music/ 后修改 "音频" 路径；"封面" 可选
 # 可以写多首，条目之间空一行
 --- playlist ---
-歌曲名：Lofi Study Beats
-音频：assets/music/lofi.mp3
+歌曲名：神狐的祝福
+音频：assets/music/1.mp3
+封面：assets/images/avatar.png
+
+歌曲名：无灵魂处的灵魂
+音频：assets/music/2.mp3
+封面：assets/images/avatar.png
+
+歌曲名：无神的丘冢
+音频：assets/music/3.mp3
+封面：assets/images/avatar.png
+
+歌曲名：终有谢时
+音频：assets/music/4.mp3
 封面：assets/images/avatar.png
 
 
