@@ -1,8 +1,5 @@
 /* ============================================================
- *  页面运行逻辑
- * ============================================================
- *  本脚本负责"读取 config.md → 解析为对象 → 填充到页面 + 绑定交互"
- *  想改内容请编辑 config.md。
+ *  页面运行逻辑（已移除锁屏）
  * ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -18,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const CFG = parseConfig(rawConfig);
     console.log('已加载配置：', CFG);
+    window.CFG = CFG;   // 挂到 window 上，方便在 Console 里调试
 
     // ---------- 2. 应用配置到 DOM ----------
     applyText(CFG);
@@ -26,20 +24,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyBg(CFG);
     applyTheme(CFG);
 
-    // ---------- 3. 锁屏 ----------
-    initLockscreen(CFG);
-
-    // ---------- 4. 时钟 + 日历 ----------
+    // ---------- 3. 时钟 + 日历 ----------
     initClockAndCalendar(CFG);
 
-    // ---------- 5. 音乐播放器 ----------
+    // ---------- 4. 音乐播放器 ----------
     initMusicPlayer(CFG);
 
-    // ---------- 6. 搜索 ----------
+    // ---------- 5. 搜索 ----------
     initSearch(CFG);
 
-    // ---------- 7. 渲染导航 / 纪念日 / 书架 / 观影 ----------
-    renderNav(CFG.links);
+    // ---------- 6. 渲染纪念日 / 书架 / 观影 ----------
     renderAnniversary(CFG.anniversary);
     renderBooks(CFG.books);
     renderMovies(CFG.movies);
@@ -47,10 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 /* ============================================================
  *  配置解析器
- *  支持三种结构：
+ *  支持两种结构：
  *  1. 键值型（如 profile / quote / theme）→ 返回对象
- *  2. 列表型（如 anniversary / books / movies / playlist）→ 返回对象数组
- *  3. links → 返回对象数组（每个链接一个对象）
+ *  2. 列表型（如 anniversary / books / movies / playlist / links）→ 返回对象数组
  * ============================================================ */
 function parseConfig(mdText) {
     const lines = mdText.split('\n');
@@ -59,11 +52,7 @@ function parseConfig(mdText) {
     let currentSectionName = null;
     let currentBlock = null;
 
-    // 列表型配置（每条数据是一个对象，可能包含多个键值对）
     const listSections = ['links', 'anniversary', 'books', 'movies', 'playlist'];
-
-    // 键值型配置（每个 section 就是一个对象）
-    const kvSections = ['profile', 'greetings', 'quote', 'assets', 'theme', 'settings'];
 
     lines.forEach(line => {
         const trimmed = line.trim();
@@ -83,7 +72,6 @@ function parseConfig(mdText) {
         // 检测 --- xxx --- 格式的模块分隔
         const sectionMatch = trimmed.match(/^---\s*(.+?)\s*---$/);
         if (sectionMatch) {
-            // 收尾上一个 section 的最后一个 block
             if (currentBlock && Array.isArray(currentSection)) {
                 currentSection.push(currentBlock);
                 currentBlock = null;
@@ -93,9 +81,6 @@ function parseConfig(mdText) {
 
             if (listSections.includes(currentSectionName)) {
                 currentSection = [];
-                result[currentSectionName] = currentSection;
-            } else if (kvSections.includes(currentSectionName)) {
-                currentSection = {};
                 result[currentSectionName] = currentSection;
             } else {
                 currentSection = {};
@@ -113,11 +98,9 @@ function parseConfig(mdText) {
         const value = kvMatch[2].trim();
 
         if (Array.isArray(currentSection)) {
-            // 列表型：每个空行分隔的块是一个对象
             if (!currentBlock) currentBlock = {};
             currentBlock[key] = value;
         } else {
-            // 键值型：直接写入
             currentSection[key] = value;
         }
     });
@@ -147,7 +130,6 @@ function applyText(CFG) {
 }
 
 function applyHref(CFG) {
-    // 链接在 renderNav 里动态生成，这里保留兼容
     const links = CFG.links || [];
     const findUrl = (keyword) => {
         const item = links.find(l => l['名称'] && l['名称'].includes(keyword));
@@ -187,7 +169,6 @@ function applyBg(CFG) {
         if (v) el.style.backgroundImage = `url('${v}')`;
     });
 
-    // 写入 CSS 变量
     const root = document.documentElement;
     if (CFG.assets?.壁纸) root.style.setProperty('--bg-wallpaper', `url('${CFG.assets.壁纸}')`);
     if (CFG.assets?.画廊1) root.style.setProperty('--bg-gallery1', `url('${CFG.assets.画廊1}')`);
@@ -211,28 +192,6 @@ function applyTheme(CFG) {
 }
 
 /* ============================================================
- *  锁屏
- * ============================================================ */
-function initLockscreen(CFG) {
-    const lsEl = document.getElementById('lockscreen');
-    const remember = CFG.settings?.记住锁屏状态 !== 'false';
-    const KEY = 'fqzlr-unlocked';
-
-    if (remember) {
-        try {
-            if (localStorage.getItem(KEY) === '1') lsEl.style.display = 'none';
-        } catch (e) {}
-    }
-
-    lsEl.addEventListener('click', () => {
-        lsEl.classList.add('unlocked');
-        if (remember) {
-            try { localStorage.setItem(KEY, '1'); } catch (e) {}
-        }
-    });
-}
-
-/* ============================================================
  *  时钟 + 日历
  * ============================================================ */
 function initClockAndCalendar(CFG) {
@@ -243,9 +202,7 @@ function initClockAndCalendar(CFG) {
         const hour = now.getHours();
 
         document.getElementById('live-clock').textContent = `${hh}:${mm}`;
-        document.getElementById('lock-clock').textContent = `${hh}:${mm}`;
         document.getElementById('live-date').textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: '2-digit', day: '2-digit' });
-        document.getElementById('lock-date').textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' });
 
         const name = CFG.profile?.昵称 || '';
         let greeting = '';
@@ -342,6 +299,7 @@ function initMusicPlayer(CFG) {
  * ============================================================ */
 function initSearch(CFG) {
     const btn = document.getElementById('btn-search');
+    if (!btn) return;
     const tmpl = CFG.settings?.搜索引擎 || 'https://www.google.com/search?q={query}';
     btn.addEventListener('click', () => {
         const q = prompt('搜索内容：');
@@ -351,14 +309,8 @@ function initSearch(CFG) {
 }
 
 /* ============================================================
- *  渲染导航 / 纪念日 / 书架 / 观影
+ *  渲染纪念日 / 书架 / 观影
  * ============================================================ */
-function renderNav(links) {
-    // 如果需要在侧边栏动态生成链接，可以在这里扩展。
-    // 目前侧边栏和底部 dock 在 HTML 中已硬编码 data-cfg-href，
-    // 由 applyHref() 统一填充。
-}
-
 function renderAnniversary(list) {
     const ul = document.getElementById('anniversary-list');
     if (!ul || !list) return;
