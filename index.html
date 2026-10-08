@@ -31,7 +31,7 @@
 
         <!-- 侧边栏：搜索 + 由 config.md 渲染的链接 -->
         <nav class="sidebar glass-panel" aria-label="快捷链接">
-            <button type="button" class="sidebar-btn" id="btn-search" aria-label="搜索" title="搜索（按 / 键）">
+            <button type="button" class="sidebar-btn" id="btn-search" aria-label="搜索" aria-haspopup="dialog" aria-controls="search-overlay" title="搜索（按 / 键）">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             </button>
             <div class="link-group" id="sidebar-links"></div>
@@ -115,10 +115,15 @@
     </div>
 
     <!-- 窄屏底部栏 -->
-    <nav class="bottom-dock glass-panel" id="bottom-dock" aria-label="链接"></nav>
+    <nav class="bottom-dock glass-panel" id="bottom-dock" aria-label="链接">
+        <button type="button" class="dock-icon" id="btn-search-mobile" aria-label="搜索" aria-haspopup="dialog" aria-controls="search-overlay">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </button>
+        <div class="dock-links" id="bottom-dock-links"></div>
+    </nav>
 
     <!-- 搜索浮层 -->
-    <div class="search-overlay" id="search-overlay" hidden>
+    <div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="搜索" hidden>
         <form class="search-box glass-panel" id="search-form" role="search">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             <input type="search" id="search-input" placeholder="输入关键词，回车搜索（Esc 关闭）" autocomplete="off" aria-label="搜索内容">

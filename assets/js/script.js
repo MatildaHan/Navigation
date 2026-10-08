@@ -278,7 +278,7 @@ function renderLinks(CFG) {
         });
     };
     fill(document.getElementById('sidebar-links'), 'sidebar-btn');
-    fill(document.getElementById('bottom-dock'), 'dock-icon');
+    fill(document.getElementById('bottom-dock-links'), 'dock-icon');
 }
 
 /* ============================================================
@@ -351,6 +351,7 @@ function initClockAndCalendar(CFG) {
 
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
         const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        grid.style.setProperty('--calendar-rows', String(1 + Math.ceil((firstDay + totalDays) / 7)));
 
         for (let i = 0; i < firstDay; i++) {
             const blank = el('span');
@@ -402,7 +403,10 @@ function initMusicPlayer(CFG) {
 
     const LIKE_KEY = 'homepage-liked-tracks';
     const readLiked = () => {
-        try { return JSON.parse(localStorage.getItem(LIKE_KEY)) || []; } catch { return []; }
+        try {
+            const liked = JSON.parse(localStorage.getItem(LIKE_KEY));
+            return Array.isArray(liked) ? liked.filter(url => typeof url === 'string') : [];
+        } catch { return []; }
     };
     const writeLiked = list => {
         try { localStorage.setItem(LIKE_KEY, JSON.stringify(list)); } catch {}
@@ -478,23 +482,30 @@ function initMusicPlayer(CFG) {
  *  搜索
  * ============================================================ */
 function initSearch(CFG) {
-    const btn = document.getElementById('btn-search');
+    const buttons = document.querySelectorAll('#btn-search, #btn-search-mobile');
     const overlay = document.getElementById('search-overlay');
     const form = document.getElementById('search-form');
     const input = document.getElementById('search-input');
-    if (!btn || !overlay || !form || !input) return;
+    if (!buttons.length || !overlay || !form || !input) return;
 
     const tmpl = CFG.settings?.搜索引擎 || DEFAULT_SEARCH;
     let lastFocus = null;
+    let backgroundState = [];
 
     const open = () => {
+        if (!overlay.hidden) return;
         lastFocus = document.activeElement;
         input.value = '';
         overlay.hidden = false;
         input.focus();
+        backgroundState = Array.from(document.querySelectorAll('.desktop-container, #bottom-dock'), node => ({ node, inert: node.inert }));
+        backgroundState.forEach(({ node }) => { node.inert = true; });
     };
     const close = () => {
+        if (overlay.hidden) return;
         overlay.hidden = true;
+        backgroundState.forEach(({ node, inert }) => { node.inert = inert; });
+        backgroundState = [];
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     };
 
@@ -504,7 +515,7 @@ function initSearch(CFG) {
         return safeUrl(raw, ['http:', 'https:']);
     }
 
-    btn.addEventListener('click', open);
+    buttons.forEach(btn => btn.addEventListener('click', open));
 
     form.addEventListener('submit', e => {
         e.preventDefault();
@@ -522,7 +533,13 @@ function initSearch(CFG) {
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 
     document.addEventListener('keydown', e => {
+        if (e.key === 'Tab' && !overlay.hidden) {
+            e.preventDefault();
+            input.focus();
+            return;
+        }
         if (e.key === 'Escape' && !overlay.hidden) {
+            e.preventDefault();
             close();
             return;
         }

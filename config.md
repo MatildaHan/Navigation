@@ -39,7 +39,7 @@
 
 名称：邮箱
 图标：fa-solid fa-envelope
-网址：matildasnow99@gmail.com
+网址：mailto:matildasnow99@gmail.com
 
 
 

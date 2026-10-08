@@ -28,7 +28,8 @@
 body {
     min-height: 100vh;
     min-height: 100dvh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -247,21 +248,27 @@ body::before {
     padding: 12px;
 }
 .card-calendar .calendar-header {
+    flex-shrink: 0;
     text-align: center;
     font-weight: 500;
     font-size: 0.82rem;
-    margin-bottom: 6px;
+    margin-bottom: 0;
     color: var(--text-primary);
 }
 .card-calendar .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(var(--calendar-rows, 7), minmax(0, 1fr));
+    flex: 1;
+    min-height: 0;
     gap: 2px;
     text-align: center;
     font-size: 0.68rem;
+    line-height: 1;
 }
 .card-calendar .calendar-grid span {
-    padding: 3px 0;
+    display: grid;
+    place-items: center;
     border-radius: 6px;
     transition: background 0.2s;
 }
@@ -440,6 +447,11 @@ body::before {
     gap: 6px;
     border-radius: 22px;
     overflow-x: auto;
+}
+.dock-links {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 6px;
 }
 
 /* ==========================================================================
