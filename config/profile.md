@@ -3,5 +3,5 @@
 # 问候语（早上好/中午好等）会根据当前时间自动生成，无需配置。
 
 昵称：北冥
-头像网址：https://api.dicebear.com/7.x/avataaars/svg?seed=Beiming
+头像网址：assets/images/avatar.png
 个人签名：躬身入局，心为主理，行有尺度，自持本心。
