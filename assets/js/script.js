@@ -38,7 +38,7 @@ async function init() {
     const steps = [
         applyText, applyLinkHref, applyAvatar, applyWallpaper, applyTheme,
         applyDocumentMeta, renderLinks, initClockAndCalendar,
-        initMusicPlayer, initSearch, renderBooks, renderMovies, initDetailViews,
+        initMusicPlayer, initSearch, renderBooks, renderMovies, initDeck, initLifeModules, initDetailViews,
     ];
     steps.forEach(fn => {
         try { fn(CFG); } catch (e) { console.error(`[${fn.name}] 执行出错`, e); }
@@ -56,6 +56,8 @@ async function loadConfig() {
 const MODULE_FILES = {
     greeting: ['greetings'], calendar: ['calendar', 'todos'], quote: ['quote', 'quotes'],
     music: ['playlist'], anniversary: ['anniversary'], books: ['books'], movies: ['movies'],
+    tools: ['tools'], checkin: ['checkins'], habits: ['habits'], focus: ['focus'],
+    notes: ['notes'], projects: ['projects', 'steps'], wishlist: ['wishlist'],
 };
 
 async function loadModules(base) {
@@ -121,7 +123,7 @@ function isExternal(href) {
 /* ============================================================
  *  配置解析器
  * ============================================================ */
-const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist', 'todos', 'quotes']);
+const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist', 'todos', 'quotes', 'tools', 'checkins', 'habits', 'notes', 'projects', 'steps', 'wishlist']);
 
 function parseConfig(mdText) {
     const result = {};
@@ -668,8 +670,8 @@ function dateKey(date) {
 }
 
 function initDetailViews(CFG) {
-    const titles = { calendar: CFG.calendar?.标题 || '日历与待办', quote: '格言', music: '音乐', anniversary: '纪念日', books: '书架', movies: '观影' };
-    const home = document.getElementById('home-grid');
+    const titles = { calendar: CFG.calendar?.标题 || '日历与待办', quote: '格言', music: '音乐', anniversary: '纪念日', books: '书架', movies: '观影', ...Life.titles };
+    const home = document.getElementById('home-pages');
     const view = document.getElementById('detail-view');
     const body = document.getElementById('detail-body');
     const heading = document.getElementById('detail-title');
@@ -679,6 +681,7 @@ function initDetailViews(CFG) {
     music.before(musicMarker);
     let active = '';
     let homeScroll = 0;
+    let disposeDetail = () => {};
     const links = new Map();
 
     document.querySelectorAll('[data-detail]').forEach(card => {
@@ -700,15 +703,19 @@ function initDetailViews(CFG) {
         const previous = active;
         const isDetail = Object.hasOwn(titles, key);
         if (isDetail && !active) homeScroll = window.scrollY;
+        disposeDetail();
+        disposeDetail = () => {};
         music.classList.remove('detail-player');
         musicMarker.after(music);
         body.replaceChildren();
         home.hidden = isDetail;
         view.hidden = !isDetail;
+        document.getElementById('page-switcher').hidden = isDetail;
         active = isDetail ? key : '';
         const name = CFG.profile?.昵称 || '个人主页';
         document.title = isDetail ? `${titles[key]} - ${name}` : `${name} - 个人主页`;
         if (!isDetail) {
+            window.deckController.setPage(key === 'life' ? 1 : 0);
             if (previous) {
                 links.get(previous)?.focus({ preventScroll: true });
                 window.scrollTo(0, homeScroll);
@@ -716,11 +723,13 @@ function initDetailViews(CFG) {
             return;
         }
         heading.textContent = titles[key];
-        if (key === 'calendar') renderCalendarDetail(body, CFG);
+        document.querySelector('.back-link').href = Object.hasOwn(Life.titles, key) ? '#life' : '#';
+        if (Object.hasOwn(Life.titles, key)) Life.render(body, key);
+        else if (key === 'calendar') disposeDetail = renderCalendarDetail(body, CFG);
         else if (key === 'music') {
             music.classList.add('detail-player');
             body.appendChild(music);
-            renderMusicDetail(body, CFG, audio);
+            disposeDetail = renderMusicDetail(body, CFG, audio);
         } else renderContentDetail(body, CFG, key);
         body.scrollTop = 0;
         window.scrollTo(0, 0);
@@ -762,37 +771,74 @@ function renderContentDetail(body, CFG, key) {
     const items = key === 'quote'
         ? [CFG.quote, ...(CFG.quotes || [])].filter(item => item?.格言)
         : (CFG[key] || []);
-    body.appendChild(el('p', 'detail-summary', `共 ${items.length} ${key === 'quote' ? '则格言' : '条记录'}`));
-    const list = el('div', 'detail-entries');
-    items.forEach(item => {
-        let entry;
-        if (key === 'quote') {
-            entry = detailEntry(item.格言, [item.作者, item.出处].filter(Boolean).join(' · '), item.说明);
-            entry.classList.add('detail-quote');
-        } else if (key === 'books') {
-            entry = detailEntry(item.书名 || '未知书名', [item.作者, item.状态, item.进度].filter(Boolean).join(' · '), item.说明, item.封面);
-            const value = parseFloat(item.进度);
-            if (Number.isFinite(value)) {
-                const progress = el('progress', 'reading-progress');
-                progress.max = 100;
-                progress.value = Math.min(100, Math.max(0, value));
-                progress.setAttribute('aria-label', `${item.书名 || '书籍'}阅读进度`);
-                entry.querySelector('.detail-entry-text').appendChild(progress);
-            }
-        } else if (key === 'movies') {
-            entry = detailEntry(item.片名 || '未知片名', [item.类型, item.状态, item.评分 ? `★ ${item.评分}` : ''].filter(Boolean).join(' · '), item.说明, item.封面);
-        } else {
-            const description = describeAnniversary(item, new Date());
-            entry = detailEntry(item.事件 || '未命名', [item.日期, item.类型, item.重复].filter(Boolean).join(' · '), item.说明);
-            if (description) entry.querySelector('.detail-entry-text').appendChild(el('p', description.accent ? 'detail-count is-accent' : 'detail-count', description.text));
-        }
-        list.appendChild(entry);
+    const toolbar = el('div', 'life-toolbar record-filter');
+    const search = el('input', 'life-input');
+    search.type = 'search'; search.placeholder = '搜索记录'; search.setAttribute('aria-label', '搜索记录');
+    const filter = el('select', 'life-input'); filter.setAttribute('aria-label', '记录分类');
+    const field = key === 'quote' ? '作者' : key === 'anniversary' ? '类型' : '状态';
+    ['全部', ...new Set(items.map(item => item[field]).filter(Boolean))].forEach(value => {
+        const option = el('option', '', value); option.value = value; filter.appendChild(option);
     });
-    if (!items.length) list.appendChild(el('p', 'detail-empty', '暂无内容'));
+    toolbar.append(search, filter); body.appendChild(toolbar);
+    const summary = el('p', 'detail-summary'); body.appendChild(summary);
+    const list = el('div', 'detail-entries');
     body.appendChild(list);
+    function draw() {
+        list.replaceChildren();
+        const query = search.value.trim().toLowerCase();
+        const matches = items.filter(item => Object.values(item).join(' ').toLowerCase().includes(query) && (filter.value === '全部' || item[field] === filter.value));
+        summary.textContent = `显示 ${matches.length} / ${items.length} 条记录`;
+        matches.forEach(item => {
+            let entry;
+            if (key === 'quote') {
+                entry = detailEntry(item.格言, [item.作者, item.出处].filter(Boolean).join(' · '), item.说明);
+                entry.classList.add('detail-quote');
+            } else if (key === 'books') {
+                entry = detailEntry(item.书名 || '未知书名', [item.作者, item.状态, item.进度].filter(Boolean).join(' · '), item.说明, item.封面);
+                const value = parseFloat(item.进度);
+                if (Number.isFinite(value)) {
+                    const progress = el('progress', 'reading-progress');
+                    progress.max = 100;
+                    progress.value = Math.min(100, Math.max(0, value));
+                    progress.setAttribute('aria-label', `${item.书名 || '书籍'}阅读进度`);
+                    entry.querySelector('.detail-entry-text').appendChild(progress);
+                }
+            } else if (key === 'movies') {
+                entry = detailEntry(item.片名 || '未知片名', [item.类型, item.状态, item.评分 ? `★ ${item.评分}` : ''].filter(Boolean).join(' · '), item.说明, item.封面);
+            } else {
+                const description = describeAnniversary(item, new Date());
+                entry = detailEntry(item.事件 || '未命名', [item.日期, item.类型, item.重复].filter(Boolean).join(' · '), item.说明);
+                if (description) entry.querySelector('.detail-entry-text').appendChild(el('p', description.accent ? 'detail-count is-accent' : 'detail-count', description.text));
+            }
+            list.appendChild(entry);
+        });
+        if (!matches.length) list.appendChild(el('p', 'detail-empty', '暂无匹配内容'));
+    }
+    search.addEventListener('input', draw); filter.addEventListener('change', draw); draw();
 }
 
 function renderMusicDetail(body, CFG, audio) {
+    const formatTime = seconds => {
+        const value = Number.isFinite(seconds) ? Math.floor(seconds) : 0;
+        return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+    };
+    const timeline = el('div', 'music-timeline');
+    const time = el('span');
+    const seek = el('input'); seek.type = 'range'; seek.min = 0; seek.step = 1; seek.setAttribute('aria-label', '播放进度');
+    const duration = el('span'); timeline.append(time, seek, duration); body.appendChild(timeline);
+    const volumeRow = el('label', 'music-volume', '音量');
+    const volume = el('input'); volume.type = 'range'; volume.min = 0; volume.max = 1; volume.step = 0.05; volume.value = audio.volume;
+    volume.setAttribute('aria-label', '音量'); volume.addEventListener('input', () => { audio.volume = Number(volume.value); });
+    volumeRow.appendChild(volume); body.appendChild(volumeRow);
+    function sync() {
+        time.textContent = formatTime(audio.currentTime); duration.textContent = formatTime(audio.duration);
+        seek.max = Number.isFinite(audio.duration) ? audio.duration : 0;
+        seek.value = audio.currentTime; seek.disabled = !Number.isFinite(audio.duration);
+        seek.setAttribute('aria-valuetext', `${time.textContent} / ${duration.textContent}`);
+    }
+    seek.addEventListener('input', () => { if (Number.isFinite(audio.duration)) audio.currentTime = Number(seek.value); });
+    const events = ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied'];
+    events.forEach(event => audio.addEventListener(event, sync)); sync();
     const tracks = (CFG.playlist || []).filter(item => safeUrl(item.音频, MEDIA_PROTOCOLS));
     body.appendChild(el('p', 'detail-summary', `播放列表 · ${tracks.length} 首曲目`));
     const list = el('div', 'detail-entries');
@@ -816,6 +862,7 @@ function renderMusicDetail(body, CFG, audio) {
     });
     if (!tracks.length) list.appendChild(el('p', 'detail-empty', '暂无曲目'));
     body.appendChild(list);
+    return () => events.forEach(event => audio.removeEventListener(event, sync));
 }
 
 function renderCalendarDetail(body, CFG) {
@@ -853,6 +900,17 @@ function renderCalendarDetail(body, CFG) {
         });
         if (!tasks.length) list.appendChild(el('li', 'detail-empty', '这一天暂无待办'));
         right.appendChild(list);
+        const records = Life.calendarRecords(date);
+        if (records.length) {
+            right.appendChild(el('h3', 'detail-meta', '个人打卡'));
+            records.forEach(record => {
+                const row = el('div', 'todo-item is-done');
+                row.appendChild(el('span', 'todo-mark', '✓'));
+                const text = el('div'); text.appendChild(el('h3', '', record.name));
+                if (record.note) text.appendChild(el('p', 'detail-note', record.note));
+                row.appendChild(text); right.appendChild(row);
+            });
+        }
     }
 
     function draw(focusDate = false) {
@@ -895,7 +953,7 @@ function renderCalendarDetail(body, CFG) {
             button.setAttribute('aria-label', key);
             button.setAttribute('aria-pressed', String(key === dateKey(selected)));
             if (key === today) button.setAttribute('aria-current', 'date');
-            if ((CFG.todos || []).some(task => task.日期 === key)) {
+            if ((CFG.todos || []).some(task => task.日期 === key) || Life.calendarRecords(key).length) {
                 button.classList.add('has-todos');
                 button.setAttribute('aria-label', `${key}，有待办`);
             }
@@ -907,4 +965,7 @@ function renderCalendarDetail(body, CFG) {
         if (focusDate) grid.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
     }
     draw();
+    const update = () => draw();
+    document.addEventListener('lifechange', update);
+    return () => document.removeEventListener('lifechange', update);
 }

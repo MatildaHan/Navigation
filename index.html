@@ -37,10 +37,17 @@
             <div class="link-group" id="sidebar-links"></div>
         </nav>
 
+        <nav class="page-switcher glass-panel" id="page-switcher" aria-label="内容分页">
+            <a href="#" data-page="0" aria-label="第一页：主页">主页</a>
+            <a href="#life" data-page="1" aria-label="第二页：生活与工具">生活与工具</a>
+            <span id="page-status" class="sr-only" aria-live="polite"></span>
+        </nav>
         <main class="main-board glass-panel">
 
             <!-- Bento 网格 -->
-            <div class="bento-grid" id="home-grid">
+            <div class="home-pages" id="home-pages">
+            <div class="card-pages" id="card-pages">
+            <div class="bento-grid deck-page" id="home-grid" aria-label="主页卡片">
 
                 <!-- 问候语 + 时钟 + 个人介绍：占 2 列 -->
                 <article class="bento-card card-greeting" data-span="2">
@@ -111,6 +118,38 @@
                 </article>
 
             </div>
+            <div class="bento-grid deck-page" id="life-grid" aria-label="生活与工具卡片" inert>
+                <article class="bento-card card-list card-life" data-span="2" data-detail="tools">
+                    <header class="card-header"><i class="fa-solid fa-toolbox" aria-hidden="true"></i><span>工具箱</span></header>
+                    <div class="life-preview" id="tools-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="checkin">
+                    <header class="card-header"><i class="fa-solid fa-check" aria-hidden="true"></i><span>今日打卡</span></header>
+                    <div class="life-preview" id="checkin-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="2" data-detail="habits">
+                    <header class="card-header"><i class="fa-solid fa-seedling" aria-hidden="true"></i><span>习惯养成</span></header>
+                    <div class="life-preview" id="habits-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="focus">
+                    <header class="card-header"><i class="fa-solid fa-hourglass-start" aria-hidden="true"></i><span>专注计时</span></header>
+                    <div class="life-preview" id="focus-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="notes">
+                    <header class="card-header"><i class="fa-solid fa-pen" aria-hidden="true"></i><span>随手记</span></header>
+                    <div class="life-preview" id="notes-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="projects">
+                    <header class="card-header"><i class="fa-solid fa-bullseye" aria-hidden="true"></i><span>目标与项目</span></header>
+                    <div class="life-preview" id="projects-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="wishlist">
+                    <header class="card-header"><i class="fa-solid fa-star" aria-hidden="true"></i><span>愿望清单</span></header>
+                    <div class="life-preview" id="wishlist-preview"></div>
+                </article>
+            </div>
+            </div>
+            </div>
             <section class="detail-view" id="detail-view" hidden aria-labelledby="detail-title">
                 <header class="detail-header">
                     <a class="back-link" href="#" aria-label="返回主页"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>返回</span></a>
@@ -138,5 +177,6 @@
     </div>
 
     <script src="assets/js/script.js" defer></script>
+    <script src="assets/js/life.js" defer></script>
 </body>
 </html>
