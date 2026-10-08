@@ -2,26 +2,43 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北冥 - 个人主页</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="个人主页">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>个人主页</title>
+
+    <!-- 标记 JS 可用；若脚本异常，3 秒后也会强制显示页面，避免空白 -->
+    <script>
+        document.documentElement.classList.add('js');
+        setTimeout(function () {
+            if (document.body) document.body.classList.remove('is-loading');
+        }, 3000);
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body class="is-loading">
+
+    <noscript>
+        <div class="notice">本页面需要启用 JavaScript 才能显示内容。</div>
+    </noscript>
+    <div id="notice" class="notice" role="alert" hidden></div>
 
     <div class="desktop-container">
 
-        <div class="sidebar glass-panel">
-            <div class="sidebar-btn search" id="btn-search"><i class="fa-solid fa-magnifying-glass"></i></div>
-            <a data-cfg-href="links.bilibili" target="_blank" rel="noopener noreferrer" class="sidebar-btn" title="Bilibili"><i class="fa-brands fa-bilibili"></i></a>
-            <a data-cfg-href="links.github" target="_blank" rel="noopener noreferrer" class="sidebar-btn" title="GitHub"><i class="fa-brands fa-github"></i></a>
-            <a data-cfg-href="links.qqGroup" target="_blank" rel="noopener noreferrer" class="sidebar-btn" title="QQ群"><i class="fa-brands fa-qq"></i></a>
-            <a data-cfg-href="links.email" class="sidebar-btn" title="Email"><i class="fa-solid fa-envelope"></i></a>
-            <a data-cfg-href="links.rss" target="_blank" rel="noopener noreferrer" class="sidebar-btn" title="RSS"><i class="fa-solid fa-rss"></i></a>
-        </div>
+        <!-- 侧边栏：搜索 + 由 config.md 的 links 渲染的链接 -->
+        <nav class="sidebar glass-panel" aria-label="快捷链接">
+            <button type="button" class="sidebar-btn" id="btn-search" aria-label="搜索" title="搜索（按 / 键）">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            </button>
+            <div class="link-group" id="sidebar-links"></div>
+        </nav>
 
-        <div class="main-board glass-panel">
+        <main class="main-board glass-panel">
 
             <div class="left-col">
                 <div class="clock-widget">
@@ -37,85 +54,70 @@
                 </div>
 
                 <div class="music-player">
-                    <audio id="main-audio" src=""></audio>
+                    <audio id="main-audio" preload="none"></audio>
                     <div class="album-art" id="player-art"></div>
                     <div class="track-info">
-                        <div class="track-title" id="track-title">加载中...</div>
+                        <div class="track-title" id="track-title">加载中…</div>
                         <div class="player-controls">
-                            <i class="fa-solid fa-repeat" id="btn-repeat"></i>
-                            <i class="fa-solid fa-backward-step" id="btn-prev"></i>
-                            <i class="fa-solid fa-play" id="play-btn"></i>
-                            <i class="fa-solid fa-forward-step" id="btn-next"></i>
-                            <i class="fa-solid fa-heart" id="btn-heart"></i>
+                            <button type="button" id="btn-repeat" aria-label="单曲循环" aria-pressed="false"><i class="fa-solid fa-repeat" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-prev" aria-label="上一首"><i class="fa-solid fa-backward-step" aria-hidden="true"></i></button>
+                            <button type="button" id="play-btn" aria-label="播放"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-next" aria-label="下一首"><i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-heart" aria-label="喜欢" aria-pressed="false"><i class="fa-solid fa-heart" aria-hidden="true"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="center-spacer"></div>
-
             <div class="right-col">
                 <div class="header-right">
-                    <a data-cfg-href="links.blog" target="_blank" rel="noopener noreferrer" class="mini-icon-btn" title="博客">
-                        <i class="fa-solid fa-house"></i>
-                    </a>
-                    <div class="user-tag">
+                    <a class="user-tag" data-cfg-link="博客" title="博客">
                         <span data-cfg-text="profile.name">用户名</span>
                         <div class="user-avatar" data-cfg-bg="profile.avatar"></div>
-                    </div>
+                    </a>
                 </div>
 
                 <div class="greeting" id="dynamic-greeting">你好！</div>
-                <div class="greeting-sub" data-cfg-text="greetings.sub">副标题</div>
+                <div class="greeting-sub" data-cfg-text="greetings.sub"></div>
 
                 <div class="quotes-widget">
                     <div class="quotes-header">
-                        <i class="fa-solid fa-quote-left"></i> 今日格言
+                        <i class="fa-solid fa-quote-left" aria-hidden="true"></i> 今日格言
                     </div>
-                    <div class="quotes-text" data-cfg-text="quote.text">格言内容</div>
-                    <div class="quotes-author" data-cfg-text="quote.author">— 作者</div>
+                    <div class="quotes-text" data-cfg-text="quote.text"></div>
+                    <div class="quotes-author" data-cfg-text="quote.author"></div>
                 </div>
 
                 <div class="extra-panel">
                     <div class="extra-block">
-                        <h4><i class="fa-solid fa-hourglass-half"></i> 纪念日</h4>
+                        <h4><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> 纪念日</h4>
                         <ul id="anniversary-list"></ul>
                     </div>
                     <div class="extra-block">
-                        <h4><i class="fa-solid fa-book"></i> 书架</h4>
+                        <h4><i class="fa-solid fa-book" aria-hidden="true"></i> 书架</h4>
                         <ul id="book-list"></ul>
                     </div>
                     <div class="extra-block">
-                        <h4><i class="fa-solid fa-film"></i> 观影</h4>
+                        <h4><i class="fa-solid fa-film" aria-hidden="true"></i> 观影</h4>
                         <ul id="movie-list"></ul>
                     </div>
                 </div>
             </div>
 
-        </div>
+        </main>
     </div>
 
-    <div class="bottom-dock glass-panel">
-        <a data-cfg-href="links.blog" target="_blank" rel="noopener noreferrer" class="dock-icon icon-blog" title="博客">
-            <i class="fa-solid fa-house"></i>
-        </a>
-        <a data-cfg-href="links.bilibili" target="_blank" rel="noopener noreferrer" class="dock-icon icon-bilibili" title="B站">
-            <i class="fa-brands fa-bilibili"></i>
-        </a>
-        <a data-cfg-href="links.github" target="_blank" rel="noopener noreferrer" class="dock-icon icon-github" title="GitHub">
-            <i class="fa-brands fa-github"></i>
-        </a>
-        <a data-cfg-href="links.qqGroup" target="_blank" rel="noopener noreferrer" class="dock-icon icon-qq" title="QQ群">
-            <i class="fa-brands fa-qq"></i>
-        </a>
-        <a data-cfg-href="links.email" class="dock-icon icon-email" title="邮箱">
-            <i class="fa-solid fa-envelope"></i>
-        </a>
-        <a data-cfg-href="links.rss" target="_blank" rel="noopener noreferrer" class="dock-icon icon-rss" title="RSS">
-            <i class="fa-solid fa-rss"></i>
-        </a>
+    <!-- 底部栏：仅在窄屏（侧边栏隐藏时）显示，内容同样来自 config.md 的 links -->
+    <nav class="bottom-dock glass-panel" id="bottom-dock" aria-label="链接"></nav>
+
+    <!-- 搜索浮层 -->
+    <div class="search-overlay" id="search-overlay" hidden>
+        <form class="search-box glass-panel" id="search-form" role="search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="search-input" placeholder="输入关键词，回车搜索（Esc 关闭）" autocomplete="off" aria-label="搜索内容">
+        </form>
     </div>
 
-    <script src="assets/js/script.js"></script>
+    <script src="assets/js/script.js" defer></script>
 </body>
 </html>
