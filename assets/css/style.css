@@ -3,21 +3,29 @@
    主题变量集中管理：这些值会被 config.md 里的 --- theme --- 覆盖
    ========================================================================== */
 :root {
+    /* 强调色相（0-360），165 是青色系 */
     --accent-hue: 165;
+
+    /* 玻璃态面板 */
     --glass-bg: rgba(255, 255, 255, 0.18);
     --glass-border: rgba(255, 255, 255, 0.28);
     --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+
+    /* 文本颜色 */
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.7);
+
+    /* 图片资源默认路径（JS 启动后会被 config.md 里的 assets 覆盖；
+       注意：style.css 在 assets/css/ 目录里，所以引用 images 需要用 ../ */
     --bg-wallpaper: url('../images/background.jpg');
     --bg-gallery1:  url('../images/background.jpg');
+    --bg-gallery2:  url('../images/background.jpg');
+    --bg-gallery3:  url('../images/background.jpg');
 }
 
 /* ==========================================================================
    页面样式
-   本文件只负责布局与视觉表现，内容由 script.js 从 config.md 读取后填充
    ========================================================================== */
-
 * {
     margin: 0;
     padding: 0;
@@ -32,53 +40,7 @@ body {
     color: var(--text-primary);
 }
 
-/* ---------- 锁屏 ---------- */
-.lockscreen {
-    position: fixed;
-    inset: 0;
-    background: var(--bg-wallpaper) center/cover no-repeat;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    z-index: 1000;
-    cursor: pointer;
-    transition: opacity 0.6s ease;
-}
-.lockscreen.unlocked {
-    opacity: 0;
-    pointer-events: none;
-}
-.lock-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.5);
-    object-fit: cover;
-}
-.lock-clock {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 4rem;
-    color: #fff;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-.lock-date {
-    color: rgba(255,255,255,0.85);
-    font-size: 1.1rem;
-}
-.lock-hint {
-    color: rgba(255,255,255,0.6);
-    font-size: 0.85rem;
-    margin-top: 20px;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-}
-
-/* ---------- 背景 ---------- */
+/* ---------- 整页背景 ---------- */
 body::before {
     content: '';
     position: fixed;
