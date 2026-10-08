@@ -12,7 +12,7 @@
 # ---------------- 个人资料 ----------------
 --- profile ---
 昵称：北冥
-头像网址：assets/images/avatar.png
+头像网址：/assets/images/avatar.png
 
 
 # ---------------- 问候语 ----------------
@@ -99,11 +99,9 @@
 
 # ---------------- 图片资源 ----------------
 --- assets ---
-壁纸：assets/images/background.jpg
-画廊1：assets/images/background.jpg
-画廊2：assets/images/background.jpg
-画廊3：assets/images/background.jpg
-角色图：assets/images/avatar.png
+壁纸：/assets/images/background.jpg
+画廊1：/assets/images/background.jpg
+角色图：/assets/images/avatar.png
 
 
 # ---------------- 主题配置 ----------------
