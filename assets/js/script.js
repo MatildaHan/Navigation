@@ -1,193 +1,407 @@
-document.addEventListener('DOMContentLoaded', () => {
-    initTimeAndCalendar();
-    loadAllConfigurations();
+/* ============================================================
+ *  页面运行逻辑
+ * ============================================================
+ *  本脚本负责"读取 config.md → 解析为对象 → 填充到页面 + 绑定交互"
+ *  想改内容请编辑 config.md。
+ * ============================================================ */
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // ---------- 1. 读取并解析 config.md ----------
+    let rawConfig = '';
+    try {
+        const res = await fetch('/config.md');
+        rawConfig = await res.text();
+    } catch (e) {
+        console.error('无法读取 config.md，请确认已使用本地服务器运行。', e);
+        return;
+    }
+
+    const CFG = parseConfig(rawConfig);
+    console.log('已加载配置：', CFG);
+
+    // ---------- 2. 应用配置到 DOM ----------
+    applyText(CFG);
+    applyHref(CFG);
+    applyImg(CFG);
+    applyBg(CFG);
+    applyTheme(CFG);
+
+    // ---------- 3. 锁屏 ----------
+    initLockscreen(CFG);
+
+    // ---------- 4. 时钟 + 日历 ----------
+    initClockAndCalendar(CFG);
+
+    // ---------- 5. 音乐播放器 ----------
+    initMusicPlayer(CFG);
+
+    // ---------- 6. 搜索 ----------
+    initSearch(CFG);
+
+    // ---------- 7. 渲染导航 / 纪念日 / 书架 / 观影 ----------
+    renderNav(CFG.links);
+    renderAnniversary(CFG.anniversary);
+    renderBooks(CFG.books);
+    renderMovies(CFG.movies);
 });
 
-// 1. 根据当前小时数获取问候语
-function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 11) {
-        return '早上好';
-    } else if (hour >= 11 && hour < 13) {
-        return '中午好';
-    } else if (hour >= 13 && hour < 18) {
-        return '下午好';
-    } else {
-        return '晚上好';
-    }
-}
+/* ============================================================
+ *  配置解析器
+ *  支持三种结构：
+ *  1. 键值型（如 profile / quote / theme）→ 返回对象
+ *  2. 列表型（如 anniversary / books / movies / playlist）→ 返回对象数组
+ *  3. links → 返回对象数组（每个链接一个对象）
+ * ============================================================ */
+function parseConfig(mdText) {
+    const lines = mdText.split('\n');
+    const result = {};
+    let currentSection = null;
+    let currentSectionName = null;
+    let currentBlock = null;
 
-// 2. 初始化时间和日历
-function initTimeAndCalendar() {
-    const updateTime = () => {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
-        const dateStr = `${now.getMonth() + 1}/${now.getDate()} 星期${['日', '一', '二', '三', '四', '五', '六'][now.getDay()]}`;
-        
-        document.getElementById('time').innerText = timeStr;
-        document.getElementById('date').innerText = dateStr;
-    };
-    updateTime();
-    setInterval(updateTime, 1000);
+    // 列表型配置（每条数据是一个对象，可能包含多个键值对）
+    const listSections = ['links', 'anniversary', 'books', 'movies', 'playlist'];
 
-    // 生成当月日历
-    const calendarEl = document.getElementById('calendar');
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    let calendarHTML = '';
-    
-    ['日', '一', '二', '三', '四', '五', '六'].forEach(d => {
-        calendarHTML += `<span style="opacity: 0.5; font-size: 0.8rem;">${d}</span>`;
-    });
+    // 键值型配置（每个 section 就是一个对象）
+    const kvSections = ['profile', 'greetings', 'quote', 'assets', 'theme', 'settings'];
 
-    for (let i = 0; i < firstDay; i++) {
-        calendarHTML += `<span class="empty"></span>`;
-    }
+    lines.forEach(line => {
+        const trimmed = line.trim();
 
-    for (let i = 1; i <= daysInMonth; i++) {
-        const isToday = i === now.getDate();
-        calendarHTML += `<span class="${isToday ? 'today' : ''}">${i}</span>`;
-    }
-    calendarEl.innerHTML = calendarHTML;
-}
-
-// 通用 MD 解析器
-function parseMdToObjects(mdText) {
-    if (!mdText) return [];
-    const cleanText = mdText.split('\n').filter(line => !line.trim().startsWith('#')).join('\n');
-    const blocks = cleanText.split(/\n\s*\n/); 
-    const result = [];
-    
-    blocks.forEach(block => {
-        const lines = block.split('\n');
-        const obj = {};
-        let hasValidData = false;
-        
-        lines.forEach(line => {
-            const match = line.match(/^([^：:]+)[：:]\s*(.+)$/);
-            if (match) {
-                obj[match[1].trim()] = match[2].trim();
-                hasValidData = true;
+        // 空行：结束当前数据块
+        if (!trimmed) {
+            if (currentBlock && Array.isArray(currentSection)) {
+                currentSection.push(currentBlock);
+                currentBlock = null;
             }
-        });
-        if (hasValidData) result.push(obj);
+            return;
+        }
+
+        // 注释行：跳过
+        if (trimmed.startsWith('#')) return;
+
+        // 检测 --- xxx --- 格式的模块分隔
+        const sectionMatch = trimmed.match(/^---\s*(.+?)\s*---$/);
+        if (sectionMatch) {
+            // 收尾上一个 section 的最后一个 block
+            if (currentBlock && Array.isArray(currentSection)) {
+                currentSection.push(currentBlock);
+                currentBlock = null;
+            }
+
+            currentSectionName = sectionMatch[1];
+
+            if (listSections.includes(currentSectionName)) {
+                currentSection = [];
+                result[currentSectionName] = currentSection;
+            } else if (kvSections.includes(currentSectionName)) {
+                currentSection = {};
+                result[currentSectionName] = currentSection;
+            } else {
+                currentSection = {};
+                result[currentSectionName] = currentSection;
+            }
+            return;
+        }
+
+        if (!currentSection) return;
+
+        // 解析 "键：值"
+        const kvMatch = trimmed.match(/^([^：:]+)[：:]\s*(.+)$/);
+        if (!kvMatch) return;
+        const key = kvMatch[1].trim();
+        const value = kvMatch[2].trim();
+
+        if (Array.isArray(currentSection)) {
+            // 列表型：每个空行分隔的块是一个对象
+            if (!currentBlock) currentBlock = {};
+            currentBlock[key] = value;
+        } else {
+            // 键值型：直接写入
+            currentSection[key] = value;
+        }
     });
+
+    // 收尾最后一个 block
+    if (currentBlock && Array.isArray(currentSection)) {
+        currentSection.push(currentBlock);
+    }
+
     return result;
 }
 
-// 3. 读取并解析所有的 Markdown 配置文件
-async function loadAllConfigurations() {
-    
-    // --- 加载个人基础信息 (结合动态问候语) ---
-    fetch('../../config/profile.md').then(r => r.text()).then(md => {
-        const profile = parseMdToObjects(md)[0] || {};
-        const nickname = profile['昵称'] || '用户';
-        const greetingWord = getGreeting(); // 调用动态问候语
-        
-        document.getElementById('greeting-title').innerText = `${greetingWord}，这里是${nickname}！`;
-        document.getElementById('profile-signature').innerText = profile['个人签名'] || '';
-        
-        if (profile['头像网址']) {
-            document.getElementById('avatar-img').src = profile['头像网址'];
+/* ============================================================
+ *  应用文本 / 链接 / 图片 / 背景
+ * ============================================================ */
+function applyText(CFG) {
+    const map = {
+        'profile.name': CFG.profile?.昵称,
+        'greetings.sub': CFG.greetings?.副标题,
+        'quote.text': CFG.quote?.格言,
+        'quote.author': CFG.quote?.作者,
+    };
+    document.querySelectorAll('[data-cfg-text]').forEach(el => {
+        const v = map[el.dataset.cfgText];
+        if (v != null) el.textContent = v;
+    });
+}
+
+function applyHref(CFG) {
+    // 链接在 renderNav 里动态生成，这里保留兼容
+    const links = CFG.links || [];
+    const findUrl = (keyword) => {
+        const item = links.find(l => l['名称'] && l['名称'].includes(keyword));
+        return item ? item['网址'] : null;
+    };
+    const map = {
+        'links.blog': findUrl('博客'),
+        'links.bilibili': findUrl('B站'),
+        'links.github': findUrl('GitHub'),
+        'links.qqGroup': findUrl('QQ群'),
+        'links.email': findUrl('邮箱'),
+        'links.rss': findUrl('RSS'),
+    };
+    document.querySelectorAll('[data-cfg-href]').forEach(el => {
+        const v = map[el.dataset.cfgHref];
+        if (v) el.href = v;
+    });
+}
+
+function applyImg(CFG) {
+    const map = {
+        'profile.avatar': CFG.profile?.头像网址,
+        'assets.character': CFG.assets?.角色图,
+    };
+    document.querySelectorAll('[data-cfg-img]').forEach(el => {
+        const v = map[el.dataset.cfgImg];
+        if (v) el.src = v;
+    });
+}
+
+function applyBg(CFG) {
+    const map = {
+        'profile.avatar': CFG.profile?.头像网址,
+    };
+    document.querySelectorAll('[data-cfg-bg]').forEach(el => {
+        const v = map[el.dataset.cfgBg];
+        if (v) el.style.backgroundImage = `url('${v}')`;
+    });
+
+    // 写入 CSS 变量
+    const root = document.documentElement;
+    if (CFG.assets?.壁纸) root.style.setProperty('--bg-wallpaper', `url('${CFG.assets.壁纸}')`);
+    if (CFG.assets?.画廊1) root.style.setProperty('--bg-gallery1', `url('${CFG.assets.画廊1}')`);
+    if (CFG.assets?.画廊2) root.style.setProperty('--bg-gallery2', `url('${CFG.assets.画廊2}')`);
+    if (CFG.assets?.画廊3) root.style.setProperty('--bg-gallery3', `url('${CFG.assets.画廊3}')`);
+}
+
+/* ============================================================
+ *  应用主题
+ * ============================================================ */
+function applyTheme(CFG) {
+    const t = CFG.theme;
+    if (!t) return;
+    const root = document.documentElement;
+    if (t.强调色相) root.style.setProperty('--accent-hue', t.强调色相);
+    if (t.玻璃背景) root.style.setProperty('--glass-bg', t.玻璃背景);
+    if (t.玻璃边框) root.style.setProperty('--glass-border', t.玻璃边框);
+    if (t.玻璃阴影) root.style.setProperty('--glass-shadow', t.玻璃阴影);
+    if (t.主文本色) root.style.setProperty('--text-primary', t.主文本色);
+    if (t.次文本色) root.style.setProperty('--text-secondary', t.次文本色);
+}
+
+/* ============================================================
+ *  锁屏
+ * ============================================================ */
+function initLockscreen(CFG) {
+    const lsEl = document.getElementById('lockscreen');
+    const remember = CFG.settings?.记住锁屏状态 !== 'false';
+    const KEY = 'fqzlr-unlocked';
+
+    if (remember) {
+        try {
+            if (localStorage.getItem(KEY) === '1') lsEl.style.display = 'none';
+        } catch (e) {}
+    }
+
+    lsEl.addEventListener('click', () => {
+        lsEl.classList.add('unlocked');
+        if (remember) {
+            try { localStorage.setItem(KEY, '1'); } catch (e) {}
         }
-    }).catch(e => console.error("读取 profile 失败", e));
+    });
+}
 
-    // --- 加载格言与笔记 ---
-    fetch('../../config/note.md').then(r => r.text()).then(md => {
-        const noteData = parseMdToObjects(md)[0] || {};
-        const quoteContent = document.querySelector('.quote-content');
-        if (quoteContent) {
-            quoteContent.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px; color: #ff7eb3;">“ ${noteData['格言'] || '暂无格言'} ”</div>
-                <div style="opacity: 0.8; font-size: 0.85rem;">${noteData['随笔'] || ''}</div>
-            `;
+/* ============================================================
+ *  时钟 + 日历
+ * ============================================================ */
+function initClockAndCalendar(CFG) {
+    function updateClock() {
+        const now = new Date();
+        const hh = now.getHours().toString().padStart(2, '0');
+        const mm = now.getMinutes().toString().padStart(2, '0');
+        const hour = now.getHours();
+
+        document.getElementById('live-clock').textContent = `${hh}:${mm}`;
+        document.getElementById('lock-clock').textContent = `${hh}:${mm}`;
+        document.getElementById('live-date').textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: '2-digit', day: '2-digit' });
+        document.getElementById('lock-date').textContent = now.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' });
+
+        const name = CFG.profile?.昵称 || '';
+        let greeting = '';
+        if (hour >= 5 && hour < 11) greeting = '早上好';
+        else if (hour >= 11 && hour < 13) greeting = '中午好';
+        else if (hour >= 13 && hour < 18) greeting = '下午好';
+        else greeting = '晚上好';
+        document.getElementById('dynamic-greeting').textContent = `${greeting}，这里是${name}！`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    const now = new Date();
+    const monthNames = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
+    document.getElementById('calendar-month').textContent = monthNames[now.getMonth()];
+    const grid = document.getElementById('calendar-grid');
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+    const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('span'));
+    for (let d = 1; d <= totalDays; d++) {
+        const span = document.createElement('span');
+        span.textContent = d;
+        if (d === now.getDate()) span.classList.add('active');
+        grid.appendChild(span);
+    }
+}
+
+/* ============================================================
+ *  音乐播放器
+ * ============================================================ */
+function initMusicPlayer(CFG) {
+    const playlist = (CFG.playlist || []).map(item => ({
+        title: item['歌曲名'],
+        url: item['音频'],
+        art: item['封面']
+    }));
+    if (playlist.length === 0) return;
+
+    const audio = document.getElementById('main-audio');
+    const playBtn = document.getElementById('play-btn');
+    const trackTitle = document.getElementById('track-title');
+    const playerArt = document.getElementById('player-art');
+    const btnRepeat = document.getElementById('btn-repeat');
+    const btnHeart = document.getElementById('btn-heart');
+    let current = 0;
+    let isLooping = false;
+
+    function loadTrack(i) {
+        const t = playlist[i];
+        if (!t) return;
+        audio.src = t.url;
+        trackTitle.textContent = t.title;
+        if (t.art) playerArt.style.backgroundImage = `url('${t.art}')`;
+    }
+
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(() => playBtn.classList.replace('fa-play', 'fa-pause')).catch(e => console.log(e));
+        } else {
+            audio.pause();
+            playBtn.classList.replace('fa-pause', 'fa-play');
         }
+    }
+
+    playBtn.addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
+    document.getElementById('btn-next').addEventListener('click', e => {
+        e.stopPropagation();
+        current = (current + 1) % playlist.length;
+        loadTrack(current); togglePlay();
     });
-
-    // --- 加载书架 ---
-    fetch('../../config/book.md').then(r => r.text()).then(md => {
-        const books = parseMdToObjects(md);
-        const container = document.getElementById('book-list');
-        container.innerHTML = books.map(b => `
-            <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold;">
-                    <span>${b['书名'] || '未知书名'}</span>
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 3px; display: flex; justify-content: space-between;">
-                    <span>${b['作者'] || '佚名'}</span>
-                    <span style="color: var(--accent-green);">${b['状态'] || ''} · ${b['进度'] || ''}</span>
-                </div>
-            </div>
-        `).join('');
+    document.getElementById('btn-prev').addEventListener('click', e => {
+        e.stopPropagation();
+        current = (current - 1 + playlist.length) % playlist.length;
+        loadTrack(current); togglePlay();
     });
-
-    // --- 加载观影 ---
-    fetch('../../config/movie.md').then(r => r.text()).then(md => {
-        const movies = parseMdToObjects(md);
-        const container = document.getElementById('movie-list');
-        container.innerHTML = movies.map(m => `
-            <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="font-weight: bold;">${m['片名'] || '未知片名'}</span>
-                    <span style="color: #ff7eb3; font-weight: bold;">★ ${m['评分'] || 'N/A'}</span>
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 3px;">
-                    ${m['类型'] || ''} · ${m['状态'] || ''}
-                </div>
-            </div>
-        `).join('');
+    btnRepeat.addEventListener('click', e => {
+        e.stopPropagation();
+        isLooping = !isLooping;
+        audio.loop = isLooping;
+        btnRepeat.classList.toggle('active-btn', isLooping);
     });
-
-    // --- 加载纪念日 ---
-    fetch('../../config/anniversary.md').then(r => r.text()).then(md => {
-        const events = parseMdToObjects(md);
-        const listEl = document.getElementById('anniversary-list').querySelector('ul');
-        listEl.innerHTML = '';
-        
-        const today = new Date();
-        today.setHours(0,0,0,0);
-
-        events.forEach(ev => {
-            if (!ev['日期']) return;
-            const targetDate = new Date(ev['日期']);
-            const eventName = ev['事件'] || '未命名事件';
-            const type = ev['类型'] || '已过日';
-            
-            const diffTime = Math.abs(today - targetDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            let dayText = type === '倒数日' ? `还有 ${diffDays} 天` : `已经历 ${diffDays} 天`;
-            const highlightStyle = type === '倒数日' ? 'color: #ff7eb3;' : 'color: #a3c4bc;';
-
-            listEl.innerHTML += `
-                <li>
-                    <span>${eventName}</span> 
-                    <strong style="${highlightStyle}">${dayText}</strong>
-                </li>
-            `;
-        });
-        
-        if(listEl.innerHTML === '') listEl.innerHTML = '<li style="opacity: 0.5;">暂无纪念日</li>';
+    btnHeart.addEventListener('click', e => {
+        e.stopPropagation();
+        btnHeart.classList.toggle('liked');
     });
+    audio.addEventListener('ended', () => { if (!isLooping) document.getElementById('btn-next').click(); });
 
-    // --- 加载导航标签 ---
-    fetch('../../config/nav.md').then(r => r.text()).then(md => {
-        const navItems = parseMdToObjects(md);
-        const navEl = document.getElementById('nav-links');
-        navEl.innerHTML = ''; 
-        
-        navItems.forEach((item, index) => {
-            const a = document.createElement('a');
-            a.href = item['网址'] || '#';
-            a.title = item['名称'] || '链接';
-            if (index === 0) a.classList.add('active');
-            a.innerHTML = `<i class="${item['图标'] || 'fa-solid fa-link'}"></i>`;
-            navEl.appendChild(a);
-        });
+    loadTrack(current);
+}
+
+/* ============================================================
+ *  搜索
+ * ============================================================ */
+function initSearch(CFG) {
+    const btn = document.getElementById('btn-search');
+    const tmpl = CFG.settings?.搜索引擎 || 'https://www.google.com/search?q={query}';
+    btn.addEventListener('click', () => {
+        const q = prompt('搜索内容：');
+        if (!q) return;
+        window.open(tmpl.replace('{query}', encodeURIComponent(q)), '_blank');
     });
+}
+
+/* ============================================================
+ *  渲染导航 / 纪念日 / 书架 / 观影
+ * ============================================================ */
+function renderNav(links) {
+    // 如果需要在侧边栏动态生成链接，可以在这里扩展。
+    // 目前侧边栏和底部 dock 在 HTML 中已硬编码 data-cfg-href，
+    // 由 applyHref() 统一填充。
+}
+
+function renderAnniversary(list) {
+    const ul = document.getElementById('anniversary-list');
+    if (!ul || !list) return;
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    ul.innerHTML = list.map(item => {
+        const event = item['事件'] || '未命名';
+        const dateStr = item['日期'];
+        const type = item['类型'] || '已过日';
+        const target = new Date(dateStr);
+        const diffDays = Math.ceil(Math.abs(today - target) / (1000 * 60 * 60 * 24));
+        const dayText = type === '倒数日' ? `还有 ${diffDays} 天` : `已经历 ${diffDays} 天`;
+        const color = type === '倒数日' ? 'hsl(var(--accent-hue),70%,60%)' : 'rgba(255,255,255,0.6)';
+        return `<li><span>${event}</span><strong style="color:${color}">${dayText}</strong></li>`;
+    }).join('');
+}
+
+function renderBooks(list) {
+    const ul = document.getElementById('book-list');
+    if (!ul || !list) return;
+    ul.innerHTML = list.map(item => {
+        const title = item['书名'] || '未知书名';
+        const author = item['作者'] || '佚名';
+        const status = item['状态'] || '';
+        const progress = item['进度'] || '';
+        return `<li>
+            <span>${title}<br><small style="opacity:0.6">${author}</small></span>
+            <span style="color:hsl(var(--accent-hue),70%,60%)">${status} ${progress}</span>
+        </li>`;
+    }).join('');
+}
+
+function renderMovies(list) {
+    const ul = document.getElementById('movie-list');
+    if (!ul || !list) return;
+    ul.innerHTML = list.map(item => {
+        const title = item['片名'] || '未知片名';
+        const type = item['类型'] || '';
+        const rating = item['评分'] || 'N/A';
+        const status = item['状态'] || '';
+        return `<li>
+            <span>${title}<br><small style="opacity:0.6">${type} · ${status}</small></span>
+            <span style="color:hsl(var(--accent-hue),70%,60%)">★ ${rating}</span>
+        </li>`;
+    }).join('');
 }
