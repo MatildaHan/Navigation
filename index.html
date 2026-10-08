@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="个人主页">
+    <meta name="description" content="个人主页导航">
     <meta name="theme-color" content="#1a1a1a">
     <title>个人主页</title>
 
-    <!-- 标记 JS 可用；若脚本异常，3 秒后也会强制显示页面，避免空白 -->
     <script>
         document.documentElement.classList.add('js');
         setTimeout(function () {
@@ -30,7 +29,7 @@
 
     <div class="desktop-container">
 
-        <!-- 侧边栏：搜索 + 由 config.md 的 links 渲染的链接 -->
+        <!-- 侧边栏：搜索 + 由 config.md 渲染的链接 -->
         <nav class="sidebar glass-panel" aria-label="快捷链接">
             <button type="button" class="sidebar-btn" id="btn-search" aria-label="搜索" title="搜索（按 / 键）">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
@@ -40,20 +39,42 @@
 
         <main class="main-board glass-panel">
 
-            <div class="left-col">
-                <div class="clock-widget">
-                    <div class="time" id="live-clock">00:00</div>
-                    <div class="date" id="live-date">日期</div>
-                </div>
+            <!-- 悬浮右上角的用户标签 -->
+            <a class="user-tag" data-cfg-link="博客" title="博客">
+                <span data-cfg-text="profile.name">用户名</span>
+                <div class="user-avatar" data-cfg-bg="profile.avatar"></div>
+            </a>
 
-                <div class="calendar-widget">
+            <!-- Bento 网格 -->
+            <div class="bento-grid">
+
+                <!-- 问候语 + 时钟 + 个人介绍：占 2 列 -->
+                <article class="bento-card card-greeting" data-span="2">
+                    <div class="clock-inline">
+                        <span class="time" id="live-clock">00:00</span>
+                        <span class="date" id="live-date">日期</span>
+                    </div>
+                    <div class="greeting" id="dynamic-greeting">你好！</div>
+                    <div class="greeting-sub" data-cfg-text="greetings.sub"></div>
+                </article>
+
+                <!-- 日历：占 1 列 -->
+                <article class="bento-card card-calendar" data-span="1">
                     <div class="calendar-header" id="calendar-month">月份</div>
                     <div class="calendar-grid" id="calendar-grid">
                         <span class="day-name">日</span><span class="day-name">一</span><span class="day-name">二</span><span class="day-name">三</span><span class="day-name">四</span><span class="day-name">五</span><span class="day-name">六</span>
                     </div>
-                </div>
+                </article>
 
-                <div class="music-player">
+                <!-- 格言：占 1 列 -->
+                <article class="bento-card card-quote" data-span="1">
+                    <div class="quote-mark"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></div>
+                    <div class="quotes-text" data-cfg-text="quote.text"></div>
+                    <div class="quotes-author" data-cfg-text="quote.author"></div>
+                </article>
+
+                <!-- 音乐：占 1 列 -->
+                <article class="bento-card card-music" data-span="1">
                     <audio id="main-audio" preload="none"></audio>
                     <div class="album-art" id="player-art"></div>
                     <div class="track-info">
@@ -66,48 +87,40 @@
                             <button type="button" id="btn-heart" aria-label="喜欢" aria-pressed="false"><i class="fa-solid fa-heart" aria-hidden="true"></i></button>
                         </div>
                     </div>
-                </div>
+                </article>
+
+                <!-- 纪念日：占 1 列 -->
+                <article class="bento-card card-list" data-span="1">
+                    <header class="card-header">
+                        <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                        <span>纪念日</span>
+                    </header>
+                    <ul id="anniversary-list"></ul>
+                </article>
+
+                <!-- 书架：占 1 列 -->
+                <article class="bento-card card-list" data-span="1">
+                    <header class="card-header">
+                        <i class="fa-solid fa-book" aria-hidden="true"></i>
+                        <span>书架</span>
+                    </header>
+                    <ul id="book-list"></ul>
+                </article>
+
+                <!-- 观影：占 2 列 -->
+                <article class="bento-card card-list" data-span="2">
+                    <header class="card-header">
+                        <i class="fa-solid fa-film" aria-hidden="true"></i>
+                        <span>观影</span>
+                    </header>
+                    <ul id="movie-list"></ul>
+                </article>
+
             </div>
-
-            <div class="right-col">
-                <div class="header-right">
-                    <a class="user-tag" data-cfg-link="博客" title="博客">
-                        <span data-cfg-text="profile.name">用户名</span>
-                        <div class="user-avatar" data-cfg-bg="profile.avatar"></div>
-                    </a>
-                </div>
-
-                <div class="greeting" id="dynamic-greeting">你好！</div>
-                <div class="greeting-sub" data-cfg-text="greetings.sub"></div>
-
-                <div class="quotes-widget">
-                    <div class="quotes-header">
-                        <i class="fa-solid fa-quote-left" aria-hidden="true"></i> 今日格言
-                    </div>
-                    <div class="quotes-text" data-cfg-text="quote.text"></div>
-                    <div class="quotes-author" data-cfg-text="quote.author"></div>
-                </div>
-
-                <div class="extra-panel">
-                    <div class="extra-block">
-                        <h4><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> 纪念日</h4>
-                        <ul id="anniversary-list"></ul>
-                    </div>
-                    <div class="extra-block">
-                        <h4><i class="fa-solid fa-book" aria-hidden="true"></i> 书架</h4>
-                        <ul id="book-list"></ul>
-                    </div>
-                    <div class="extra-block">
-                        <h4><i class="fa-solid fa-film" aria-hidden="true"></i> 观影</h4>
-                        <ul id="movie-list"></ul>
-                    </div>
-                </div>
-            </div>
-
         </main>
     </div>
 
-    <!-- 底部栏：仅在窄屏（侧边栏隐藏时）显示，内容同样来自 config.md 的 links -->
+    <!-- 窄屏底部栏 -->
     <nav class="bottom-dock glass-panel" id="bottom-dock" aria-label="链接"></nav>
 
     <!-- 搜索浮层 -->
