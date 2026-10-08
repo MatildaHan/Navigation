@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人主页导航</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="background"></div>
+
+    <div class="app-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar glass">
+            <div class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <nav class="nav-links" id="nav-links"></nav>
+            <div class="sidebar-bottom">
+                <a href="#"><i class="fa-solid fa-gear"></i></a>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content glass">
+            <!-- 顶部 -->
+            <header class="top-bar">
+                <div class="time-date">
+                    <h1 id="time">11:16</h1>
+                    <p id="date">10/08 星期四</p>
+                </div>
+                <div class="user-info">
+                    <div class="greeting">
+                        <h2 id="greeting-title">加载中...</h2>
+                        <p class="signature-text" id="profile-signature">加载中...</p>
+                    </div>
+                    <img src="" id="avatar-img" class="avatar-lg" alt="avatar">
+                </div>
+            </header>
+
+            <!-- 中间 -->
+            <section class="middle-section">
+                <div class="calendar-card dark-card">
+                    <h3>本月日历</h3>
+                    <div class="calendar-grid" id="calendar"></div>
+                </div>
+                
+                <div class="right-middle-col">
+                    <div class="anniversary-card glass-dark" id="anniversary-list">
+                        <h3><i class="fa-solid fa-hourglass-half"></i> 纪念日</h3>
+                        <ul><li>加载中...</li></ul>
+                    </div>
+                    
+                    <div class="quote-card glass-dark" id="quote-card">
+                        <h3><i class="fa-solid fa-quote-left"></i> 今日格言</h3>
+                        <div class="quote-content">加载中...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 底部 -->
+            <section class="bottom-section">
+                <div class="card music-card dark-card">
+                    <i class="fa-solid fa-music music-icon"></i>
+                    <div class="music-info">
+                        <span>Lofi Study Beats</span>
+                        <small>正在播放</small>
+                    </div>
+                    <div class="controls">
+                        <i class="fa-solid fa-backward-step"></i>
+                        <i class="fa-solid fa-pause"></i>
+                        <i class="fa-solid fa-forward-step"></i>
+                    </div>
+                </div>
+
+                <div class="card list-card glass-dark">
+                    <h3><i class="fa-solid fa-book"></i> 我的书架</h3>
+                    <div id="book-list" class="md-content">加载中...</div>
+                </div>
+
+                <div class="card list-card glass-dark">
+                    <h3><i class="fa-solid fa-film"></i> 观影记录</h3>
+                    <div id="movie-list" class="md-content">加载中...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

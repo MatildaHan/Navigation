@@ -1,0 +1,254 @@
+:root {
+    --bg-color: #e0e8f0;
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --dark-card-bg: rgba(25, 25, 30, 0.75);
+    --text-dark: #333;
+    --text-light: #fff;
+    --accent-pink: #ff7eb3;
+    --accent-green: #a3c4bc;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #a3c4bc;
+}
+
+.background {
+    position: absolute;
+    top: -10px; left: -10px; right: -10px; bottom: -10px;
+    /* 替换为你的背景图链接 */
+    background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+    filter: blur(8px);
+    z-index: -1;
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.glass-dark {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 20px;
+    color: var(--text-light);
+}
+
+.dark-card {
+    background: var(--dark-card-bg);
+    color: var(--text-light);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.app-container {
+    display: flex;
+    gap: 20px;
+    height: 85vh;
+    width: 92vw;
+    max-width: 1300px;
+}
+
+.sidebar {
+    width: 75px;
+    border-radius: 37.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px 0;
+    gap: 20px;
+}
+
+.sidebar a, .search-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background: var(--dark-card-bg);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.sidebar-bottom { margin-top: auto; }
+
+.main-content {
+    flex: 1;
+    border-radius: 30px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.time-date h1 {
+    font-size: 4.5rem;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.time-date p {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-align: right;
+}
+
+.greeting h2 {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.signature-text {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.avatar-lg { 
+    width: 70px; 
+    height: 70px; 
+    border-radius: 50%; 
+    border: 3px solid rgba(255,255,255,0.6);
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.middle-section {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    flex: 1;
+}
+
+.calendar-card { display: flex; flex-direction: column; }
+.calendar-card h3 { font-size: 1.1rem; margin-bottom: 15px; text-align: center; }
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.calendar-grid span { padding: 8px 0; border-radius: 8px; transition: 0.2s; }
+.calendar-grid span:not(.empty):hover { background: rgba(255,255,255,0.1); }
+.calendar-grid .today {
+    background: var(--accent-pink);
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(255, 126, 179, 0.5);
+}
+
+.right-middle-col { display: flex; flex-direction: column; gap: 20px; }
+.anniversary-card, .quote-card { flex: 1; display: flex; flex-direction: column; }
+
+.anniversary-card h3, .quote-card h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.9);
+}
+
+.anniversary-card ul { list-style: none; overflow-y: auto; }
+.anniversary-card li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+}
+
+.quote-content { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.85); }
+
+.bottom-section {
+    display: grid;
+    grid-template-columns: 300px 1fr 1fr;
+    gap: 20px;
+    height: 220px;
+}
+
+.music-card { display: flex; align-items: center; gap: 15px; }
+.music-icon { font-size: 2.5rem; color: var(--accent-pink); }
+.music-info { display: flex; flex-direction: column; flex: 1; }
+.music-info span { font-weight: bold; font-size: 0.95rem; }
+.music-info small { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.list-card h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+}
+
+.md-content {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 5px;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
