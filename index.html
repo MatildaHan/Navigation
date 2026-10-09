@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="个人主页导航">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>个人主页</title>
+
+    <script>
+        document.documentElement.classList.add('js');
+        setTimeout(function () {
+            if (document.body) document.body.classList.remove('is-loading');
+        }, 3000);
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="is-loading">
+
+    <noscript>
+        <div class="notice">本页面需要启用 JavaScript 才能显示内容。</div>
+    </noscript>
+    <div id="notice" class="notice" role="alert" hidden></div>
+
+    <div class="desktop-container">
+
+        <!-- 侧边栏：搜索 + 由 config.md 渲染的链接 -->
+        <nav class="sidebar glass-panel" aria-label="快捷链接">
+            <button type="button" class="sidebar-btn" id="btn-search" aria-label="搜索" aria-haspopup="dialog" aria-controls="search-overlay" title="搜索（按 / 键）">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            </button>
+            <div class="link-group" id="sidebar-links"></div>
+        </nav>
+
+        <nav class="page-switcher glass-panel" id="page-switcher" aria-label="内容分页">
+            <a href="#" data-page="0" aria-label="第一页：主页">主页</a>
+            <a href="#life" data-page="1" aria-label="第二页：生活与工具">生活与工具</a>
+            <span id="page-status" class="sr-only" aria-live="polite"></span>
+        </nav>
+        <main class="main-board glass-panel">
+
+            <!-- Bento 网格 -->
+            <div class="home-pages" id="home-pages">
+            <div class="card-pages" id="card-pages">
+            <div class="bento-grid deck-page" id="home-grid" aria-label="主页卡片">
+
+                <!-- 问候语 + 时钟 + 个人介绍：占 2 列 -->
+                <article class="bento-card card-greeting" data-span="2">
+                    <div class="clock-inline">
+                        <span class="time" id="live-clock">00:00</span>
+                        <span class="date" id="live-date">日期</span>
+                    </div>
+                    <div class="greeting" id="dynamic-greeting">你好！</div>
+                    <div class="greeting-sub" data-cfg-text="greetings.sub"></div>
+                </article>
+
+                <!-- 日历：占 1 列 -->
+                <article class="bento-card card-calendar" data-span="1" data-detail="calendar">
+                    <div class="calendar-header" id="calendar-month">月份</div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <span class="day-name">日</span><span class="day-name">一</span><span class="day-name">二</span><span class="day-name">三</span><span class="day-name">四</span><span class="day-name">五</span><span class="day-name">六</span>
+                    </div>
+                </article>
+
+                <!-- 格言：占 1 列 -->
+                <article class="bento-card card-quote" data-span="1" data-detail="quote">
+                    <div class="quote-mark"><i class="fa-solid fa-quote-left" aria-hidden="true"></i></div>
+                    <div class="quotes-text" data-cfg-text="quote.text"></div>
+                    <div class="quotes-author" data-cfg-text="quote.author"></div>
+                </article>
+
+                <!-- 音乐：占 1 列 -->
+                <article class="bento-card card-music" data-span="1" data-detail="music">
+                    <audio id="main-audio" preload="none"></audio>
+                    <div class="album-art" id="player-art"></div>
+                    <div class="track-info">
+                        <div class="track-title" id="track-title">加载中…</div>
+                        <div class="player-controls">
+                            <button type="button" id="btn-repeat" aria-label="单曲循环" aria-pressed="false"><i class="fa-solid fa-repeat" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-prev" aria-label="上一首"><i class="fa-solid fa-backward-step" aria-hidden="true"></i></button>
+                            <button type="button" id="play-btn" aria-label="播放"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-next" aria-label="下一首"><i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+                            <button type="button" id="btn-heart" aria-label="喜欢" aria-pressed="false"><i class="fa-solid fa-heart" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 纪念日：占 1 列 -->
+                <article class="bento-card card-list" data-span="1" data-detail="anniversary">
+                    <header class="card-header">
+                        <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                        <span>纪念日</span>
+                    </header>
+                    <ul id="anniversary-list"></ul>
+                </article>
+
+                <!-- 书架：占 1 列 -->
+                <article class="bento-card card-list" data-span="1" data-detail="books">
+                    <header class="card-header">
+                        <i class="fa-solid fa-book" aria-hidden="true"></i>
+                        <span>书架</span>
+                    </header>
+                    <ul id="book-list"></ul>
+                </article>
+
+                <!-- 观影：占 2 列 -->
+                <article class="bento-card card-list" data-span="2" data-detail="movies">
+                    <header class="card-header">
+                        <i class="fa-solid fa-film" aria-hidden="true"></i>
+                        <span>观影</span>
+                    </header>
+                    <ul id="movie-list"></ul>
+                </article>
+
+            </div>
+            <div class="bento-grid deck-page" id="life-grid" aria-label="生活与工具卡片" inert>
+                <article class="bento-card card-list card-life" data-span="2" data-detail="tools">
+                    <header class="card-header"><i class="fa-solid fa-toolbox" aria-hidden="true"></i><span>工具箱</span></header>
+                    <div class="life-preview" id="tools-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="checkin">
+                    <header class="card-header"><i class="fa-solid fa-check" aria-hidden="true"></i><span>今日打卡</span></header>
+                    <div class="life-preview" id="checkin-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="2" data-detail="habits">
+                    <header class="card-header"><i class="fa-solid fa-seedling" aria-hidden="true"></i><span>习惯养成</span></header>
+                    <div class="life-preview" id="habits-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="focus">
+                    <header class="card-header"><i class="fa-solid fa-hourglass-start" aria-hidden="true"></i><span>专注计时</span></header>
+                    <div class="life-preview" id="focus-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="notes">
+                    <header class="card-header"><i class="fa-solid fa-pen" aria-hidden="true"></i><span>随手记</span></header>
+                    <div class="life-preview" id="notes-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="projects">
+                    <header class="card-header"><i class="fa-solid fa-bullseye" aria-hidden="true"></i><span>目标与项目</span></header>
+                    <div class="life-preview" id="projects-preview"></div>
+                </article>
+                <article class="bento-card card-list card-life" data-span="1" data-detail="wishlist">
+                    <header class="card-header"><i class="fa-solid fa-star" aria-hidden="true"></i><span>愿望清单</span></header>
+                    <div class="life-preview" id="wishlist-preview"></div>
+                </article>
+            </div>
+            </div>
+            </div>
+            <section class="detail-view" id="detail-view" hidden aria-labelledby="detail-title">
+                <header class="detail-header">
+                    <a class="back-link" href="#" aria-label="返回主页"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>返回</span></a>
+                    <h1 id="detail-title" tabindex="-1"></h1>
+                </header>
+                <div class="detail-body" id="detail-body"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 窄屏底部栏 -->
+    <nav class="bottom-dock glass-panel" id="bottom-dock" aria-label="链接">
+        <button type="button" class="dock-icon" id="btn-search-mobile" aria-label="搜索" aria-haspopup="dialog" aria-controls="search-overlay">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </button>
+        <div class="dock-links" id="bottom-dock-links"></div>
+    </nav>
+
+    <!-- 搜索浮层 -->
+    <div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="搜索" hidden>
+        <form class="search-box glass-panel" id="search-form" role="search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" id="search-input" placeholder="输入关键词，回车搜索（Esc 关闭）" autocomplete="off" aria-label="搜索内容">
+        </form>
+    </div>
+
+    <script src="assets/js/script.js" defer></script>
+    <script src="assets/js/life.js" defer></script>
+</body>
+</html>
