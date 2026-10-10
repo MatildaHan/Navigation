@@ -5,13 +5,12 @@
         { id: 'sun', name: '晴', icon: 'fa-sun' },
         { id: 'rain', name: '雨', icon: 'fa-cloud-rain' },
         { id: 'snow', name: '雪', icon: 'fa-snowflake' },
-        { id: 'fog', name: '雾', icon: 'fa-smog' },
         { id: 'leaves', name: '落叶', icon: 'fa-leaf' },
         { id: 'off', name: '关闭', icon: 'fa-ban' },
     ];
     const STORAGE_KEY = 'navigation-weather-mode';
     const LEGACY_KEY = 'navigation-rain-enabled';
-    const SLOPE = 0.35; // 所有效果共用右上到左下的风向。
+    const SLOPE = 0.35; // 粒子共用右上到左下的风向；阳光从右上方发散。
     const random = (min, max) => min + Math.random() * (max - min);
     const validMode = value => MODES.some(item => item.id === value);
 
@@ -39,6 +38,7 @@
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (validMode(saved)) return saved;
+                if (saved === 'fog') return 'off';
                 // 延续旧雨效的关闭选择；其余模式以后只读取新的独立偏好。
                 if (saved === null && localStorage.getItem(LEGACY_KEY) === 'false') return 'off';
             } catch { /* 存储不可用时仍可切换 */ }
@@ -55,6 +55,7 @@
         let lastTime = 0;
         let surfaceTime = 0;
         let elapsed = 0;
+        let sunlight = null;
 
         function position(initial) {
             if (initial) return { x: random(0, width), y: random(-40, height) };
@@ -72,8 +73,6 @@
             if (mode === 'leaves') return { ...base, radius: random(4, width <= 860 ? 8 : 11),
                 speed: random(35, 75), spin: random(-0.7, 0.7), alpha: random(0.45, 0.8),
                 color: ['#d9a24c', '#bd783f', '#c8bb67', '#a9b77a'][Math.floor(random(0, 4))] };
-            if (mode === 'fog') return { ...base, radius: random(width * 0.15, width * 0.3),
-                speed: random(5, 12), alpha: random(0.06, 0.1) };
             return { ...base, radius: random(0.6, 1.6), speed: random(10, 22), alpha: random(0.15, 0.4) };
         }
 
@@ -81,10 +80,11 @@
             const area = width * height;
             const counts = { rain: Math.max(18, Math.min(72, area / 18000)),
                 snow: Math.max(26, Math.min(100, area / 13000)),
-                leaves: Math.max(10, Math.min(26, area / 45000)), fog: 7, sun: 24, off: 0 };
+                leaves: Math.max(10, Math.min(26, area / 45000)), sun: 24, off: 0 };
             particles = Array.from({ length: Math.round(counts[mode]) }, () => makeParticle(true));
             splashes = [];
             elapsed = 0;
+            sunlight = mode === 'sun' ? buildSunlight() : null;
         }
 
         function readSurfaces() {
@@ -200,47 +200,54 @@
             }
         }
 
-        function drawFog(dt) {
-            for (const cloud of particles) {
-                drift(cloud, dt, cloud.radius * 3);
-                context.save();
-                context.translate(cloud.x, cloud.y);
-                context.rotate(-Math.atan(SLOPE));
-                context.scale(cloud.radius * 2.5, cloud.radius * (0.32 + Math.sin(cloud.phase * 0.15) * 0.06));
-                const mist = context.createRadialGradient(0, 0, 0, 0, 0, 1);
-                mist.addColorStop(0, `rgba(225, 238, 242, ${cloud.alpha})`);
-                mist.addColorStop(0.5, `rgba(225, 238, 242, ${cloud.alpha * 0.65})`);
-                mist.addColorStop(1, 'rgba(225, 238, 242, 0)');
-                context.fillStyle = mist;
-                context.fillRect(-1, -1, 2, 2);
-                context.restore();
+        function buildSunlight() {
+            // 缓存柔化的扇形光场，动画帧只绘制缓存和浮尘。
+            const layer = document.createElement('canvas');
+            layer.width = canvas.width;
+            layer.height = canvas.height;
+            const light = layer.getContext('2d');
+            if (!light) return null;
+            light.setTransform(layer.width / width, 0, 0, layer.height / height, 0, 0);
+            const source = { x: width * 1.03, y: -height * 0.08 };
+            const distance = Math.hypot(width, height) * 1.15;
+            const glow = light.createRadialGradient(source.x, source.y, 0, source.x, source.y, distance);
+            glow.addColorStop(0, 'rgba(255, 235, 185, 0.14)');
+            glow.addColorStop(0.35, 'rgba(255, 235, 185, 0.035)');
+            glow.addColorStop(1, 'rgba(255, 235, 185, 0)');
+            light.fillStyle = glow;
+            light.fillRect(0, 0, width, height);
+            const beam = light.createRadialGradient(source.x, source.y, 0, source.x, source.y, distance);
+            beam.addColorStop(0, 'rgba(255, 242, 207, 0.2)');
+            beam.addColorStop(0.15, 'rgba(255, 242, 207, 0.18)');
+            beam.addColorStop(0.45, 'rgba(255, 242, 207, 0.09)');
+            beam.addColorStop(0.8, 'rgba(255, 242, 207, 0.025)');
+            beam.addColorStop(1, 'rgba(255, 242, 207, 0)');
+            light.fillStyle = beam;
+            const rays = [{ angle: 105, spread: 0.025 }, { angle: 117, spread: 0.04 },
+                { angle: 131, spread: 0.035 }, { angle: 146, spread: 0.055 }, { angle: 160, spread: 0.04 }];
+            for (const ray of rays) {
+                const center = ray.angle * Math.PI / 180;
+                // 分片羽化两侧，距离光源越远越宽、越淡，避免硬边条带。
+                const slices = 20;
+                for (let i = 0; i < slices; i += 1) {
+                    const offset = (i + 0.5) / slices * 2 - 1;
+                    light.globalAlpha = Math.exp(-4 * offset * offset);
+                    light.beginPath();
+                    light.moveTo(source.x, source.y);
+                    light.arc(source.x, source.y, distance,
+                        center - ray.spread + i / slices * ray.spread * 2,
+                        center - ray.spread + (i + 1) / slices * ray.spread * 2);
+                    light.closePath();
+                    light.fill();
+                }
             }
+            return layer;
         }
 
         function drawSun(dt) {
-            const glow = context.createRadialGradient(width * 0.98, -height * 0.1, 0,
-                width * 0.98, -height * 0.1, Math.hypot(width, height) * 0.75);
-            glow.addColorStop(0, 'rgba(255, 231, 170, 0.16)');
-            glow.addColorStop(1, 'rgba(255, 231, 170, 0)');
-            context.fillStyle = glow;
-            context.fillRect(0, 0, width, height);
-            for (let i = 0; i < 4; i += 1) {
-                const top = width * (0.48 + i * 0.19) + Math.sin(elapsed * 0.12 + i) * 24;
-                const bottom = top - (height + 160) * SLOPE;
-                const spread = width * (0.025 + i * 0.008);
-                const beam = context.createLinearGradient(top, -80, bottom, height + 80);
-                beam.addColorStop(0, 'rgba(255, 239, 195, 0)');
-                beam.addColorStop(0.2, 'rgba(255, 239, 195, 0.08)');
-                beam.addColorStop(1, 'rgba(255, 239, 195, 0)');
-                context.fillStyle = beam;
-                context.globalAlpha = 0.7 + Math.sin(elapsed * 0.3 + i) * 0.2;
-                context.beginPath();
-                context.moveTo(top - spread * 0.3, -80);
-                context.lineTo(top + spread * 0.3, -80);
-                context.lineTo(bottom + spread, height + 80);
-                context.lineTo(bottom - spread, height + 80);
-                context.closePath();
-                context.fill();
+            if (sunlight) {
+                context.globalAlpha = 0.85 + Math.sin(elapsed * 0.2) * 0.1;
+                context.drawImage(sunlight, 0, 0, width, height);
             }
             context.fillStyle = '#fff0bf';
             for (const mote of particles) {
@@ -252,7 +259,7 @@
             }
         }
 
-        const renderers = { sun: drawSun, rain: drawRain, snow: drawSnow, fog: drawFog, leaves: drawLeaves };
+        const renderers = { sun: drawSun, rain: drawRain, snow: drawSnow, leaves: drawLeaves };
         function draw(time) {
             const dt = lastTime ? Math.min((time - lastTime) / 1000, 0.04) : 1 / 60;
             lastTime = time;
@@ -285,7 +292,7 @@
         }
 
         function select(value, remember = false) {
-            mode = validMode(value) ? value : reducedMotion.matches ? 'off' : 'rain';
+            mode = validMode(value) ? value : value === 'fog' || reducedMotion.matches ? 'off' : 'rain';
             if (remember) {
                 try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* 本次切换仍然生效 */ }
             }

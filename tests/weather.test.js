@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/weather.js'), 'utf8');
 const KEY = 'navigation-weather-mode';
-const ORDER = ['sun', 'rain', 'snow', 'fog', 'leaves', 'off'];
+const ORDER = ['sun', 'rain', 'snow', 'leaves', 'off'];
 
 function environment({ saved = null, legacy = null, reduced = false, storageFails = false, noCanvas = false } = {}) {
     const frames = new Map();
@@ -16,11 +16,13 @@ function environment({ saved = null, legacy = null, reduced = false, storageFail
     let nextFrame = 0;
     const context = {};
     for (const method of ['setTransform', 'clearRect', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'arc',
-        'fill', 'save', 'restore', 'translate', 'rotate', 'scale', 'bezierCurveTo', 'fillRect', 'closePath']) {
+        'fill', 'save', 'restore', 'translate', 'rotate', 'scale', 'bezierCurveTo', 'fillRect', 'closePath', 'drawImage']) {
         context[method] = (...args) => commands.push([method, ...args]);
     }
     for (const method of ['createLinearGradient', 'createRadialGradient']) {
-        context[method] = (...args) => { commands.push([method, ...args]); return { addColorStop() {} }; };
+        context[method] = (...args) => { commands.push([method, ...args]); return {
+            addColorStop(offset, color) { commands.push(['colorStop', offset, color]); },
+        }; };
     }
     const document = { ...events(), readyState: 'complete', hidden: false,
         body: { append(...children) { nodes.push(...children); } },
@@ -47,9 +49,9 @@ function environment({ saved = null, legacy = null, reduced = false, storageFail
         tick(time) { commands.length = 0; const [id, fn] = frames.entries().next().value; frames.delete(id); fn(time); return [...commands]; } };
 }
 
-test('six modes cycle in order, survive reload, and off cancels the only animation loop', () => {
+test('five modes cycle in order, survive reload, and off cancels the only animation loop', () => {
     const e = environment({ saved: 'sun' });
-    for (let i = 0; i < 12; i += 1) {
+    for (let i = 0; i < ORDER.length * 2; i += 1) {
         const mode = ORDER[i % ORDER.length];
         assert.equal(e.mode(), mode);
         assert.equal(e.frames.size, mode === 'off' ? 0 : 1);
@@ -63,18 +65,44 @@ test('six modes cycle in order, survive reload, and off cancels the only animati
     }
 });
 
-test('rain, snow, fog and leaves drift left and down; sunlight beams point the same way', () => {
-    for (const [mode, method] of [['rain', 'moveTo'], ['snow', 'arc'], ['fog', 'translate'], ['leaves', 'translate']]) {
+test('rain, snow and leaves drift left and down', () => {
+    for (const [mode, method] of [['rain', 'moveTo'], ['snow', 'arc'], ['leaves', 'translate']]) {
         const e = environment({ saved: mode });
         const first = e.tick(16).find(command => command[0] === method);
         const second = e.tick(32).find(command => command[0] === method);
         assert.ok(second[1] < first[1], `${mode} moves left`);
         assert.ok(second[2] > first[2], `${mode} moves down`);
     }
-    const sun = environment({ saved: 'sun' });
-    const beam = sun.tick(16).find(command => command[0] === 'createLinearGradient');
-    assert.ok(beam[3] < beam[1]);
-    assert.ok(beam[4] > beam[2]);
+});
+
+test('sunlight diverges from one upper-right source, fades outward and is cached between frames', () => {
+    const e = environment({ saved: 'sun' });
+    const rays = e.commands.filter(command => command[0] === 'arc');
+    assert.ok(rays.length > 0);
+    const [, x, y] = rays[0];
+    assert.ok(x > e.window.innerWidth && y < 0);
+    assert.ok(rays.every(ray => ray[1] === x && ray[2] === y));
+    assert.ok(rays.every(ray => ray[4] > Math.PI / 2 && ray[5] < Math.PI));
+    assert.ok(rays.at(-1)[4] - rays[0][4] > 0.5);
+    const stops = e.commands.filter(command => command[0] === 'colorStop');
+    assert.ok(stops.some(stop => stop[1] === 1 && /, 0\)$/.test(stop[2])));
+    assert.ok(stops.some(stop => stop[1] > 0 && stop[1] < 1 && /, 0\.\d+\)$/.test(stop[2])));
+    for (const time of [16, 32]) {
+        const commands = e.tick(time);
+        assert.equal(commands.filter(command => command[0] === 'drawImage').length, 1);
+        assert.equal(commands.filter(command => command[0].startsWith('create')).length, 0);
+    }
+});
+
+test('removed fog preferences recover to off and the next click selects sun', () => {
+    const e = environment({ saved: 'fog' });
+    assert.equal(e.mode(), 'off');
+    assert.equal(e.frames.size, 0);
+    e.toggle.listeners.click();
+    assert.equal(e.mode(), 'sun');
+    e.window.listeners.storage({ key: KEY, newValue: 'fog' });
+    assert.equal(e.mode(), 'off');
+    assert.equal(e.frames.size, 0);
 });
 
 test('background and page-cache lifecycle pause and resume one loop for every active mode', () => {
@@ -127,8 +155,8 @@ test('another tab can change the mode; invalid modes and unrelated records canno
     const e = environment();
     e.window.listeners.storage({ key: 'navigation-life-v1', newValue: 'off' });
     assert.equal(e.mode(), 'rain');
-    e.window.listeners.storage({ key: KEY, newValue: 'fog' });
-    assert.equal(e.mode(), 'fog');
+    e.window.listeners.storage({ key: KEY, newValue: 'snow' });
+    assert.equal(e.mode(), 'snow');
     e.tick(16);
     e.window.listeners.storage({ key: KEY, newValue: 'off' });
     assert.equal(e.frames.size, 0);
