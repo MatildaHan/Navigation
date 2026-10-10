@@ -696,6 +696,7 @@ function initDetailViews(CFG) {
     const view = document.getElementById('detail-view');
     const body = document.getElementById('detail-body');
     const heading = document.getElementById('detail-title');
+    const appHelp = document.getElementById('app-title-help');
     const music = document.querySelector('.card-music');
     const audio = document.getElementById('main-audio');
     const musicMarker = document.createComment('music home position');
@@ -735,6 +736,11 @@ function initDetailViews(CFG) {
         document.getElementById('page-switcher').hidden = isDetail;
         active = isDetail ? key : '';
         document.querySelector('.main-board').classList.toggle('has-app', !!app);
+        document.querySelector('.main-board').classList.toggle('has-game', app?.kind === 'game');
+        appHelp.textContent = app?.kind === 'game' ? app.说明 || '' : '';
+        appHelp.hidden = !appHelp.textContent;
+        if (appHelp.hidden) heading.removeAttribute('aria-describedby');
+        else heading.setAttribute('aria-describedby', 'app-title-help');
         document.body.classList.toggle('music-page', isDetail && key === 'music');
         const name = CFG.profile?.昵称 || '个人主页';
         document.title = isDetail ? `${app?.名称 || titles[key]} - ${name}` : `${name} - 个人主页`;

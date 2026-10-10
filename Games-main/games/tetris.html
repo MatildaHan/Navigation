@@ -418,12 +418,13 @@
     let bestScore = 0;
     try { const saved = Number(localStorage.getItem('tetrisBest')); if (Number.isSafeInteger(saved) && saved >= 0) bestScore = saved; } catch (e) {}
 
-    // ============================================================
-    // 关键：根据视口动态设置主区宽度 = 屏宽 × 80%
-    // ============================================================
+    // Reserve the actual frame padding, side rail, and controls before sizing the board.
     function updateBoardWidth() {
-        const widthBudget = window.innerWidth - (window.innerWidth <= 600 ? 122 : 182);
-        const heightBudget = (window.innerHeight - 130) / 2;
+        const innerStyle = getComputedStyle(document.querySelector('.game-inner'));
+        const layoutStyle = getComputedStyle(layoutEl);
+        const railWidth = document.querySelector('.tetris-rail').getBoundingClientRect().width;
+        const widthBudget = window.innerWidth - parseFloat(innerStyle.paddingLeft) - parseFloat(innerStyle.paddingRight) - railWidth - parseFloat(layoutStyle.columnGap);
+        const heightBudget = (window.innerHeight - parseFloat(innerStyle.paddingTop) - parseFloat(innerStyle.paddingBottom) - 112) / 2;
         const boardW = Math.max(96, Math.floor(Math.min(widthBudget, heightBudget, 280)));
         mainEl.style.setProperty('--board-width', boardW + 'px');
         mainEl.style.width = boardW + 'px';

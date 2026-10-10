@@ -60,7 +60,6 @@ const Apps = (() => {
         const retry = el('button', 'action-button app-retry', '重新加载'); retry.type = 'button'; retry.hidden = true;
         stage.append(frame, status, retry);
         body.appendChild(stage);
-        if (item.kind === 'game') body.appendChild(el('p', 'app-help', item.说明));
         let timeout;
         let disposed = false;
         const protocol = item.kind === 'game' ? 'game-hub' : 'tool-hub';
