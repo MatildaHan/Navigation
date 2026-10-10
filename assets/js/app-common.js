@@ -3,6 +3,11 @@
 /* Shared by embedded and direct app pages; no game state lives in the parent. */
 document.addEventListener('DOMContentLoaded', () => {
     const games = location.pathname.includes('/Games-main/');
+    if (games) {
+        document.body.classList.add('game-app');
+        // Recalculate boards after the shared game layout has been applied.
+        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    }
     const id = location.pathname.split('/').pop().replace(/\.html$/, '');
     if (window.parent === window) {
         const back = document.createElement('a');
