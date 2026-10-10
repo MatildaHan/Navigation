@@ -109,3 +109,46 @@ body.ink-theme .ink-card .card-title { color: var(--text-sub); }
     .chess-layout, .gomoku-layout { grid-template-columns: minmax(0, 1fr); min-width: 0; }
     .chess-board-wrap, .gomoku-board-wrap { min-width: 0; }
 }
+
+/* Games use the available card area and center without hiding overflow above it. */
+body.game-app .game-inner { flex-direction: column; align-items: center; padding: 14px; }
+body.game-app .game-inner > div { flex: 0 0 auto; min-height: 0; margin: auto; width: 100%; }
+body.game-app :is(.chess-layout,.gomoku-layout) { grid-template-columns: minmax(0, 1fr) 150px; align-items: center; gap: 14px; max-width: 760px; }
+body.game-app :is(.chess-side,.gomoku-side) { gap: 8px; }
+body.game-app .ink-card { padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+body.game-app .ink-card .card-title { margin-bottom: 4px; padding-bottom: 4px; letter-spacing: normal; }
+body.game-app .ink-select { min-height: 36px; padding: 6px 8px; letter-spacing: normal; width: 100%; }
+body.game-app .ink-btn { padding: 8px 12px; font-size: 13px; }
+body.game-app .sudoku-layout { grid-template-columns: 112px minmax(0, 1fr) 144px; align-items: center; gap: 14px; max-width: 780px; }
+body.game-app .sudoku-board { --cell-size: max(24px, min(48px, calc((100vw - 320px) / 9), calc((100dvh - 60px) / 9))); }
+body.game-app .diff-btn { padding: 8px 10px; }
+body.game-app :is(.nono-wrap,.mine-wrap,.lo-wrap,.klotski-wrap,.gc-wrap) { gap: 10px; padding: 0; }
+body.game-app .nono-grid { max-height: none; }
+body.game-app .gc-canvas-wrap { width: min(616px, 100%, max(180px, calc((100dvh - 200px) * 1.5))); }
+body.game-app .gc-canvas-wrap canvas { width: 100% !important; height: auto !important; aspect-ratio: 3 / 2; }
+body.game-app .zebra-wrap { max-width: 820px; gap: 10px; }
+body.game-app .zebra-problem { max-height: max(100px, min(240px, calc(100dvh - 400px))); overscroll-behavior: contain; }
+body.game-app .zebra-table-wrap { width: 100%; overscroll-behavior-x: contain; }
+body.game-app.px-theme .tetris-layout { align-items: center; gap: 12px; }
+body.game-app.px-theme .tetris-rail { width: 112px; flex-basis: 112px; }
+body.game-app.px-theme #next-canvas { width: 56px; }
+body.game-app.px-theme .px-card { padding: 6px; }
+body.game-app.px-theme .tetris-rail { gap: 6px; }
+body.game-app.px-theme .px-btn { min-height: 40px; }
+@media (max-width: 767px) {
+    body.game-app .game-inner { padding: 10px; }
+    body.game-app :is(.chess-layout,.gomoku-layout) { grid-template-columns: minmax(0, 1fr); padding: 0; gap: 10px; }
+    body.game-app :is(.chess-side,.gomoku-side) { display: flex; flex-direction: row; flex-wrap: wrap; width: 100%; gap: 6px; }
+    body.game-app .ink-card { flex: 1 1 calc(50% - 6px); min-width: 0; }
+    body.game-app .ink-btn { flex: 1 1 calc(33% - 6px); }
+    body.game-app .sudoku-layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    body.game-app .sudoku-board { --cell-size: max(24px, min(40px, calc((100vw - 28px) / 9), calc((100dvh - 210px) / 9))); }
+    body.game-app .number-pad { grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 364px; padding: 6px; gap: 4px; }
+    body.game-app .num-btn { min-width: 0; min-height: 40px; height: 40px; font-size: 17px; }
+    body.game-app .num-btn.erase { grid-column: auto; height: 40px; font-size: 12px; }
+    body.game-app .diff-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 364px; gap: 4px; }
+    body.game-app .diff-list > .card-title { grid-column: 1 / -1; margin: 0 !important; text-align: center; }
+    body.game-app .diff-btn { min-width: 0; padding: 5px 2px; font-size: 11px; }
+    body.game-app .diff-btn .prog { font-size: 9px; }
+    body.game-app.px-theme .tetris-rail { width: 88px; flex-basis: 88px; }
+}
