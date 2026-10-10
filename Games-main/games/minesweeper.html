@@ -88,7 +88,7 @@
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
 </head>
-<body class="embedded">
+<body class="game-app embedded">
 <div class="game-inner">
     <div class="mine-wrap">
         <div class="mine-info">
@@ -124,8 +124,9 @@
     </div>
 </div>
 
+<script src="../js/layout.js"></script>
 <script src="../js/bridge.js"></script>
-<script src="../../assets/js/app-common.js" defer></script>
+<script src="../../assets/js/app-common.js"></script>
 <script>
 (function () {
     'use strict';
@@ -157,13 +158,10 @@
     const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
     function calcCellSize() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const availW = Math.min(vw - 60, 900);
-        const availH = vh * 0.55;
-        const byW = Math.floor((availW - cols * 2) / cols);
-        const byH = Math.floor((availH - rows * 2) / rows);
-        return Math.max(18, Math.min(byW, byH, 32));
+        const surface = document.querySelector('.mine-grid-wrap');
+        const area = GameLayout.boardArea(surface);
+        const inset = GameLayout.insets(surface);
+        return GameLayout.fitCells({ ...area, ...inset, rows, cols, gap: parseFloat(getComputedStyle(gridEl).columnGap), minCell: 8 });
     }
 
     function init() {
@@ -385,7 +383,6 @@
     });
 
     init();
-    GameBridge.notifyReady();
 })();
 </script>
 </body>

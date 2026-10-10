@@ -305,7 +305,7 @@
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
 </head>
-<body class="embedded">
+<body class="game-app embedded">
 <div class="game-inner px-theme">
     <div class="tetris-layout">
         <!-- 主区：画布 + 重新开始 + 触屏按钮 -->
@@ -352,13 +352,12 @@
 </div>
 
 <script src="../js/bridge.js"></script>
-<script src="../../assets/js/app-common.js" defer></script>
+<script src="../../assets/js/app-common.js"></script>
 <script>
 (function () {
     'use strict';
 
     document.body.classList.add('embedded');
-    GameBridge.notifyReady();
 
     const COLS = 10, ROWS = 20, BLOCK = 24;
     const BASE_INTERVAL = 800;
