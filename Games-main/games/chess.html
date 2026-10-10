@@ -523,7 +523,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
         const frame = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
         const availW = Math.max(0, wrap.clientWidth - frame);
         const isMobile = window.innerWidth <= 767;
-        const availH = Math.max(120, window.innerHeight - (isMobile ? 260 : 220));
+        const availH = Math.max(120, window.innerHeight - (isMobile ? 190 : 52));
         return Math.max(12, Math.floor(Math.min(availW / 9, availH / 10, isMobile ? 44 : 56)));
     }
 

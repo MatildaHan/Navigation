@@ -33,7 +33,7 @@ body.ink-theme::before { display: none; }
 
 .gomoku-layout {
     display: grid;
-    grid-template-columns: auto 200px;
+    grid-template-columns: minmax(0, 1fr) 200px;
     gap: 24px;
     align-items: flex-start;
     justify-content: center;
@@ -469,7 +469,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
 
         const frame = isMobile ? 12 : 24;
         const availW = vw - frame;
-        const availH = isMobile ? vh - 260 : vh - 220;
+        const availH = isMobile ? vh - 190 : vh - 52;
         const byW = Math.floor(availW / SIZE);
         const byH = Math.floor(availH / SIZE);
         return Math.max(14, Math.min(byW, byH, isMobile ? 26 : 40));
