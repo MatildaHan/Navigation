@@ -217,6 +217,27 @@ function applyAvatar(CFG) {
 function applyWallpaper(CFG) {
     const url = safeUrl(CFG.assets?.壁纸, MEDIA_PROTOCOLS);
     if (url) document.documentElement.style.setProperty('--bg-wallpaper', cssUrl(url));
+
+    const nextUrl = safeUrl(CFG.assets?.轮播壁纸, MEDIA_PROTOCOLS);
+    if (!url || !nextUrl || nextUrl === url) return;
+
+    const seconds = Number(CFG.assets?.壁纸切换间隔);
+    const interval = Number.isFinite(seconds) && seconds > 0 ? Math.max(1, seconds) * 1000 : 5000;
+    const probe = new Image();
+    let timer;
+    const start = () => {
+        clearInterval(timer);
+        if (!document.hidden) {
+            timer = setInterval(() => document.body.classList.toggle('wallpaper-alternate'), interval);
+        }
+    };
+    probe.onload = () => {
+        document.documentElement.style.setProperty('--bg-wallpaper-next', cssUrl(nextUrl));
+        start();
+        document.addEventListener('visibilitychange', start);
+    };
+    // 第二张图片加载成功后才启动，加载失败时继续显示原有背景。
+    probe.src = nextUrl;
 }
 
 function applyTheme(CFG) {
@@ -484,7 +505,7 @@ function initMusicPlayer(CFG) {
         if (trackTitle) trackTitle.textContent = '⚠️ 音频加载失败';
     });
     audio.addEventListener('ended', () => {
-        if (playlist.length > 1) step(1);
+        if (playlist.length) step(1);
     });
 
     playBtn.addEventListener('click', () => { audio.paused ? play() : audio.pause(); });
@@ -714,6 +735,7 @@ function initDetailViews(CFG) {
         document.getElementById('page-switcher').hidden = isDetail;
         active = isDetail ? key : '';
         document.querySelector('.main-board').classList.toggle('has-app', !!app);
+        document.body.classList.toggle('music-page', isDetail && key === 'music');
         const name = CFG.profile?.昵称 || '个人主页';
         document.title = isDetail ? `${app?.名称 || titles[key]} - ${name}` : `${name} - 个人主页`;
         if (!isDetail) {
@@ -731,8 +753,7 @@ function initDetailViews(CFG) {
         else if (key === 'calendar') disposeDetail = renderCalendarDetail(body, CFG);
         else if (key === 'music') {
             music.classList.add('detail-player');
-            body.appendChild(music);
-            disposeDetail = renderMusicDetail(body, CFG, audio);
+            disposeDetail = renderMusicDetail(body, CFG, audio, music);
         } else renderContentDetail(body, CFG, key);
         body.scrollTop = 0;
         window.scrollTo(0, 0);
@@ -818,54 +839,6 @@ function renderContentDetail(body, CFG, key) {
         if (!matches.length) list.appendChild(el('p', 'detail-empty', '暂无匹配内容'));
     }
     search.addEventListener('input', draw); filter.addEventListener('change', draw); draw();
-}
-
-function renderMusicDetail(body, CFG, audio) {
-    const formatTime = seconds => {
-        const value = Number.isFinite(seconds) ? Math.floor(seconds) : 0;
-        return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
-    };
-    const timeline = el('div', 'music-timeline');
-    const time = el('span');
-    const seek = el('input'); seek.type = 'range'; seek.min = 0; seek.step = 1; seek.setAttribute('aria-label', '播放进度');
-    const duration = el('span'); timeline.append(time, seek, duration); body.appendChild(timeline);
-    const volumeRow = el('label', 'music-volume', '音量');
-    const volume = el('input'); volume.type = 'range'; volume.min = 0; volume.max = 1; volume.step = 0.05; volume.value = audio.volume;
-    volume.setAttribute('aria-label', '音量'); volume.addEventListener('input', () => { audio.volume = Number(volume.value); });
-    volumeRow.appendChild(volume); body.appendChild(volumeRow);
-    function sync() {
-        time.textContent = formatTime(audio.currentTime); duration.textContent = formatTime(audio.duration);
-        seek.max = Number.isFinite(audio.duration) ? audio.duration : 0;
-        seek.value = audio.currentTime; seek.disabled = !Number.isFinite(audio.duration);
-        seek.setAttribute('aria-valuetext', `${time.textContent} / ${duration.textContent}`);
-    }
-    seek.addEventListener('input', () => { if (Number.isFinite(audio.duration)) audio.currentTime = Number(seek.value); });
-    const events = ['timeupdate', 'durationchange', 'loadedmetadata', 'emptied'];
-    events.forEach(event => audio.addEventListener(event, sync)); sync();
-    const tracks = (CFG.playlist || []).filter(item => safeUrl(item.音频, MEDIA_PROTOCOLS));
-    body.appendChild(el('p', 'detail-summary', `播放列表 · ${tracks.length} 首曲目`));
-    const list = el('div', 'detail-entries');
-    tracks.forEach((track, index) => {
-        const button = el('button', 'track-row');
-        button.type = 'button';
-        button.dataset.trackUrl = safeUrl(track.音频, MEDIA_PROTOCOLS);
-        button.setAttribute('aria-label', `播放${track.歌曲名 || '未知曲目'}`);
-        button.appendChild(el('span', 'track-number', String(index + 1).padStart(2, '0')));
-        const text = el('span', 'track-row-text');
-        text.appendChild(el('span', '', track.歌曲名 || '未知曲目'));
-        if (track.说明) text.appendChild(el('small', 'detail-meta', track.说明));
-        button.appendChild(text);
-        button.appendChild(el('span', 'track-action', '播放'));
-        if (button.dataset.trackUrl === audio.src) {
-            button.classList.add('is-current');
-            button.setAttribute('aria-current', 'true');
-        }
-        button.addEventListener('click', () => audio.dispatchEvent(new CustomEvent('selecttrack', { detail: index })));
-        list.appendChild(button);
-    });
-    if (!tracks.length) list.appendChild(el('p', 'detail-empty', '暂无曲目'));
-    body.appendChild(list);
-    return () => events.forEach(event => audio.removeEventListener(event, sync));
 }
 
 function renderCalendarDetail(body, CFG) {

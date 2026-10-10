@@ -9,6 +9,7 @@
 - `configs/*.md`：各卡片独立配置，字段和分区见 `configs/README.md`；由 JavaScript 解析，保留现有分区和键值格式。
 - `assets/css/style.css`：样式、响应式布局和动画。
 - `assets/js/script.js`：配置解析、页面渲染和交互逻辑。
+- `assets/js/music.js`、`assets/css/music.css`：音乐详情的黑胶播放器、歌单和歌词视图。
 - `assets/js/life.js`：三页卡片切换、生活工具详情和浏览器本地记录。
 - `assets/js/apps.js`、`assets/js/app-common.js`、`assets/css/apps.css`：本地工具、游戏入口、详情生命周期和统一样式。
 - `Games-main/`、`Tools-main/`：独立游戏与工具实现；象棋引擎和 Worker 在 `Games-main/js/`。
