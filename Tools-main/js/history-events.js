@@ -47,7 +47,6 @@ if (typeof document !== 'undefined') (() => {
     const detail = document.getElementById('detail');
     const list = document.getElementById('list');
     const filters = document.getElementById('filter');
-    const search = document.getElementById('search');
     const count = document.getElementById('count');
     const loading = document.getElementById('loading');
     const retry = document.getElementById('retry');
@@ -84,10 +83,8 @@ if (typeof document !== 'undefined') (() => {
             button.classList.toggle('active', selected);
             button.setAttribute('aria-pressed', String(selected));
         });
-        search.value = state.query;
-        document.getElementById('clear-search').disabled = !state.query;
     }
-    function resetFilters() { updateList('全部', ''); search.focus(); }
+    function resetFilters() { updateList('全部', ''); filters.querySelector('button').focus(); }
     function renderList(state) {
         setFilters(state); list.replaceChildren();
         const events = HistoryCatalog.filter(data.events, state.era, state.query);
@@ -151,7 +148,6 @@ if (typeof document !== 'undefined') (() => {
         if (activeRoute && !activeRoute.id) positions.set(listHref(activeRoute), scroller.scrollTop);
         const state = HistoryCatalog.route(location.hash, data.eras);
         catalog.hidden = Boolean(state.id); detail.hidden = !state.id;
-        document.getElementById('catalog-header').hidden = Boolean(state.id);
         if (state.id) {
             const title = renderDetail(state); scroller.scrollTop = 0;
             if (focus) title.focus({ preventScroll: true });
@@ -159,7 +155,7 @@ if (typeof document !== 'undefined') (() => {
             document.title = '历史事件'; renderList(state);
             if (focus && activeRoute?.id) {
                 const card = [...list.querySelectorAll('a')].find(anchor => anchor.dataset.eventId === lastRead);
-                (card || search).focus({ preventScroll: true });
+                (card || filters.querySelector('button.active')).focus({ preventScroll: true });
             }
             scroller.scrollTop = positions.get(listHref(state)) || 0;
         }
@@ -180,7 +176,7 @@ if (typeof document !== 'undefined') (() => {
             filters.replaceChildren();
             ['全部', ...data.eras].forEach(era => {
                 const button = node('button', 'hist-button', era); button.type = 'button'; button.dataset.era = era;
-                button.addEventListener('click', () => updateList(era, search.value)); filters.append(button);
+                button.addEventListener('click', () => updateList(era, '')); filters.append(button);
             });
             loading.hidden = true; render(false); GameBridge.notifyReady();
         } catch (error) {
@@ -188,8 +184,6 @@ if (typeof document !== 'undefined') (() => {
             console.error('历史事件加载失败', error);
         }
     }
-    search.addEventListener('input', () => updateList(activeRoute.era, search.value));
-    document.getElementById('clear-search').addEventListener('click', () => { updateList(activeRoute.era, ''); search.focus(); });
     retry.addEventListener('click', load);
     window.addEventListener('hashchange', () => render());
     load();
