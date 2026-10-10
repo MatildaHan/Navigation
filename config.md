@@ -5,7 +5,7 @@
 
 --- profile ---
 昵称：北冥
-头像网址：assets/images/avatar.png
+头像网址：assets/images/avatar.jpg
 
 --- links ---
 名称：博客
