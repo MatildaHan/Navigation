@@ -130,21 +130,21 @@ window.JapaneseStudyData = (() => {
         group('shopping', '问路 / 点餐 / 购物', '把地点、物品或金额替换成自己的需求，练习真实生活场景。', entries([
             ['駅はどこですか。', 'えきはどこですか。', 'eki wa doko desu ka', '车站在哪里？', '～はどこですか：询问地点。'],
             ['この電車は東京に行きますか。', 'このでんしゃはとうきょうにいきますか。', 'kono densha wa toukyou ni ikimasu ka', '这班电车去东京吗？', 'に表示目的地；行く→行きます。'],
-            ['トイレはどこですか。', 'トイレはどこですか。', 'toire wa doko desu ka', '洗手间在哪里？'],
+            ['トイレはどこですか。', 'トイレはどこですか。', 'toire wa doko desu ka', '洗手间在哪里？', '～はどこですか：询问地点。'],
             ['これをください。', 'これをください。', 'kore o kudasai', '请给我这个。', '名词＋をください：请求物品。'],
-            ['水をお願いします。', 'みずをおねがいします。', 'mizu o onegaishimasu', '麻烦给我水。'],
-            ['これはいくらですか。', 'これはいくらですか。', 'kore wa ikura desu ka', '这个多少钱？'],
+            ['水をお願いします。', 'みずをおねがいします。', 'mizu o onegaishimasu', '麻烦给我水。', '名词＋をお願いします：礼貌请求物品。'],
+            ['これはいくらですか。', 'これはいくらですか。', 'kore wa ikura desu ka', '这个多少钱？', 'いくらですか：询问价格。'],
             ['カードで払えますか。', 'カードではらえますか。', 'kaado de haraemasu ka', '可以刷卡吗？', 'で表示方式；払えます是払う的可能形礼貌形式。'],
             ['写真を撮ってもいいですか。', 'しゃしんをとってもいいですか。', 'shashin o totte mo ii desu ka', '可以拍照吗？', '动词て形＋もいいですか：请求许可。'],
         ])),
         group('daily', '日常沟通', '用请求、邀请、否定与过去时，把单词连成能交流的句子。', entries([
             ['もう一度言ってください。', 'もういちどいってください。', 'mou ichido itte kudasai', '请再说一遍。', '言う→言って；て形＋ください表示请求。'],
-            ['ゆっくり話してください。', 'ゆっくりはなしてください。', 'yukkuri hanashite kudasai', '请说慢一点。'],
+            ['ゆっくり話してください。', 'ゆっくりはなしてください。', 'yukkuri hanashite kudasai', '请说慢一点。', 'ゆっくり表示慢慢地；話す→話して。'],
             ['よく分かりません。', 'よくわかりません。', 'yoku wakarimasen', '我不太明白。', '～ません是礼貌否定。'],
             ['一緒に行きませんか。', 'いっしょにいきませんか。', 'issho ni ikimasen ka', '要不要一起去？', '～ませんか常表示邀请。'],
-            ['明日は時間がありますか。', 'あしたはじかんがありますか。', 'ashita wa jikan ga arimasu ka', '明天有时间吗？'],
+            ['明日は時間がありますか。', 'あしたはじかんがありますか。', 'ashita wa jikan ga arimasu ka', '明天有时间吗？', '時間がある：有时间；か表示疑问。'],
             ['昨日は映画を見ました。', 'きのうはえいがをみました。', 'kinou wa eiga o mimashita', '昨天看了电影。', '～ました是礼貌过去形。'],
-            ['今日は忙しいです。', 'きょうはいそがしいです。', 'kyou wa isogashii desu', '今天很忙。'],
+            ['今日は忙しいです。', 'きょうはいそがしいです。', 'kyou wa isogashii desu', '今天很忙。', 'い形容词原形＋です：礼貌描述状态。'],
             ['少し待ってください。', 'すこしまってください。', 'sukoshi matte kudasai', '请稍等。', '待つ→待って。'],
         ])),
         group('casual', '字幕 / 日常口语', '识别省略、普通形与缩略说法。注意人物关系，先理解语气再模仿。', entries([
@@ -172,6 +172,29 @@ window.JapaneseStudyData = (() => {
             ['約束を忘れないで。', 'やくそくをわすれないで。', 'yakusoku o wasurenaide', '别忘了约定。', 'ない形＋で：请求不要做某事；礼貌说法加ください。'],
         ])),
     ];
+    const moveWords = (from, to, texts) => {
+        const source = wordGroups.find(section => section.id === from);
+        const target = window.JapaneseLifeData.words.find(section => section.id === to);
+        target.items.unshift(...source.items.filter(entry => texts.includes(entry.text)));
+        source.items = source.items.filter(entry => !texts.includes(entry.text));
+    };
+    moveWords('travel', 'food', ['水', 'ご飯']);
+    moveWords('travel', 'shopping', ['店', 'お金']);
+    moveWords('travel', 'questions', ['いくら', 'どこ', 'これ']);
+    moveWords('travel', 'home', ['トイレ']);
+    moveWords('actions', 'food', ['美味しい']);
+    moveWords('actions', 'adjectives', ['大きい', '小さい', '新しい', '古い', '好き', '楽しい', '難しい', '忙しい']);
+    // Add life topics while keeping the original learning entries and stable category ids.
+    for (const [groups, additions] of [[wordGroups, window.JapaneseLifeData.words], [sentenceGroups, window.JapaneseLifeData.sentences]]) {
+        for (const addition of additions) {
+            const existing = groups.find(section => section.id === addition.id);
+            if (existing) {
+                existing.items.push(...addition.items);
+                existing.label = addition.label;
+                existing.description = addition.description;
+            } else groups.push(addition);
+        }
+    }
     return [
         { id: 'kana', label: '假名', unit: '音', groups: kanaGroups },
         { id: 'words', label: '单词', unit: '词', groups: wordGroups },
