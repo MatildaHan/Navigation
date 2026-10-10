@@ -21,7 +21,34 @@ body::before, .px-theme.game-inner::before, .px-theme.game-inner::after { displa
 body, button, input, select, .px-theme, .px-theme * { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; letter-spacing: normal; }
 .game-inner, body.ink-theme .game-inner, .px-theme.game-inner { background: transparent; padding: 18px; height: 100%; min-height: 0; width: 100%; overflow: auto; align-items: flex-start; justify-content: flex-start; }
 .game-inner > div { flex-shrink: 0; margin-inline: auto; }
-.game-inner > :is(.answer-wrap,.muyu-wrap,.en-wrap,.jp-wrap,.poetry-wrap,.hist-wrap,.music-wrap) { max-width: 720px; min-height: 0; padding: 16px 0; }
+/* Tool content fits the detail stage; long reading sections scroll locally. */
+.game-inner > :is(.answer-wrap,.muyu-wrap,.en-wrap,.jp-wrap,.poetry-wrap,.hist-wrap,.music-wrap) { max-width: 720px; min-height: 0; padding: 0; gap: 12px; }
+.answer-box { min-height: 160px; padding: 32px 24px; }
+.muyu-body { width: min(200px, 38vh, 60vw); height: min(200px, 38vh, 60vw); }
+.muyu-body::after { font-size: min(72px, 14vh, 22vw); }
+.muyu-wrap { gap: 10px; }
+.muyu-wrap #storageStatus:empty { display: none; }
+.en-card, .jp-card, .poetry-card { padding: 16px; }
+.en-subtitle, .jp-subtitle, .poetry-subtitle, .hist-subtitle { margin-bottom: 0; }
+.en-meaning { margin-top: 10px; }
+.en-example { margin-top: 12px; padding-top: 10px; }
+.jp-kanji { font-size: 40px; }
+.jp-kana { font-size: 18px; margin-top: 6px; }
+.jp-romaji { margin-top: 4px; }
+.jp-meaning { margin-top: 10px; padding-top: 10px; }
+.jp-example { margin-top: 10px; }
+.en-controls, .jp-controls, .poetry-controls { margin-top: 0; }
+.en-wrap, .jp-wrap, .poetry-wrap, .hist-wrap { height: 100%; }
+.en-wrap > *, .jp-wrap > *, .poetry-wrap > *, .hist-wrap > * { flex-shrink: 0; }
+.en-wrap .en-card, .jp-wrap .jp-card { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.poetry-wrap .poetry-card, .hist-wrap .hist-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.poetry-author { margin-bottom: 12px; }
+.hist-list > * { flex-shrink: 0; }
+.music-cover { width: min(180px, 35vh, 55vw); height: min(180px, 35vh, 55vw); }
+@media (max-height: 440px) {
+    .game-inner > :is(.en-wrap,.jp-wrap) { gap: 8px; }
+    .en-card, .jp-card { padding: 12px; }
+}
 :is(.en-title,.jp-title,.poetry-title,.hist-title,.answer-box,.en-word,.jp-word,.jp-kanji,.en-meaning,.jp-meaning,.poetry-name,.poetry-content,.hist-event,.music-title .name) { color: var(--text); }
 :is(.answer-subtitle,.answer-hint,.en-subtitle,.en-phonetic,.en-example,.en-example .zh,.en-progress,.jp-subtitle,.jp-kana,.jp-romaji,.jp-example,.jp-example .zh,.jp-progress,.poetry-subtitle,.poetry-dynasty,.poetry-author,.poetry-hint,.hist-subtitle,.hist-desc,.music-hint,.music-title .artist,.muyu-count,.muyu-merit,.muyu-hint) { color: var(--text-sub); }
 :is(.en-card,.jp-card,.poetry-card,.hist-item,.answer-box,.card,.ink-card), body.ink-theme .ink-card { background: rgba(0,0,0,.28); border: 1px solid var(--border); border-radius: 14px; box-shadow: none; color: var(--text); }
