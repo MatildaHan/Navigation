@@ -139,9 +139,7 @@ body.wallpaper-alternate::after {
 .app-tile { min-height: 156px; cursor: pointer; }
 .card-life .preview-line { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .has-app .detail-body { display: flex; flex-direction: column; overflow: visible; min-height: 0; }
-.app-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.app-toolbar label { display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-size: .8rem; }
-.app-stage { position: relative; flex: 1; min-height: 0; margin-top: 12px; border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,.24); }
+.app-stage { position: relative; flex: 1; min-height: 0; border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,.24); }
 .app-frame { display: block; width: 100%; height: 100%; border: 0; }
 .app-status { position: absolute; inset: 0; display: grid; place-items: center; background: #1b2424; color: var(--text-primary); }
 .app-retry { position: absolute; top: 58%; left: 50%; transform: translateX(-50%); }
@@ -149,9 +147,6 @@ body.wallpaper-alternate::after {
 @media (max-width: 860px) {
     #games-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .page-switcher a { padding: 8px 12px; }
-}
-@media (max-width: 380px) {
-    .app-toolbar label { gap: 8px; }
 }
 .life-preview { flex: 1; min-height: 0; overflow-y: auto; }
 .preview-stat { font-size: 0.8rem; margin: 2px 0 8px; }
@@ -752,4 +747,3 @@ select.life-input option { background: #252525; color: #fff; }
 
 /* App details share one stage size without the extra inset of text details. */
 .has-app .detail-body { padding: 0; border: 0; background: transparent; }
-.app-toolbar select { color: var(--text-primary); background: #233232; border: 1px solid var(--glass-border); border-radius: 10px; min-height: 38px; padding: 8px 28px 8px 12px; max-width: 100%; font: inherit; }

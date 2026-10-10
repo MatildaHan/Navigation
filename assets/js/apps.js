@@ -53,25 +53,13 @@ const Apps = (() => {
     }
     function render(body, key) {
         const item = entries.get(key);
-        const toolbar = el('div', 'app-toolbar');
-        const label = el('label', '', item.kind === 'game' ? '切换游戏' : '切换工具');
-        const select = el('select', 'life-select');
-        label.appendChild(select);
-        for (const [route, entry] of entries) if (entry.kind === item.kind) {
-            const option = el('option', '', entry.名称); option.value = route; select.appendChild(option);
-        }
-        select.value = key;
-        select.addEventListener('change', () => { location.hash = select.value; });
-        const focus = el('button', 'action-button', item.kind === 'game' ? '键盘操作' : '进入工具');
-        focus.type = 'button';
-        toolbar.append(label, focus);
         const stage = el('div', 'app-stage');
         const frame = el('iframe', 'app-frame');
         frame.title = item.名称;
         const status = el('p', 'app-status', '正在加载…'); status.setAttribute('role', 'status');
         const retry = el('button', 'action-button app-retry', '重新加载'); retry.type = 'button'; retry.hidden = true;
         stage.append(frame, status, retry);
-        body.append(toolbar, stage, el('p', 'app-help', item.说明));
+        body.append(stage, el('p', 'app-help', item.说明));
         let timeout;
         let disposed = false;
         const protocol = item.kind === 'game' ? 'game-hub' : 'tool-hub';
@@ -102,7 +90,6 @@ const Apps = (() => {
             } catch { /* The stage retains an explicit retry on load failure. */ }
         });
         retry.addEventListener('click', load);
-        focus.addEventListener('click', () => frame.contentWindow?.focus());
         window.addEventListener('message', message);
         document.addEventListener('visibilitychange', visibility);
         load();
