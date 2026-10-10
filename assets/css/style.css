@@ -17,6 +17,8 @@
     --bg-blur: 8px;
     --glass-blur: 10px;
     --board-height: min(560px, calc(100dvh - 100px));
+    /* 三行卡片共用高度：扣除面板内边距、边框和两处行间距。 */
+    --card-row-height: calc((var(--board-height) - 34px - 24px) / 3);
 }
 
 /* ==========================================================================
@@ -132,11 +134,10 @@ body.wallpaper-alternate::after {
 .card-pages::-webkit-scrollbar { display: none; }
 .card-pages.is-dragging { user-select: none; cursor: grabbing; }
 .card-pages .deck-page { width: 100%; flex: 0 0 100%; min-width: 0; height: 100%; overflow-y: auto; overscroll-behavior-y: contain; scroll-snap-align: start; scroll-snap-stop: always; }
-.card-pages #life-grid { grid-template-rows: none; grid-auto-rows: max-content; align-content: start; }
-.card-pages #life-grid > * { min-height: 156px; }
+.card-pages #life-grid { grid-template-rows: none; grid-auto-rows: var(--card-row-height); align-content: start; }
 .app-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-#games-grid { grid-auto-rows: max-content; align-content: start; padding: 2px; }
-.app-tile { min-height: 156px; cursor: pointer; }
+#games-grid { grid-auto-rows: var(--card-row-height); align-content: start; padding: 2px; }
+.app-tile { cursor: pointer; }
 .card-life .preview-line { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .has-app .detail-body { display: flex; flex-direction: column; overflow: visible; min-height: 0; }
 .app-stage { position: relative; flex: 1; min-height: 0; border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,.24); }
@@ -224,7 +225,7 @@ body.wallpaper-alternate::after {
 .bento-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, var(--card-row-height));
     gap: 12px;
     height: 100%;
     padding-top: 0px;  
@@ -598,7 +599,10 @@ body.wallpaper-alternate::after {
 
 /* 移动端：纵向堆叠 */
 @media (max-width: 860px) {
-    :root { --board-height: min(560px, calc(100dvh - 176px)); }
+    :root {
+        --board-height: min(560px, calc(100dvh - 176px));
+        --card-row-height: 140px;
+    }
     body {
         height: 100dvh;
         overflow: hidden;
@@ -629,7 +633,7 @@ body.wallpaper-alternate::after {
     .bento-grid {
         grid-template-columns: 1fr;
         grid-template-rows: none;
-        grid-auto-rows: minmax(140px, auto);
+        grid-auto-rows: minmax(var(--card-row-height), auto);
         padding-top: 0;
     }
     .bento-card[data-span="2"],
