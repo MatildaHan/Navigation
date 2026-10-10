@@ -56,7 +56,7 @@ test('five modes cycle in order, survive reload, and off cancels the only animat
         assert.equal(e.mode(), mode);
         assert.equal(e.frames.size, mode === 'off' ? 0 : 1);
         assert.equal(e.canvas.hidden, mode === 'off');
-        if (mode !== 'off') assert.ok(e.tick(i * 16 + 16).some(command => ['stroke', 'fill', 'fillRect'].includes(command[0])));
+        if (mode !== 'off') assert.ok(e.tick(i * 16 + 16).some(command => ['stroke', 'fill', 'fillRect', 'drawImage'].includes(command[0])));
         const reload = environment({ saved: mode });
         assert.equal(reload.mode(), mode);
         assert.equal(reload.toggle.attributes['aria-label'], e.toggle.attributes['aria-label']);
@@ -75,7 +75,7 @@ test('rain, snow and leaves drift left and down', () => {
     }
 });
 
-test('sunlight diverges from one upper-right source, fades outward and is cached between frames', () => {
+test('one broad sunlight beam is continuous, fades outward and is cached between frames', () => {
     const e = environment({ saved: 'sun' });
     const rays = e.commands.filter(command => command[0] === 'arc');
     assert.ok(rays.length > 0);
@@ -83,7 +83,8 @@ test('sunlight diverges from one upper-right source, fades outward and is cached
     assert.ok(x > e.window.innerWidth && y < 0);
     assert.ok(rays.every(ray => ray[1] === x && ray[2] === y));
     assert.ok(rays.every(ray => ray[4] > Math.PI / 2 && ray[5] < Math.PI));
-    assert.ok(rays.at(-1)[4] - rays[0][4] > 0.5);
+    assert.ok(rays.at(-1)[5] - rays[0][4] > 0.7);
+    assert.ok(rays.slice(1).every((ray, index) => Math.abs(ray[4] - rays[index][5]) < 1e-10));
     const stops = e.commands.filter(command => command[0] === 'colorStop');
     assert.ok(stops.some(stop => stop[1] === 1 && /, 0\)$/.test(stop[2])));
     assert.ok(stops.some(stop => stop[1] > 0 && stop[1] < 1 && /, 0\.\d+\)$/.test(stop[2])));
@@ -91,6 +92,7 @@ test('sunlight diverges from one upper-right source, fades outward and is cached
         const commands = e.tick(time);
         assert.equal(commands.filter(command => command[0] === 'drawImage').length, 1);
         assert.equal(commands.filter(command => command[0].startsWith('create')).length, 0);
+        assert.equal(commands.filter(command => command[0] === 'arc').length, 0);
     }
 });
 

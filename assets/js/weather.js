@@ -54,7 +54,6 @@
         let frame = 0;
         let lastTime = 0;
         let surfaceTime = 0;
-        let elapsed = 0;
         let sunlight = null;
 
         function position(initial) {
@@ -80,10 +79,9 @@
             const area = width * height;
             const counts = { rain: Math.max(18, Math.min(72, area / 18000)),
                 snow: Math.max(26, Math.min(100, area / 13000)),
-                leaves: Math.max(10, Math.min(26, area / 45000)), sun: 24, off: 0 };
+                leaves: Math.max(10, Math.min(26, area / 45000)), sun: 0, off: 0 };
             particles = Array.from({ length: Math.round(counts[mode]) }, () => makeParticle(true));
             splashes = [];
-            elapsed = 0;
             sunlight = mode === 'sun' ? buildSunlight() : null;
         }
 
@@ -201,7 +199,7 @@
         }
 
         function buildSunlight() {
-            // 缓存柔化的扇形光场，动画帧只绘制缓存和浮尘。
+            // 缓存一束宽阔、柔化的扇形光，随距离逐渐变淡。
             const layer = document.createElement('canvas');
             layer.width = canvas.width;
             layer.height = canvas.height;
@@ -210,12 +208,6 @@
             light.setTransform(layer.width / width, 0, 0, layer.height / height, 0, 0);
             const source = { x: width * 1.03, y: -height * 0.08 };
             const distance = Math.hypot(width, height) * 1.15;
-            const glow = light.createRadialGradient(source.x, source.y, 0, source.x, source.y, distance);
-            glow.addColorStop(0, 'rgba(255, 235, 185, 0.14)');
-            glow.addColorStop(0.35, 'rgba(255, 235, 185, 0.035)');
-            glow.addColorStop(1, 'rgba(255, 235, 185, 0)');
-            light.fillStyle = glow;
-            light.fillRect(0, 0, width, height);
             const beam = light.createRadialGradient(source.x, source.y, 0, source.x, source.y, distance);
             beam.addColorStop(0, 'rgba(255, 242, 207, 0.2)');
             beam.addColorStop(0.15, 'rgba(255, 242, 207, 0.18)');
@@ -223,47 +215,32 @@
             beam.addColorStop(0.8, 'rgba(255, 242, 207, 0.025)');
             beam.addColorStop(1, 'rgba(255, 242, 207, 0)');
             light.fillStyle = beam;
-            const rays = [{ angle: 105, spread: 0.025 }, { angle: 117, spread: 0.04 },
-                { angle: 131, spread: 0.035 }, { angle: 146, spread: 0.055 }, { angle: 160, spread: 0.04 }];
-            for (const ray of rays) {
-                const center = ray.angle * Math.PI / 180;
-                // 分片羽化两侧，距离光源越远越宽、越淡，避免硬边条带。
-                const slices = 20;
-                for (let i = 0; i < slices; i += 1) {
-                    const offset = (i + 0.5) / slices * 2 - 1;
-                    light.globalAlpha = Math.exp(-4 * offset * offset);
-                    light.beginPath();
-                    light.moveTo(source.x, source.y);
-                    light.arc(source.x, source.y, distance,
-                        center - ray.spread + i / slices * ray.spread * 2,
-                        center - ray.spread + (i + 1) / slices * ray.spread * 2);
-                    light.closePath();
-                    light.fill();
-                }
+            const center = 132 * Math.PI / 180;
+            const spread = 0.42;
+            // 连续分片羽化一束光的两侧，不再分成多条光线。
+            const slices = 80;
+            for (let i = 0; i < slices; i += 1) {
+                const offset = (i + 0.5) / slices * 2 - 1;
+                light.globalAlpha = Math.exp(-4 * offset * offset);
+                light.beginPath();
+                light.moveTo(source.x, source.y);
+                light.arc(source.x, source.y, distance,
+                    center - spread + i / slices * spread * 2,
+                    center - spread + (i + 1) / slices * spread * 2);
+                light.closePath();
+                light.fill();
             }
             return layer;
         }
 
-        function drawSun(dt) {
-            if (sunlight) {
-                context.globalAlpha = 0.85 + Math.sin(elapsed * 0.2) * 0.1;
-                context.drawImage(sunlight, 0, 0, width, height);
-            }
-            context.fillStyle = '#fff0bf';
-            for (const mote of particles) {
-                drift(mote, dt);
-                context.globalAlpha = mote.alpha * (0.65 + Math.sin(mote.phase) * 0.25);
-                context.beginPath();
-                context.arc(mote.x, mote.y, mote.radius, 0, Math.PI * 2);
-                context.fill();
-            }
+        function drawSun() {
+            if (sunlight) context.drawImage(sunlight, 0, 0, width, height);
         }
 
         const renderers = { sun: drawSun, rain: drawRain, snow: drawSnow, leaves: drawLeaves };
         function draw(time) {
             const dt = lastTime ? Math.min((time - lastTime) / 1000, 0.04) : 1 / 60;
             lastTime = time;
-            elapsed += dt;
             if (mode === 'rain' && time - surfaceTime > 250) {
                 readSurfaces();
                 surfaceTime = time;
