@@ -55,8 +55,6 @@ body, button, input, select, .px-theme, .px-theme * { font-family: 'Noto Sans SC
 .hist-item:hover { background: rgba(0,0,0,.4); }
 :is(.en-example .en,.jp-example .jp) { color: var(--text); }
 :is(.hist-year,.en-pos,.en-progress b,.jp-progress b,.poetry-hint b,.hist-era,.muyu-title,.muyu-count b) { color: var(--accent); }
-.poetry-content .blank { min-width: 1.1em; background: transparent; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; color: transparent; padding: 0; font: inherit; }
-.poetry-content .blank.revealed { color: var(--accent); }
 :is(.en-controls,.jp-controls,.poetry-controls) { flex-wrap: wrap; }
 :is(.answer-btn,.en-btn,.jp-btn,.poetry-btn,.muyu-btn,.hist-filter button,.music-btn,.ink-btn,.px-btn,.px-touch-btn), body.ink-theme .ink-btn { color: var(--text); background: rgba(0,0,0,.22); border: 1px solid var(--border); border-radius: 10px; min-height: 40px; font: inherit; letter-spacing: normal; padding: 10px 16px; text-shadow: none; box-shadow: none; }
 :is(.answer-btn,.en-btn.primary,.jp-btn.primary,.poetry-btn.primary,.hist-filter button.active,.music-btn.play,.ink-btn.primary,.px-btn-start), body.ink-theme .ink-btn.primary { background: var(--accent); color: #06201a; border-color: transparent; }
