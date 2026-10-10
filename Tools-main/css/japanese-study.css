@@ -1,0 +1,55 @@
+/* Scoped to the Japanese learning page; shared app styling stays intact. */
+.game-inner > .jp-wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+    gap: 12px;
+    padding: 0;
+}
+.jp-switches { display: flex; flex-wrap: wrap; gap: 8px; }
+.jp-switches[hidden], #kana[hidden], #note[hidden] { display: none; }
+.jp-switches .jp-btn { flex: 1 1 auto; }
+.jp-categories .jp-btn { flex: 0 1 auto; font-size: 13px; }
+.jp-btn { cursor: pointer; }
+.jp-btn[aria-pressed="true"], .jp-list button[aria-current="true"] {
+    background: var(--accent);
+    color: #06201a;
+    border-color: transparent;
+}
+.jp-description, .jp-note { font-size: 13px; line-height: 1.8; color: var(--text-sub); overflow-wrap: anywhere; }
+.jp-description:not(:empty) { padding: 8px 10px; background: var(--bg-sub); border-radius: 10px; }
+.jp-card { text-align: center; }
+.jp-kanji { font-size: 44px; line-height: 1.5; overflow-wrap: anywhere; }
+.jp-wrap[data-stage="sentences"] .jp-kanji { font-size: clamp(22px, 4vw, 30px); }
+.jp-kana { font-size: 18px; line-height: 1.7; overflow-wrap: anywhere; }
+.jp-romaji { font-size: 14px; line-height: 1.6; color: var(--text-sub); overflow-wrap: anywhere; }
+.jp-meaning { font-size: 17px; line-height: 1.6; border-top: 1px dashed var(--border); }
+.jp-note { margin-top: 10px; text-align: left; }
+.jp-controls { display: flex; justify-content: center; gap: 8px; }
+.jp-controls .jp-btn { flex: 1; min-width: 0; }
+.jp-progress { text-align: center; font-size: 13px; }
+.jp-speech-status:empty { display: none; }
+.jp-overview h2 { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+.jp-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; }
+.jp-list button {
+    display: flex; flex-direction: column; gap: 4px; align-items: center;
+    min-width: 0; min-height: 64px; padding: 10px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); background: var(--bg-sub); overflow-wrap: anywhere;
+}
+.jp-list .jp-list-text { font-size: 22px; line-height: 1.5; }
+.jp-list small { font-size: 12px; line-height: 1.6; }
+.jp-wrap[data-stage="words"] .jp-list .jp-list-text { font-size: 18px; }
+.jp-wrap[data-stage="sentences"] .jp-list { grid-template-columns: minmax(0, 1fr); }
+.jp-wrap[data-stage="sentences"] .jp-list button { align-items: flex-start; text-align: left; }
+.jp-wrap[data-stage="sentences"] .jp-list .jp-list-text { font-size: 16px; }
+.jp-guide { font-size: 13px; line-height: 1.8; color: var(--text-sub); border-top: 1px solid var(--border); padding-top: 10px; }
+.jp-guide summary { cursor: pointer; min-height: 44px; display: list-item; padding-block: 10px; color: var(--text); }
+.jp-guide p { margin: 10px 0; }
+.jp-guide a { color: var(--accent); }
+@media (max-width: 360px) {
+    .jp-categories .jp-btn { padding: 8px; }
+    .jp-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
