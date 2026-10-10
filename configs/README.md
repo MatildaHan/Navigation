@@ -11,7 +11,8 @@
 | `anniversary.md` | `anniversary` | 事件、日期、类型、重复和说明 |
 | `books.md` | `books` | 书名、作者、状态、进度、封面和说明 |
 | `movies.md` | `movies` | 片名、类型、评分、状态、封面和说明 |
-| `tools.md` | `tools` | 工具标识、名称、分类、网址和说明 |
+| `tools.md` | `tools` | 外部工具与本地工具标识、名称、分类、网址和说明 |
+| `games.md` | `games` | 游戏标识、名称、分类与操作说明 |
 | `checkin.md` | `checkins` | 打卡标识、名称和说明 |
 | `habits.md` | `habits` | 习惯标识、名称、每周目标和说明 |
 | `focus.md` | `focus` | 专注分钟、休息分钟 |
@@ -39,9 +40,9 @@
 
 为兼容旧配置，模块文件读取失败或未提供某分区时，会保留 `config.md` 中相应的旧分区内容，并提示读取失败。模块文件中的同名分区优先。
 
-## 两页内容
+## 三页内容
 
-第一页保留原有招呼、日历、格言、音乐、纪念日、书架和观影卡片。第二页地址是 `#life`，展示工具箱、今日打卡、习惯养成、专注计时、随手记、目标与项目、愿望清单。支持触屏横向滑动、触控板横向滚动、鼠标拖动、分页链接，以及网格内左右方向键；纵向滚动仍用于查看手机端内容。
+第一页保留原有招呼、日历、格言、音乐、纪念日、书架和观影卡片。第二页地址是 `#life`，展示工具箱、今日打卡、习惯养成、专注计时、随手记、目标与项目、愿望清单，以及「学习与放松」中的七个本地工具。第三页 `#games` 展示十个本地游戏。桌面端第二、三页可纵向滚动查看全部卡片。支持触屏横向滑动、触控板横向滚动、鼠标拖动、分页链接，以及网格内左右方向键；纵向滚动仍用于查看手机端内容。
 
 新详情地址为 `#tools`、`#checkin`、`#habits`、`#focus`、`#notes`、`#projects`、`#wishlist`，返回后回到第二页。原有详情返回第一页。所有详情支持直接打开和浏览器历史导航。
 
@@ -59,4 +60,16 @@ MD 定义公开内容、项目和目标。打卡、备注、工具收藏、专�
 
 ## 验证
 
-运行 `node --check assets/js/script.js`、`node --check assets/js/life.js` 和 `node --test tests/life.test.js`。浏览器检查两页切换、各详情、手机布局、记录交互和播放连续性；本项目不需要包管理或构建工具。
+运行 `node --check assets/js/script.js`、`node --check assets/js/life.js` 和 `node --test tests/*.test.js`。浏览器检查三页切换、各详情、手机布局、记录交互和播放连续性；本项目不需要包管理或构建工具。
+
+## 本地工具与游戏
+
+`tools.md` 中的本地工具网址使用 `#tool/标识`，与外部工具共用搜索、分类和收藏；在「学习与放松」也有直接入口。本地工具包括 `book`、`cyber-muyu`、`english-study`、`japanese-study`、`poetry-recite`、`history-events`、`music-player`。它们在当前页面打开，返回生活与工具。
+
+`games.md` 中的标识对应 `Games-main/games/` 中的文件名：`tetris`、`sudoku`、`nonogram`、`chess`、`gomoku`、`klotski`、`minesweeper`、`lightsout`、`graphcoloring`、`zebra`。详情地址使用 `#game/标识`，返回第三页。工具和游戏共用固定外壳，支持顶部选择器切换、深链接刷新与浏览器前进后退。游戏键盘操作可先点击游戏区域或「键盘操作」按钮。
+
+入口名称、分类与说明由 MD 配置，允许嵌入的本地文件在 `assets/js/apps.js` 中明确列出；新增实现时需同时更新清单。旧 `Games-main/index.html` 和 `Tools-main/index.html` 会转到主页相应入口；直接打开单个 HTML 时也有返回链接。通用外观在 `assets/css/apps.css` 中，保留棋盘必要的对比色。象棋规则和 AI 引擎在 `Games-main/js/chess-engine.js`，AI 在 Worker 中限时搜索。
+
+本地音乐使用浏览器文件选择器，不上传音频，离开工具会停止播放并释放资源。语音朗读依赖浏览器及系统安装的语音；没有对应语音时可能无法发音。木鱼次数、俄罗斯方块最高分、数独解锁记录分别使用原有键 `muyu.count`、`tetrisBest`、`sudokuProgress`，独立于生活记录 JSON 的导入导出。木鱼归零支持当次页面内撤销。切换游戏会开始新局，后台时俄罗斯方块暂停，象棋停止搜索。
+
+运行 `node --test tests/*.test.js` 检查生活记录、配置、游戏规则与题库；浏览器中仍须验证实际操作与响应布局。

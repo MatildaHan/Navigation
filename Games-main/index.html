@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>游戏</title></head>
+<body><p><a href="../index.html#games">进入游戏</a></p>
+<script>
+'use strict';
+const ids = ['tetris', 'sudoku', 'nonogram', 'chess', 'gomoku', 'klotski', 'minesweeper', 'lightsout', 'graphcoloring', 'zebra'];
+const id = location.hash.slice(1);
+location.replace('../index.html#' + (ids.includes(id) ? 'game/' + id : 'games'));
+</script></body></html>

@@ -9,7 +9,9 @@
 - `configs/*.md`：各卡片独立配置，字段和分区见 `configs/README.md`；由 JavaScript 解析，保留现有分区和键值格式。
 - `assets/css/style.css`：样式、响应式布局和动画。
 - `assets/js/script.js`：配置解析、页面渲染和交互逻辑。
-- `assets/js/life.js`：两页卡片切换、生活工具详情和浏览器本地记录。
+- `assets/js/life.js`：三页卡片切换、生活工具详情和浏览器本地记录。
+- `assets/js/apps.js`、`assets/js/app-common.js`、`assets/css/apps.css`：本地工具、游戏入口、详情生命周期和统一样式。
+- `Games-main/`、`Tools-main/`：独立游戏与工具实现；象棋引擎和 Worker 在 `Games-main/js/`。
 - `assets/images/`、`assets/music/`：图片和音频资源。
 
 这是原生 HTML/CSS/JavaScript 静态网站，目前没有包管理或构建流程。预览须通过 HTTP 静态服务器访问，以便读取 `config.md`。
@@ -30,7 +32,7 @@
 - 配置、链接或媒体：检查解析格式和资源路径，通过 HTTP 预览确认相关内容显示及链接或媒体可用。
 - HTML/CSS：检查桌面和窄屏显示、溢出、可读性与相关交互。
 - JavaScript：运行可用的语法检查（如 `node --check assets/js/script.js`），并在浏览器验证受影响功能及控制台错误。
-- 分页或本地记录：同时检查滑动与按钮切页、详情返回对应页、刷新持久化、无效数据和记录导入恢复；模型与配置回归检查可运行 `node --test tests/life.test.js`。
+- 分页或本地记录：同时检查滑动与按钮切页、详情返回对应页、刷新持久化、无效数据和记录导入恢复；模型与配置回归检查可运行 `node --test tests/*.test.js`。
 - 验证规模与改动影响相匹配；缺少工具、未执行的检查和失败的检查须如实说明，不得报告为通过。
 
 ## 完成后自动上传 GitHub

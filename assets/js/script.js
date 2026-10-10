@@ -38,7 +38,7 @@ async function init() {
     const steps = [
         applyText, applyLinkHref, applyAvatar, applyWallpaper, applyTheme,
         applyDocumentMeta, renderLinks, initClockAndCalendar,
-        initMusicPlayer, initSearch, renderBooks, renderMovies, initDeck, initLifeModules, initDetailViews,
+        initMusicPlayer, initSearch, renderBooks, renderMovies, initDeck, initLifeModules, Apps.init, initDetailViews,
     ];
     steps.forEach(fn => {
         try { fn(CFG); } catch (e) { console.error(`[${fn.name}] 执行出错`, e); }
@@ -57,7 +57,7 @@ const MODULE_FILES = {
     greeting: ['greetings'], calendar: ['calendar', 'todos'], quote: ['quote', 'quotes'],
     music: ['playlist'], anniversary: ['anniversary'], books: ['books'], movies: ['movies'],
     tools: ['tools'], checkin: ['checkins'], habits: ['habits'], focus: ['focus'],
-    notes: ['notes'], projects: ['projects', 'steps'], wishlist: ['wishlist'],
+    notes: ['notes'], projects: ['projects', 'steps'], wishlist: ['wishlist'], games: ['games'],
 };
 
 async function loadModules(base) {
@@ -123,7 +123,7 @@ function isExternal(href) {
 /* ============================================================
  *  配置解析器
  * ============================================================ */
-const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist', 'todos', 'quotes', 'tools', 'checkins', 'habits', 'notes', 'projects', 'steps', 'wishlist']);
+const LIST_SECTIONS = new Set(['links', 'anniversary', 'books', 'movies', 'playlist', 'todos', 'quotes', 'tools', 'checkins', 'habits', 'notes', 'projects', 'steps', 'wishlist', 'games']);
 
 function parseConfig(mdText) {
     const result = {};
@@ -701,7 +701,8 @@ function initDetailViews(CFG) {
     function route() {
         const key = location.hash.slice(1);
         const previous = active;
-        const isDetail = Object.hasOwn(titles, key);
+        const app = Apps.get(key);
+        const isDetail = !!app || Object.hasOwn(titles, key);
         if (isDetail && !active) homeScroll = window.scrollY;
         disposeDetail();
         disposeDetail = () => {};
@@ -712,19 +713,21 @@ function initDetailViews(CFG) {
         view.hidden = !isDetail;
         document.getElementById('page-switcher').hidden = isDetail;
         active = isDetail ? key : '';
+        document.querySelector('.main-board').classList.toggle('has-app', !!app);
         const name = CFG.profile?.昵称 || '个人主页';
-        document.title = isDetail ? `${titles[key]} - ${name}` : `${name} - 个人主页`;
+        document.title = isDetail ? `${app?.名称 || titles[key]} - ${name}` : `${name} - 个人主页`;
         if (!isDetail) {
-            window.deckController.setPage(key === 'life' ? 1 : 0);
+            window.deckController.setPage(key === 'games' ? 2 : key === 'life' ? 1 : 0);
             if (previous) {
-                links.get(previous)?.focus({ preventScroll: true });
+                (links.get(previous) || [...home.querySelectorAll('a')].find(link => link.getAttribute('href') === `#${previous}`))?.focus({ preventScroll: true });
                 window.scrollTo(0, homeScroll);
             }
             return;
         }
-        heading.textContent = titles[key];
-        document.querySelector('.back-link').href = Object.hasOwn(Life.titles, key) ? '#life' : '#';
-        if (Object.hasOwn(Life.titles, key)) Life.render(body, key);
+        heading.textContent = app?.名称 || titles[key];
+        document.querySelector('.back-link').href = app?.parent || (Object.hasOwn(Life.titles, key) ? '#life' : '#');
+        if (app) disposeDetail = Apps.render(body, key);
+        else if (Object.hasOwn(Life.titles, key)) Life.render(body, key);
         else if (key === 'calendar') disposeDetail = renderCalendarDetail(body, CFG);
         else if (key === 'music') {
             music.classList.add('detail-player');

@@ -1,0 +1,424 @@
+/* ============================================================
+   极简主义 · Minimalism
+   白底、黑字、单一强调色、无阴影、大留白
+   ============================================================ */
+:root {
+    --bg:           #FFFFFF;
+    --bg-sub:       #FAFAFA;
+    --bg-hover:     #F5F5F5;
+    --text:         #111111;
+    --text-sub:     #888888;
+    --text-light:   #BBBBBB;
+    --border:       #E5E5E5;
+    --border-strong:#111111;
+    --accent:       #111111;   /* 单一强调色：纯黑 */
+    --accent-text:  #FFFFFF;
+    --radius:       0px;
+    --gap:          16px;
+
+    --safe-top:     env(safe-area-inset-top, 0px);
+    --safe-bottom:  env(safe-area-inset-bottom, 0px);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+html, body {
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(32px + var(--safe-top)) 24px calc(32px + var(--safe-bottom));
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+/* iframe 内 */
+body.embedded {
+    background: transparent;
+    padding: 0;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+/* ============================================================
+   主容器
+   ============================================================ */
+.container {
+    width: 100%;
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+/* ============================================================
+   顶部标题
+   ============================================================ */
+.site-header {
+    padding: 0;
+    flex-shrink: 0;
+}
+.site-title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+.site-title .sub {
+    display: none;
+}
+
+/* ============================================================
+   工具导航（桌面）
+   极简：无背景、无边框，仅文字 + 下划线
+   ============================================================ */
+.tool-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.nav-btn {
+    background: transparent;
+    color: var(--text-sub);
+    border: none;
+    padding: 0 0 6px 0;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: color 0.15s;
+    font-family: inherit;
+    letter-spacing: 0.05em;
+    position: relative;
+    min-height: auto;
+}
+.nav-btn:hover {
+    color: var(--text);
+}
+.nav-btn.active {
+    color: var(--text);
+    font-weight: 500;
+}
+.nav-btn.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--text);
+}
+.nav-btn:focus-visible {
+    outline: 1px solid var(--text);
+    outline-offset: 4px;
+}
+
+/* ============================================================
+   内容容器
+   极简：无边框、无阴影，只有一条顶线
+   ============================================================ */
+.content {
+    background: var(--bg);
+    border: none;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+    position: relative;
+    overflow: hidden;
+    height: 640px;
+    height: clamp(420px, calc(100dvh - 280px), 720px);
+    min-height: 420px;
+}
+.content iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* ============================================================
+   iframe 内部通用布局
+   ============================================================ */
+.game-inner {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   通用按钮
+   极简：无圆角、无阴影、细边框或纯色
+   ============================================================ */
+.btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--text);
+    padding: 12px 24px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: 44px;
+    text-transform: uppercase;
+}
+.btn:hover:not(:disabled) {
+    background: var(--text);
+    color: var(--bg);
+}
+.btn:active:not(:disabled) { transform: none; }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn.primary {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+}
+.btn.primary:hover:not(:disabled) {
+    background: transparent;
+    color: var(--text);
+}
+
+/* ============================================================
+   模态框
+   ============================================================ */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.96);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 24px;
+}
+.modal.show { display: flex; }
+.modal-box {
+    background: transparent;
+    border: none;
+    padding: 40px;
+    max-width: 90vw;
+    width: 400px;
+    text-align: center;
+}
+.modal-box h2 {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+    color: var(--text);
+    text-transform: uppercase;
+}
+.modal-box p {
+    font-size: 14px;
+    color: var(--text-sub);
+    letter-spacing: 0.05em;
+    margin-bottom: 28px;
+}
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.modal-actions .btn { flex: 1; }
+
+/* ============================================================
+   移动端单行栏
+   ============================================================ */
+.mobile-topbar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 0 16px 0;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.mobile-topbar .current-name {
+    flex: 1;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mobile-topbar .switch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--text);
+    border-radius: 0;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    min-height: 36px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    transition: all 0.15s;
+}
+.mobile-topbar .switch-btn:hover {
+    background: var(--text);
+    color: var(--bg);
+}
+
+/* ============================================================
+   全屏选择弹窗
+   ============================================================ */
+.picker {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    display: none;
+    flex-direction: column;
+    padding: calc(32px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+}
+.picker.show { display: flex; }
+.picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.picker-title {
+    color: var(--text);
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+.picker-close {
+    background: transparent;
+    color: var(--text-sub);
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    font-family: inherit;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.picker-close:hover { color: var(--text); }
+.picker-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    align-content: start;
+    flex: 1;
+}
+.picker-item {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--text);
+    font-size: 20px;
+    font-family: inherit;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    padding: 24px 0;
+    cursor: pointer;
+    text-align: left;
+    transition: padding-left 0.2s, color 0.15s;
+    display: flex;
+    align-items: center;
+}
+.picker-item::before {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 1px;
+    background: var(--text);
+    margin-right: 0;
+    transition: width 0.2s, margin-right 0.2s;
+}
+.picker-item:hover {
+    color: var(--text);
+}
+.picker-item:hover::before {
+    width: 24px;
+    margin-right: 12px;
+}
+.picker-item.active {
+    color: var(--text);
+    font-weight: 500;
+}
+.picker-item.active::before {
+    width: 24px;
+    margin-right: 12px;
+    background: var(--text);
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (min-width: 768px) {
+    .mobile-topbar { display: none !important; }
+    .picker { display: none !important; }
+}
+
+@media (max-width: 767px) {
+    body {
+        padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+    }
+    .container {
+        flex: 1;
+        min-height: 0;
+        gap: 24px;
+    }
+    .site-header { padding: 0; }
+    .site-title { font-size: 12px; letter-spacing: 0.25em; }
+    .site-title .sub { display: none; }
+    .tool-nav { display: none; }
+    .mobile-topbar { display: flex; }
+    .content {
+        flex: 1;
+        min-height: 0;
+        height: auto;
+        padding-top: 20px;
+    }
+    .game-inner { padding: 0; }
+}

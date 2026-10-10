@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>数织</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.nono-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+}
+.nono-toolbar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    color: var(--text-sub);
+    font-size: 13px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.nono-toolbar b { color: var(--primary); }
+.nono-grid {
+    display: grid;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 6px;
+    overflow: auto;
+    max-width: 100%;
+    max-height: 60vh;
+    touch-action: manipulation;
+}
+.nono-cell {
+    width: var(--cell, 30px);
+    height: var(--cell, 30px);
+    background: rgba(30,41,59,0.9);
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.nono-cell:hover { background: rgba(255,255,255,0.08); }
+.nono-cell.filled { background: var(--primary); box-shadow: inset 0 0 8px rgba(0,0,0,0.35); }
+.nono-cell.marked { background: rgba(239,68,68,0.35); }
+.nono-cell.locked { cursor: default; }
+.nono-cell.locked:hover { background: inherit; }
+.nono-clue {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 4px;
+    font-size: 11px;
+    color: var(--text-sub);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    font-weight: 600;
+    line-height: 1.1;
+    overflow: hidden;
+}
+.nono-clue.top { justify-content: center; flex-direction: column; text-align: center; }
+.nono-clue.corner { background: rgba(0,0,0,0.4); }
+.nono-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+@media (max-width: 767px) {
+    .nono-toolbar { font-size: 12px; gap: 10px; }
+    .nono-cell { width: var(--cell, 26px); height: var(--cell, 26px); }
+    .nono-clue { font-size: 10px; }
+    .nono-btns .btn { font-size: 12px; padding: 8px 12px; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="nono-wrap">
+        <div class="nono-toolbar">
+            <span>尺寸 <b id="sizeLabel">—</b></span>
+            <span>难度 <b id="levelLabel">—</b></span>
+            <span>剩余 <b id="remainLabel" style="color: var(--primary);">—</b></span>
+        </div>
+        <div id="grid" class="nono-grid"></div>
+        <div class="nono-btns">
+            <button class="btn" id="btnNew">新游戏</button>
+            <button class="btn ghost" id="btnCheck">检查</button>
+            <button class="btn ghost" id="btnLevel">切换难度</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h2 id="modalTitle">恭喜完成</h2>
+        <p id="modalSub">数织通关</p>
+        <div class="modal-actions">
+            <button class="btn" id="btnNext">下一题</button>
+            <button class="btn ghost" id="btnClose">关闭</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+
+    const LEVELS = [
+        { size: 5,  density: 0.6, name: '简单' },
+        { size: 10, density: 0.6, name: '困难' },
+        { size: 15, density: 0.6, name: '专业' }
+    ];
+
+    let levelIdx = 0;
+    let solution = [];
+    let gridState = [];
+    let totalFilled = 0;
+    let locked = false;
+
+    const gridEl = document.getElementById('grid');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const levelLabel = document.getElementById('levelLabel');
+    const remainLabel = document.getElementById('remainLabel');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+    const btnNext = document.getElementById('btnNext');
+    const btnClose = document.getElementById('btnClose');
+    const toastContainer = document.getElementById('toastContainer');
+
+    function toast(text, type = '') {
+        const el = document.createElement('div');
+        el.className = 'toast' + (type ? ' ' + type : '');
+        el.textContent = text;
+        toastContainer.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.3s';
+            setTimeout(() => el.remove(), 300);
+        }, 2000);
+    }
+
+    function generateSolution(size, density) {
+        const sol = Array.from({ length: size }, () => Array(size).fill(0));
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x <= Math.floor((size - 1) / 2); x++) {
+                const v = Math.random() < density ? 1 : 0;
+                sol[y][x] = v;
+                sol[y][size - 1 - x] = v;
+            }
+        }
+        if (sol.flat().every(value => value === 0)) sol[0][0] = 1;
+        return sol;
+    }
+
+    function rowClue(row) {
+        const clue = [];
+        let cnt = 0;
+        for (const v of row) {
+            if (v) cnt++;
+            else { if (cnt) clue.push(cnt); cnt = 0; }
+        }
+        if (cnt) clue.push(cnt);
+        return clue.length ? clue : [0];
+    }
+    function colClue(sol, col) { return rowClue(sol.map(r => r[col])); }
+    function countFilled() {
+        let n = 0;
+        solution.forEach(r => r.forEach(v => { if (v) n++; }));
+        return n;
+    }
+
+    function computeCellSize(size, maxRowClueLen, maxColClueLen) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const availW = Math.min(vw - 60, 700);
+        const availH = Math.min(vh - 260, 500);
+        const clueW = maxRowClueLen * 14;
+        const clueH = maxColClueLen * 14;
+        const byW = Math.floor((availW - clueW - size * 2) / size);
+        const byH = Math.floor((availH - clueH - size * 2) / size);
+        return Math.max(12, Math.min(byW, byH, 34));
+    }
+
+    function render() {
+        const size = solution.length;
+        const rowClues = solution.map(rowClue);
+        const colClues = Array.from({ length: size }, (_, c) => colClue(solution, c));
+        const maxRowClue = Math.max(...rowClues.map(c => c.length));
+        const maxColClue = Math.max(...colClues.map(c => c.length));
+
+        const cell = computeCellSize(size, maxRowClue, maxColClue);
+        const clueSize = Math.max(14, Math.floor(cell * 0.7));
+
+        gridEl.style.setProperty('--cell', cell + 'px');
+        gridEl.innerHTML = '';
+        gridEl.style.gridTemplateColumns = `${maxRowClue * clueSize}px repeat(${size}, ${cell}px)`;
+        gridEl.style.gridTemplateRows = `${maxColClue * clueSize}px repeat(${size}, ${cell}px)`;
+
+        const corner = document.createElement('div');
+        corner.className = 'nono-clue corner';
+        corner.style.gridColumn = '1 / 2';
+        corner.style.gridRow = '1 / 2';
+        gridEl.appendChild(corner);
+
+        for (let c = 0; c < size; c++) {
+            const el = document.createElement('div');
+            el.className = 'nono-clue top';
+            el.style.gridColumn = `${c + 2} / ${c + 3}`;
+            el.style.gridRow = '1 / 2';
+            el.innerHTML = colClues[c].map(n => `<div>${n}</div>`).join('');
+            gridEl.appendChild(el);
+        }
+
+        for (let r = 0; r < size; r++) {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'nono-clue';
+            rowEl.style.gridColumn = '1 / 2';
+            rowEl.style.gridRow = `${r + 2} / ${r + 3}`;
+            rowEl.innerText = rowClues[r].join(' ');
+            gridEl.appendChild(rowEl);
+
+            for (let c = 0; c < size; c++) {
+                const cellEl = document.createElement('div');
+                cellEl.className = 'nono-cell';
+                cellEl.dataset.r = r;
+                cellEl.dataset.c = c;
+                if (gridState[r][c] === 1) cellEl.classList.add('filled');
+                if (gridState[r][c] === 2) cellEl.classList.add('marked');
+                if (locked) cellEl.classList.add('locked');
+                gridEl.appendChild(cellEl);
+            }
+        }
+    }
+
+    let longPressTimer = null;
+    let longPressHandled = false;
+
+    gridEl.addEventListener('click', e => {
+        if (locked) return;
+        const cell = e.target.closest('.nono-cell');
+        if (!cell) return;
+        if (longPressHandled) { longPressHandled = false; return; }
+        const r = +cell.dataset.r, c = +cell.dataset.c;
+        toggle(r, c, 1);
+    });
+
+    gridEl.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        if (locked) return;
+        if (longPressHandled) return;
+        const cell = e.target.closest('.nono-cell');
+        if (!cell) return;
+        const r = +cell.dataset.r, c = +cell.dataset.c;
+        toggle(r, c, 2);
+    });
+
+    gridEl.addEventListener('touchstart', e => {
+        if (locked) return;
+        const cell = e.target.closest('.nono-cell');
+        if (!cell) return;
+        longPressHandled = false;
+        longPressTimer = setTimeout(() => {
+            longPressHandled = true;
+            const r = +cell.dataset.r, c = +cell.dataset.c;
+            toggle(r, c, 2);
+        }, 450);
+    }, { passive: true });
+
+    gridEl.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); longPressHandled = false; });
+    gridEl.addEventListener('touchend', () => {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    });
+    gridEl.addEventListener('touchmove', () => {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    }, { passive: true });
+
+    function toggle(r, c, mode) {
+        if (locked) return;
+        if (mode === 1) gridState[r][c] = gridState[r][c] === 1 ? 0 : 1;
+        else gridState[r][c] = gridState[r][c] === 2 ? 0 : 2;
+        const cellEl = gridEl.querySelector(`.nono-cell[data-r="${r}"][data-c="${c}"]`);
+        if (cellEl) {
+            cellEl.classList.toggle('filled', gridState[r][c] === 1);
+            cellEl.classList.toggle('marked', gridState[r][c] === 2);
+        }
+        updateRemain();
+        checkWin();
+    }
+
+    function updateRemain() {
+        let filled = 0;
+        gridState.forEach(r => r.forEach(v => { if (v === 1) filled++; }));
+        const diff = totalFilled - filled;
+        if (diff > 0) { remainLabel.textContent = diff; remainLabel.style.color = 'var(--primary)'; }
+        else if (diff === 0) { remainLabel.textContent = '0'; remainLabel.style.color = 'var(--primary)'; }
+        else { remainLabel.textContent = `超出 ${-diff}`; remainLabel.style.color = 'var(--danger)'; }
+    }
+
+    function deriveClue(arr) {
+        const clue = []; let cnt = 0;
+        for (const v of arr) {
+            if (v === 1) cnt++;
+            else { if (cnt) clue.push(cnt); cnt = 0; }
+        }
+        if (cnt) clue.push(cnt);
+        return clue.length ? clue : [0];
+    }
+    function cluesEqual(a, b) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+        return true;
+    }
+
+    function checkByClues() {
+        const size = solution.length;
+        const targetRowClues = solution.map(rowClue);
+        const targetColClues = Array.from({ length: size }, (_, c) => colClue(solution, c));
+        const curRows = gridState.map(row => row.map(v => v === 1 ? 1 : 0));
+        const curCols = Array.from({ length: size }, (_, c) => curRows.map(r => r[c]));
+        for (let r = 0; r < size; r++) {
+            if (!cluesEqual(deriveClue(curRows[r]), targetRowClues[r])) return false;
+        }
+        for (let c = 0; c < size; c++) {
+            if (!cluesEqual(deriveClue(curCols[c]), targetColClues[c])) return false;
+        }
+        return true;
+    }
+
+    function checkWin() {
+        if (locked) return;
+        if (checkByClues()) {
+            locked = true;
+            render(); // 加 locked 样式
+            modalTitle.textContent = '恭喜完成';
+            modalSub.textContent = `数织 ${solution.length} × ${solution.length}`;
+            modal.classList.add('show');
+        }
+    }
+
+    function checkAnswer() {
+        if (locked) { toast('已完成，无需检查'); return; }
+        if (checkByClues()) { toast('全部正确！', 'success'); return; }
+        const size = solution.length;
+        let badRows = 0, badCols = 0;
+        const targetRowClues = solution.map(rowClue);
+        const targetColClues = Array.from({ length: size }, (_, c) => colClue(solution, c));
+        const curRows = gridState.map(row => row.map(v => v === 1 ? 1 : 0));
+        const curCols = Array.from({ length: size }, (_, c) => curRows.map(r => r[c]));
+        for (let r = 0; r < size; r++) if (!cluesEqual(deriveClue(curRows[r]), targetRowClues[r])) badRows++;
+        for (let c = 0; c < size; c++) if (!cluesEqual(deriveClue(curCols[c]), targetColClues[c])) badCols++;
+        toast(`还有 ${badRows} 行、${badCols} 列不符`, 'warn');
+    }
+
+    function newGame() {
+        const lv = LEVELS[levelIdx];
+        solution = generateSolution(lv.size, lv.density);
+        gridState = Array.from({ length: lv.size }, () => Array(lv.size).fill(0));
+        totalFilled = countFilled();
+        locked = false;
+        sizeLabel.textContent = `${lv.size} × ${lv.size}`;
+        levelLabel.textContent = lv.name;
+        updateRemain();
+        render();
+    }
+
+    document.getElementById('btnNew').onclick = newGame;
+    document.getElementById('btnCheck').onclick = checkAnswer;
+    document.getElementById('btnLevel').onclick = () => {
+        levelIdx = (levelIdx + 1) % LEVELS.length;
+        newGame();
+    };
+    btnNext.onclick = () => { modal.classList.remove('show'); newGame(); };
+    btnClose.onclick = () => { modal.classList.remove('show'); };
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 200);
+    });
+
+    newGame();
+    GameBridge.notifyReady();
+})();
+</script>
+</body>
+</html>

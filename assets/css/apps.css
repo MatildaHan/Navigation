@@ -1,0 +1,84 @@
+/* Shared navigation theme, loaded after app-specific board rules. */
+:root {
+    --accent-hue: 165;
+    --accent: hsl(var(--accent-hue), 70%, 60%);
+    --primary: var(--accent);
+    --primary-dim: rgba(82,224,189,.14);
+    --primary-mid: rgba(82,224,189,.3);
+    --bg: transparent;
+    --bg-base: transparent;
+    --bg-sub: rgba(0,0,0,.28);
+    --bg-hover: rgba(255,255,255,.1);
+    --text: #fff;
+    --text-sub: #bec8c8;
+    --text-light: #a9b7b7;
+    --border: rgba(255,255,255,.18);
+    --radius: 14px;
+}
+html, body { height: 100%; min-height: 0; }
+body.embedded, body.embedded.ink-theme { background: transparent !important; background-image: none !important; color: var(--text); padding: 0; height: 100%; min-height: 0; overflow: hidden; }
+body::before, .px-theme.game-inner::before, .px-theme.game-inner::after { display: none !important; }
+body, button, input, select, .px-theme, .px-theme * { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; letter-spacing: normal; }
+.game-inner, body.ink-theme .game-inner, .px-theme.game-inner { background: transparent; padding: 18px; height: 100%; min-height: 0; width: 100%; overflow: auto; align-items: flex-start; justify-content: flex-start; }
+.game-inner > div { flex-shrink: 0; margin-inline: auto; }
+.game-inner > :is(.answer-wrap,.muyu-wrap,.en-wrap,.jp-wrap,.poetry-wrap,.hist-wrap,.music-wrap) { max-width: 720px; min-height: 0; padding: 16px 0; }
+:is(.en-title,.jp-title,.poetry-title,.hist-title,.answer-box,.en-word,.jp-word,.jp-kanji,.en-meaning,.jp-meaning,.poetry-name,.poetry-content,.hist-event,.music-title .name) { color: var(--text); }
+:is(.answer-subtitle,.answer-hint,.en-subtitle,.en-phonetic,.en-example,.en-example .zh,.en-progress,.jp-subtitle,.jp-kana,.jp-romaji,.jp-example,.jp-example .zh,.jp-progress,.poetry-subtitle,.poetry-dynasty,.poetry-author,.poetry-hint,.hist-subtitle,.hist-desc,.music-hint,.music-title .artist,.muyu-count,.muyu-merit,.muyu-hint) { color: var(--text-sub); }
+:is(.en-card,.jp-card,.poetry-card,.hist-item,.answer-box,.card,.ink-card), body.ink-theme .ink-card { background: rgba(0,0,0,.28); border: 1px solid var(--border); border-radius: 14px; box-shadow: none; color: var(--text); }
+.hist-item:hover { background: rgba(0,0,0,.4); }
+:is(.en-example .en,.jp-example .jp) { color: var(--text); }
+:is(.hist-year,.en-pos,.en-progress b,.jp-progress b,.poetry-hint b,.hist-era,.muyu-title,.muyu-count b) { color: var(--accent); }
+.poetry-content .blank { min-width: 1.1em; background: transparent; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; color: transparent; padding: 0; font: inherit; }
+.poetry-content .blank.revealed { color: var(--accent); }
+:is(.en-controls,.jp-controls,.poetry-controls) { flex-wrap: wrap; }
+:is(.answer-btn,.en-btn,.jp-btn,.poetry-btn,.muyu-btn,.hist-filter button,.music-btn,.ink-btn,.px-btn,.px-touch-btn), body.ink-theme .ink-btn { color: var(--text); background: rgba(0,0,0,.22); border: 1px solid var(--border); border-radius: 10px; min-height: 40px; font: inherit; letter-spacing: normal; padding: 10px 16px; text-shadow: none; box-shadow: none; }
+:is(.answer-btn,.en-btn.primary,.jp-btn.primary,.poetry-btn.primary,.hist-filter button.active,.music-btn.play,.ink-btn.primary,.px-btn-start), body.ink-theme .ink-btn.primary { background: var(--accent); color: #06201a; border-color: transparent; }
+button:hover:not(:disabled), body.ink-theme .ink-btn:hover { filter: brightness(1.12); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, [role="button"]:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.modal-box, body.ink-theme .modal-box { background: #1b2929; color: var(--text); border: 1px solid var(--border); border-radius: 18px; padding: 24px; }
+.modal-box h2, body.ink-theme .modal-box h2 { color: var(--accent); }
+.modal-box p, body.ink-theme .modal-box p { color: var(--text-sub); }
+.px-theme { --px-panel: rgba(0,0,0,.3); --px-panel-2: rgba(0,0,0,.4); --px-border: #647777; --px-border-hi: #b3d3cb; --px-text: #fff; --px-text-dim: #bec8c8; --px-accent: var(--accent); }
+.px-theme .tetris-layout { min-height: 0; }
+.px-theme #tetris-canvas { border: 2px solid var(--border); border-radius: 8px; box-shadow: none; }
+.px-theme .px-card { border-radius: 12px; box-shadow: none; }
+.ink-select, body.ink-theme .ink-select { color: var(--text); background-color: #233232; border: 1px solid var(--border); border-radius: 8px; }
+/* Board surfaces retain contrasting pieces and game state colors. */
+.chess-board-wrap, .gmk-board-wrap { margin-inline: auto; }
+.standalone-back { display: none; }
+body.standalone-app { background: #1b2929 !important; padding: 16px; overflow: auto; }
+.standalone-app .standalone-back { display: block; color: var(--accent); padding: 10px; margin: 0 auto; width: min(900px, 100%); }
+.standalone-app .game-inner { width: min(900px, 100%); height: 660px; margin-inline: auto; border: 1px solid var(--border); border-radius: 16px; }
+@media (max-width: 600px) {
+    .game-inner, body.ink-theme .game-inner, .px-theme.game-inner { padding: 12px; }
+    .game-inner > :is(.answer-wrap,.muyu-wrap,.en-wrap,.jp-wrap,.poetry-wrap,.hist-wrap,.music-wrap) { width: 100%; }
+    .en-btn,.jp-btn,.poetry-btn { padding: 10px 12px; }
+    .answer-box { font-size: 22px; padding: 40px 16px; }
+    .standalone-app .game-inner { height: max(540px, calc(100dvh - 90px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+.music-hint #linkFile { color: var(--accent); background: transparent; border: 0; text-decoration: underline; padding: 6px; cursor: pointer; }
+.music-progress input[type="range"] { min-width: 0; flex: 1; accent-color: var(--accent); }
+.ink-card b, body.ink-theme .ink-card b { color: var(--accent); }
+
+body.ink-theme .ink-card .card-title { color: var(--text-sub); }
+.px-theme .px-btn, .px-theme .px-touch-btn { background: var(--px-panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: none; padding: 8px; }
+.px-theme .px-btn.primary { background: var(--accent); border-color: transparent; color: #06201a; }
+.px-theme .tetris-rail { width: 136px; flex: 0 0 136px; }
+.px-theme .touch-controls { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.px-theme .px-touch-btn { min-width: 0; padding: 0; }
+@media (max-width: 600px) {
+    .px-theme .tetris-rail { width: 88px; flex-basis: 88px; }
+    .px-theme .px-card { padding: 8px; }
+    .px-theme .px-btn { font-size: 11px; padding: 8px 4px; }
+    .px-theme .px-card-label { font-size: 10px; }
+}
+
+@media (max-width: 767px) {
+    .chess-layout, .gomoku-layout { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+    .chess-board-wrap, .gomoku-board-wrap { min-width: 0; }
+}

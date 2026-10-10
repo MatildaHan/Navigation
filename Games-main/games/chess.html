@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>中国象棋</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+body.ink-theme {
+    background-color: #F5EFE0;
+    background-image:
+        repeating-linear-gradient(95deg,
+            rgba(180, 160, 120, 0.05) 0px,
+            rgba(180, 160, 120, 0.05) 1px,
+            transparent 1px,
+            transparent 4px),
+        repeating-linear-gradient(175deg,
+            rgba(160, 140, 100, 0.04) 0px,
+            rgba(160, 140, 100, 0.04) 1px,
+            transparent 1px,
+            transparent 6px),
+        radial-gradient(ellipse 60% 40% at 20% 15%,
+            rgba(80, 70, 50, 0.08) 0%,
+            transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 90%,
+            rgba(80, 70, 50, 0.06) 0%,
+            transparent 70%),
+        linear-gradient(180deg, #F5EFE0 0%, #EBE2CE 100%);
+    color: #1A1A1A;
+    font-family: "KaiTi", "STKaiti", "Songti SC", serif;
+}
+body.ink-theme::before { display: none; }
+
+.chess-layout {
+    display: grid;
+    grid-template-columns: auto 200px;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+.chess-board-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ============================================================
+   棋盘：width 由 grid 内容决定，木框计入 box-sizing
+   ============================================================ */
+.chess-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(9, var(--cell, 52px));
+    grid-template-rows: repeat(10, var(--cell, 52px));
+    background:
+        radial-gradient(ellipse at center, rgba(255,255,255,0.5) 0%, rgba(0,0,0,0) 70%),
+        repeating-linear-gradient(95deg,
+            rgba(180, 160, 120, 0.06) 0px,
+            rgba(180, 160, 120, 0.06) 1px,
+            transparent 1px,
+            transparent 3px),
+        repeating-linear-gradient(175deg,
+            rgba(160, 140, 100, 0.04) 0px,
+            rgba(160, 140, 100, 0.04) 1px,
+            transparent 1px,
+            transparent 5px),
+        linear-gradient(135deg, #F5EFE0 0%, #EBE2CE 60%, #E0D3B5 100%);
+    border: 12px solid #3A2E1F;
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 0 1px #C9A961,
+        inset 0 0 0 2px rgba(44, 44, 44, 0.6),
+        inset 0 0 60px rgba(120, 90, 40, 0.2),
+        0 10px 30px rgba(44, 30, 10, 0.35),
+        0 2px 6px rgba(44, 30, 10, 0.25);
+    background-clip: padding-box;
+    touch-action: manipulation;
+    font-family: "KaiTi", "STKaiti", "Songti SC", serif;
+    width: max-content;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.chess-board::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 2px;
+    background:
+        repeating-linear-gradient(92deg,
+            rgba(0,0,0,0.12) 0px,
+            rgba(0,0,0,0.12) 1px,
+            transparent 1px,
+            transparent 4px),
+        linear-gradient(180deg, #4A3A28 0%, #2E2418 50%, #3A2E1F 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+.chess-board::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        linear-gradient(to right, rgba(44, 44, 44, 0.6) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(44, 44, 44, 0.6) 1px, transparent 1px);
+    background-size:
+        var(--cell) var(--cell),
+        var(--cell) var(--cell);
+    background-position:
+        calc(var(--cell) / 2) 0,
+        0 calc(var(--cell) / 2);
+    opacity: 0.75;
+}
+
+/* 九宫斜线 */
+.chess-board .palace-top,
+.chess-board .palace-bottom {
+    position: absolute;
+    width: calc(var(--cell) * 3);
+    height: calc(var(--cell) * 3);
+    left: calc(var(--cell) * 3);
+    pointer-events: none;
+    z-index: 2;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><line x1='0' y1='0' x2='100' y2='100' stroke='%232C2C2C' stroke-width='1.5' vector-effect='non-scaling-stroke' opacity='0.7'/><line x1='100' y1='0' x2='0' y2='100' stroke='%232C2C2C' stroke-width='1.5' vector-effect='non-scaling-stroke' opacity='0.7'/></svg>");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+.chess-board .palace-top { top: 0; }
+.chess-board .palace-bottom { bottom: 0; }
+
+/* 楚河汉界 */
+.chess-river {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--cell) * 4);
+    height: calc(var(--cell) * 2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10%;
+    font-family: "KaiTi", "STKaiti", serif;
+    font-size: calc(var(--cell) * 0.85);
+    color: #2C2C2C;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    opacity: 0.75;
+    text-shadow:
+        0 1px 0 rgba(255,255,255,0.4),
+        1px 0 1px rgba(255,255,255,0.2);
+}
+
+.chess-cell {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 3;
+}
+
+.chess-piece {
+    width: calc(var(--cell, 52px) * 0.9);
+    height: calc(var(--cell, 52px) * 0.9);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "KaiTi", "STKaiti", "Songti SC", serif;
+    font-weight: 700;
+    font-size: calc(var(--cell, 52px) * 0.5);
+    line-height: 1;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background:
+        radial-gradient(circle at 40% 35%,
+            #FFFFFF 0%,
+            #FAF6EC 40%,
+            #EFE6CE 70%,
+            #DDD0B3 100%);
+    box-shadow:
+        0 2px 5px rgba(44, 30, 10, 0.4),
+        0 1px 2px rgba(44, 30, 10, 0.3),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -3px 5px rgba(120, 90, 40, 0.25);
+}
+.chess-piece::before {
+    content: '';
+    position: absolute;
+    inset: 5%;
+    border-radius: 50%;
+    border: 1.5px solid rgba(44, 44, 44, 0.65);
+    pointer-events: none;
+}
+.chess-piece::after {
+    content: '';
+    position: absolute;
+    inset: 15%;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.chess-cell.red .chess-piece { color: #B83B3B; }
+.chess-cell.red .chess-piece::before { border-color: rgba(184, 59, 59, 0.75); }
+.chess-cell.black .chess-piece {
+    color: #1A1A1A;
+    background:
+        radial-gradient(circle at 40% 35%,
+            #F0E8D2 0%,
+            #E5DAB8 40%,
+            #D0C29A 75%,
+            #B5A67A 100%);
+    box-shadow:
+        0 2px 5px rgba(44, 30, 10, 0.45),
+        0 1px 2px rgba(44, 30, 10, 0.35),
+        inset 0 1px 2px rgba(255,255,255,0.85),
+        inset 0 -3px 5px rgba(80, 60, 20, 0.35);
+}
+.chess-cell.black .chess-piece::before { border-color: rgba(26, 26, 26, 0.8); }
+
+.chess-cell.selected .chess-piece {
+    transform: translateY(-2px) scale(1.06);
+    box-shadow:
+        0 4px 8px rgba(44, 30, 10, 0.5),
+        0 2px 3px rgba(44, 30, 10, 0.35),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -3px 5px rgba(120, 90, 40, 0.25),
+        0 0 0 3px rgba(184, 59, 59, 0.9);
+}
+.chess-cell.valid::after {
+    content: '';
+    position: absolute;
+    width: calc(var(--cell, 52px) * 0.3);
+    height: calc(var(--cell, 52px) * 0.3);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(44, 44, 44, 0.75) 0%, rgba(44, 44, 44, 0.4) 70%, transparent 100%);
+    pointer-events: none;
+    z-index: 4;
+    animation: validPulse 1.4s ease-in-out infinite;
+}
+@keyframes validPulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+.chess-cell.lastmove .chess-piece {
+    box-shadow:
+        0 4px 8px rgba(44, 30, 10, 0.5),
+        0 2px 3px rgba(44, 30, 10, 0.35),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -3px 5px rgba(120, 90, 40, 0.25),
+        0 0 0 3px rgba(201, 169, 97, 0.85);
+}
+
+/* 侧栏 */
+.chess-side { display: flex; flex-direction: column; gap: 12px; }
+
+.ink-card {
+    background: rgba(245, 239, 224, 0.85);
+    border: 1px solid rgba(44, 44, 44, 0.2);
+    padding: 14px;
+    border-radius: 2px;
+    font-family: "KaiTi", "STKaiti", serif;
+    color: #2C2C2C;
+    box-shadow:
+        inset 0 0 20px rgba(180, 160, 120, 0.15),
+        0 2px 8px rgba(80, 60, 30, 0.08);
+    font-size: 14px;
+    letter-spacing: 1px;
+    line-height: 1.8;
+}
+.ink-card .card-title {
+    font-size: 13px;
+    color: #4A4A4A;
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(44, 44, 44, 0.15);
+    padding-bottom: 6px;
+}
+.ink-card b { color: #B83B3B; font-weight: 700; }
+
+.ink-select {
+    background: rgba(245, 239, 224, 0.95);
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    border-radius: 2px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: "KaiTi", "STKaiti", serif;
+    letter-spacing: 3px;
+    width: 100%;
+    cursor: pointer;
+    outline: none;
+    min-height: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%234A4A4A' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+.ink-select:focus { border-color: #B83B3B; }
+
+.ink-btn {
+    background: transparent;
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    padding: 10px 20px;
+    font-family: "KaiTi", "STKaiti", serif;
+    font-size: 15px;
+    letter-spacing: 6px;
+    cursor: pointer;
+    border-radius: 2px;
+    min-height: 44px;
+    transition: all 0.2s;
+    width: 100%;
+}
+.ink-btn:hover:not(:disabled) {
+    background: rgba(44, 44, 44, 0.06);
+    border-color: #1A1A1A;
+}
+.ink-btn.primary {
+    background: #B83B3B;
+    color: #F5EFE0;
+    border-color: #8B2A2A;
+}
+.ink-btn.primary:hover:not(:disabled) { background: #8B2A2A; }
+.ink-btn:active:not(:disabled) { transform: translateY(1px); }
+
+@media (max-width: 1023px) {
+    .chess-layout { grid-template-columns: auto 170px; gap: 14px; }
+}
+
+/* 手机端：木框收窄到 6px，棋盘宽度由 grid 决定 */
+@media (max-width: 767px) {
+    body.ink-theme { padding: 0; }
+
+    .chess-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        align-items: stretch;
+        justify-items: center;
+        width: 100%;
+        padding: 0 6px;
+        box-sizing: border-box;
+    }
+    .chess-board-wrap {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .chess-board {
+        border-width: 6px;
+        width: max-content;
+        max-width: 100%;
+        box-sizing: border-box;
+        box-shadow:
+            inset 0 0 0 1px #C9A961,
+            inset 0 0 0 2px rgba(44, 44, 44, 0.6),
+            inset 0 0 30px rgba(120, 90, 40, 0.2),
+            0 6px 16px rgba(44, 30, 10, 0.3);
+    }
+    .chess-board::before { inset: -6px; }
+    .chess-river {
+        font-size: calc(var(--cell) * 0.7);
+        letter-spacing: 0.1em;
+    }
+
+    .chess-side {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: stretch;
+        width: 100%;
+        gap: 6px;
+    }
+    .ink-card {
+        flex: 1 1 100%;
+        padding: 8px 12px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .ink-card .card-title {
+        font-size: 12px;
+        letter-spacing: 3px;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+    }
+    .ink-select {
+        font-size: 13px;
+        padding: 6px 28px 6px 8px;
+        min-height: 36px;
+        letter-spacing: 2px;
+    }
+    .ink-btn {
+        flex: 1 1 calc(33% - 6px);
+        font-size: 14px;
+        letter-spacing: 3px;
+        padding: 8px 10px;
+        min-height: 42px;
+    }
+}
+
+/* 水墨模态框 */
+body.ink-theme .modal-box {
+    background: #F5EFE0;
+    border: 1px solid #4A4A4A;
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 40px rgba(180, 160, 120, 0.2),
+        0 20px 60px rgba(44, 30, 10, 0.3);
+    font-family: "KaiTi", "STKaiti", serif;
+    padding: 40px 48px;
+    max-width: 90vw;
+    width: 420px;
+}
+body.ink-theme .modal-box h2 {
+    color: #1A1A1A;
+    font-size: 26px;
+    letter-spacing: 6px;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+body.ink-theme .modal-box p {
+    color: #4A4A4A;
+    font-size: 15px;
+    letter-spacing: 3px;
+}
+body.ink-theme .modal-box .big-value {
+    color: #B83B3B;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-family: "KaiTi", "STKaiti", serif;
+}
+body.ink-theme .modal-actions { display: flex; gap: 12px; justify-content: center; }
+body.ink-theme .modal-actions .ink-btn { flex: 1; }
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded ink-theme">
+<div class="game-inner">
+    <div class="chess-layout">
+        <div class="chess-board-wrap">
+            <div id="board" class="chess-board">
+                <div class="chess-river"><span>楚　河</span><span>汉　界</span></div>
+                <div class="palace-top"></div>
+                <div class="palace-bottom"></div>
+            </div>
+        </div>
+        <div class="chess-side">
+            <div class="ink-card">
+                <div class="card-title">对局</div>
+                执：<b id="playerSide">红方</b><br>
+                行：<b id="turnLabel">红方</b>
+            </div>
+            <div class="ink-card">
+                <div class="card-title">棋力</div>
+                <select id="aiDepth" class="ink-select">
+                    <option value="1">入门</option>
+                    <option value="2" selected>进阶</option>
+                    <option value="3">高手</option>
+                </select>
+            </div>
+            <button class="ink-btn primary" id="btnNew">新　局</button>
+            <button class="ink-btn" id="btnUndo">悔　棋</button>
+            <button class="ink-btn" id="btnSwap">换　手</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="endModal">
+    <div class="modal-box">
+        <h2 id="endModalTitle">对局终了</h2>
+        <p id="endModalSub">——</p>
+        <div class="modal-actions">
+            <button class="ink-btn primary" id="btnEndNew">再　来</button>
+            <button class="ink-btn" id="btnEndClose">收　子</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/chess-engine.js"></script>
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+
+    document.body.classList.add('embedded', 'ink-theme');
+    GameBridge.notifyReady();
+
+    const INIT = [
+        ['r','n','b','a','k','a','b','n','r'],
+        [0,0,0,0,0,0,0,0,0],
+        [0,'c',0,0,0,0,0,'c',0],
+        ['p',0,'p',0,'p',0,'p',0,'p'],
+        [0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0],
+        ['P',0,'P',0,'P',0,'P',0,'P'],
+        [0,'C',0,0,0,0,0,'C',0],
+        [0,0,0,0,0,0,0,0,0],
+        ['R','N','B','A','K','A','B','N','R']
+    ];
+
+    const NAMES = {
+        K:'帅', A:'仕', B:'相', N:'马', R:'车', C:'炮', P:'兵',
+        k:'将', a:'士', b:'象', n:'马', r:'车', c:'炮', p:'卒'
+    };
+    const VALUES = { k: 10000, r: 900, n: 400, c: 450, a: 200, b: 200, p: 100 };
+
+    let board, playerSide, turn, selected, validMoves, gameOver, aiThinking;
+    let lastMove = null;
+    let history = [];
+    let aiTimerId = null;
+
+    const boardEl = document.getElementById('board');
+    const turnLabel = document.getElementById('turnLabel');
+    const playerSideEl = document.getElementById('playerSide');
+    const aiDepthEl = document.getElementById('aiDepth');
+    const endModal = document.getElementById('endModal');
+    const endModalTitle = document.getElementById('endModalTitle');
+    const endModalSub = document.getElementById('endModalSub');
+    const btnEndNew = document.getElementById('btnEndNew');
+    const btnEndClose = document.getElementById('btnEndClose');
+
+    const isRed = p => p && p === p.toUpperCase();
+    const isBlack = p => p && p === p.toLowerCase();
+    const sameSide = (a, b) => (isRed(a) && isRed(b)) || (isBlack(a) && isBlack(b));
+
+    // ============================================================
+    // 棋盘尺寸：--cell 是唯一尺寸来源，木框宽 6px 手机 / 12px 桌面
+    // ============================================================
+    function calcCellSize() {
+        const wrap = document.querySelector('.chess-board-wrap');
+        const vw = wrap ? wrap.clientWidth : window.innerWidth;
+        const vh = window.innerHeight;
+        const isMobile = window.innerWidth <= 767;
+
+        // 木框：手机 6px×2 = 12，桌面 12px×2 = 24
+        const frame = isMobile ? 12 : 24;
+        const availW = vw - frame;
+        const availH = isMobile ? vh - 260 : vh - 220;
+        const byW = Math.floor(availW / 9);
+        const byH = Math.floor(availH / 10);
+        return Math.max(20, Math.min(byW, byH, isMobile ? 44 : 56));
+    }
+
+    let cellEls = null;
+
+    function buildBoardDOM() {
+        const decorations = Array.from(boardEl.children);
+        boardEl.innerHTML = '';
+        decorations.forEach(d => boardEl.appendChild(d));
+
+        cellEls = new Array(90);
+        for (let y = 0; y < 10; y++) {
+            for (let x = 0; x < 9; x++) {
+                const el = document.createElement('div');
+                el.className = 'chess-cell';
+                el.onclick = () => onClick(x, y);
+                boardEl.appendChild(el);
+                cellEls[y * 9 + x] = el;
+            }
+        }
+        updateBoardSize();
+    }
+
+    function updateBoardSize() {
+        const cell = calcCellSize();
+        boardEl.style.setProperty('--cell', cell + 'px');
+    }
+
+    function render() {
+        updateBoardSize();
+        for (let y = 0; y < 10; y++) {
+            for (let x = 0; x < 9; x++) {
+                const el = cellEls[y * 9 + x];
+                const p = board[y][x];
+                el.className = 'chess-cell';
+                el.innerHTML = '';
+                if (p) {
+                    const piece = document.createElement('div');
+                    piece.className = 'chess-piece';
+                    piece.textContent = NAMES[p];
+                    el.appendChild(piece);
+                    el.classList.add(isRed(p) ? 'red' : 'black');
+                }
+                if (selected && selected.x === x && selected.y === y) el.classList.add('selected');
+                if (validMoves.some(m => m.x === x && m.y === y)) el.classList.add('valid');
+                if (lastMove && ((lastMove.from.x === x && lastMove.from.y === y) ||
+                                  (lastMove.to.x === x && lastMove.to.y === y))) {
+                    el.classList.add('lastmove');
+                }
+            }
+        }
+        if (!aiThinking && !gameOver) {
+            turnLabel.textContent = turn === 'red' ? '红方' : '黑方';
+        }
+    }
+
+    const engine = createChessEngine([]);
+    const getLegalMoves = (...args) => engine.getLegalMoves(...args);
+    const findKing = side => engine.findKing(side);
+    const isInCheck = side => engine.isInCheck(side);
+    let aiWorker = null;
+    function stopAI() {
+        if (aiTimerId) clearTimeout(aiTimerId);
+        aiTimerId = null;
+        aiWorker?.terminate(); aiWorker = null; aiThinking = false;
+    }
+
+    function onClick(x, y) {
+        if (gameOver || aiThinking) return;
+        if (turn !== playerSide) return;
+        const p = board[y][x];
+        if (selected && validMoves.some(m => m.x === x && m.y === y)) {
+            doMove({ from: selected, to: { x, y } });
+            selected = null; validMoves = [];
+            render();
+            if (!gameOver) scheduleAI();
+            return;
+        }
+        if (p && ((playerSide === 'red' && isRed(p)) || (playerSide === 'black' && isBlack(p)))) {
+            selected = { x, y };
+            validMoves = getLegalMoves(x, y);
+        } else {
+            selected = null; validMoves = [];
+        }
+        render();
+    }
+
+    function doMove(mv) {
+        history.push({
+            from: { ...mv.from },
+            to: { ...mv.to },
+            captured: board[mv.to.y][mv.to.x],
+            turn
+        });
+        board[mv.to.y][mv.to.x] = board[mv.from.y][mv.from.x];
+        board[mv.from.y][mv.from.x] = 0;
+        lastMove = mv;
+        turn = turn === 'red' ? 'black' : 'red';
+        checkGameEnd();
+    }
+
+    function undo() {
+        if (history.length === 0 || aiThinking) return;
+        do {
+            const last = history.pop();
+            board[last.from.y][last.from.x] = board[last.to.y][last.to.x];
+            board[last.to.y][last.to.x] = last.captured;
+            turn = last.turn;
+            lastMove = history.length
+                ? { from: { ...history[history.length - 1].from }, to: { ...history[history.length - 1].to } }
+                : null;
+        } while (turn !== playerSide && history.length > 0);
+
+        selected = null; validMoves = []; gameOver = false;
+        endModal.classList.remove('show');
+        render();
+    }
+
+    function checkGameEnd() {
+        const kr = findKing('red'), kb = findKing('black');
+        if (!kr || !kb) {
+            gameOver = true;
+            const winnerSide = kr ? 'red' : 'black';
+            const winnerName = winnerSide === 'red' ? '红方' : '黑方';
+            const loserName = winnerSide === 'red' ? '黑方' : '红方';
+            showEndModal(`${winnerName}　胜`, `${loserName}将帅就擒`);
+            return;
+        }
+        const side = turn;
+        const sideName = side === 'red' ? '红方' : '黑方';
+        const opponentName = side === 'red' ? '黑方' : '红方';
+
+        let hasLegal = false;
+        outer: for (let y = 0; y < 10; y++) {
+            for (let x = 0; x < 9; x++) {
+                const p = board[y][x];
+                if (!p) continue;
+                if (side === 'red' && !isRed(p)) continue;
+                if (side === 'black' && !isBlack(p)) continue;
+                if (getLegalMoves(x, y).length > 0) { hasLegal = true; break outer; }
+            }
+        }
+        if (hasLegal) return;
+
+        gameOver = true;
+        const reason = isInCheck(side) ? '将死' : '困毙';
+        showEndModal(`${opponentName}　胜`, `${sideName}${reason}`);
+    }
+
+    function showEndModal(title, sub) {
+        endModalTitle.textContent = title;
+        endModalSub.textContent = sub;
+        endModal.classList.add('show');
+        aiThinking = false;
+        turnLabel.textContent = '终了';
+    }
+
+    function scheduleAI() {
+        if (gameOver || turn === playerSide || document.hidden) return;
+        stopAI();
+        aiThinking = true;
+        turnLabel.textContent = '思　索';
+        const side = turn, depth = Number(aiDepthEl.value);
+        function applyMove(move) {
+            if (gameOver || turn !== side) return;
+            aiWorker?.terminate(); aiWorker = null;
+            aiThinking = false;
+            if (move && getLegalMoves(move.from.x, move.from.y).some(to => to.x === move.to.x && to.y === move.to.y)) doMove(move);
+            else checkGameEnd();
+            render();
+        }
+        function fallback() {
+            aiWorker?.terminate(); aiWorker = null;
+            aiTimerId = setTimeout(() => { aiTimerId = null; applyMove(engine.chooseMove(side, Math.min(depth, 2), 100)); }, 30);
+        }
+        try {
+            aiWorker = new Worker('../js/chess-worker.js');
+            aiWorker.onmessage = event => applyMove(event.data);
+            aiWorker.onerror = fallback;
+            aiWorker.postMessage({ board, side, depth });
+        } catch { fallback(); }
+    }
+    GameBridge.onVisibilityChange(hidden => { if (hidden) stopAI(); else scheduleAI(); });
+    GameBridge.onParentMessage(message => { if (message.type === 'pause') stopAI(); });
+
+    function newGame() {
+        stopAI();
+        board = JSON.parse(JSON.stringify(INIT));
+        engine.setBoard(board);
+        selected = null; validMoves = [];
+        turn = 'red';
+        gameOver = false;
+        aiThinking = false;
+        lastMove = null;
+        history = [];
+        endModal.classList.remove('show');
+        playerSideEl.textContent = playerSide === 'red' ? '红方' : '黑方';
+        render();
+        if (playerSide === 'black') scheduleAI();
+    }
+
+    document.getElementById('btnNew').onclick = newGame;
+    document.getElementById('btnUndo').onclick = undo;
+    document.getElementById('btnSwap').onclick = () => {
+        stopAI();
+        playerSide = playerSide === 'red' ? 'black' : 'red';
+        newGame();
+    };
+    btnEndNew.onclick = () => { endModal.classList.remove('show'); newGame(); };
+    btnEndClose.onclick = () => { endModal.classList.remove('show'); };
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 150);
+    });
+
+    playerSide = 'red';
+    buildBoardDOM();
+    newGame();
+})();
+</script>
+</body>
+</html>

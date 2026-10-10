@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>音乐播放器</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.music-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    min-height: 100%;
+    justify-content: center;
+}
+.music-cover {
+    width: min(220px, 55vw);
+    height: min(220px, 55vw);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        #2C2C2C 0%,
+        #1A1A1A 30%,
+        #0A0A0A 70%,
+        #2C2C2C 100%);
+    border: 6px solid #3A2E1F;
+    box-shadow:
+        0 10px 30px rgba(80, 60, 30, 0.4),
+        inset 0 0 40px rgba(0, 0, 0, 0.8);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.music-cover::before {
+    content: '';
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: #B83B3B;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
+.music-cover::after {
+    content: '';
+    position: absolute;
+    inset: 47%;
+    border-radius: 50%;
+    background: #F5EFE0;
+}
+.music-cover.playing {
+    animation: spin 8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.music-title {
+    text-align: center;
+}
+.music-title .name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #1A1A1A;
+}
+.music-title .artist {
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 2px;
+    margin-top: 4px;
+}
+.music-progress {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #6A6050;
+    font-family: "Courier New", monospace;
+}
+.music-progress .bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(44, 44, 44, 0.15);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+}
+.music-progress .bar .fill {
+    height: 100%;
+    background: #B83B3B;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s;
+}
+.music-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+.music-btn {
+    background: transparent;
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.music-btn:hover { background: rgba(44, 44, 44, 0.06); border-color: #1A1A1A; }
+.music-btn:active { transform: scale(0.96); }
+.music-btn.play {
+    width: 68px;
+    height: 68px;
+    font-size: 24px;
+    background: #B83B3B;
+    color: #F5EFE0;
+    border-color: #8B2A2A;
+}
+.music-btn.play:hover { background: #8B2A2A; }
+.music-hint {
+    font-size: 12px;
+    color: #A89A80;
+    letter-spacing: 3px;
+    text-align: center;
+}
+.music-hint a {
+    color: #B83B3B;
+    text-decoration: underline;
+    cursor: pointer;
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="music-wrap">
+        <div class="music-cover" id="cover"></div>
+        <div class="music-title">
+            <div class="name" id="trackName">未选择音乐</div>
+            <div class="artist" id="artistName">点击下方选择本地音频</div>
+        </div>
+        <div class="music-progress">
+            <span id="currentTime">00:00</span>
+            <input type="range" id="progressBar" min="0" max="100" step="0.1" value="0" disabled aria-label="播放进度">
+            <span id="totalTime">00:00</span>
+        </div>
+        <div class="music-controls">
+            <button class="music-btn" id="btnPrev" aria-label="上一首">⏮</button>
+            <button class="music-btn play" id="btnPlay" aria-label="播放">▶</button>
+            <button class="music-btn" id="btnNext" aria-label="下一首">⏭</button>
+        </div>
+        <div class="music-hint">
+            点击 <button type="button" id="linkFile">选择音频文件</button> 开始播放<br>
+            （本地播放，不上传）
+        </div>
+        <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const cover = document.getElementById('cover');
+    const trackName = document.getElementById('trackName');
+    const artistName = document.getElementById('artistName');
+    const currentTime = document.getElementById('currentTime');
+    const totalTime = document.getElementById('totalTime');
+    const progressBar = document.getElementById('progressBar');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnNext = document.getElementById('btnNext');
+    const linkFile = document.getElementById('linkFile');
+    const fileInput = document.getElementById('fileInput');
+
+    let audio = new Audio();
+    let playlist = [];
+    let currentIndex = 0;
+
+    function fmt(sec) {
+        if (!isFinite(sec)) return '00:00';
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function loadFile(file) {
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        return { url, name: file.name.replace(/\.[^/.]+$/, ''), artist: '本地音频' };
+    }
+
+    function syncPlayback() {
+        cover.classList.toggle('playing', !audio.paused);
+        btnPlay.textContent = audio.paused ? '▶' : '⏸';
+        btnPlay.setAttribute('aria-label', audio.paused ? '播放' : '暂停');
+    }
+    function play() {
+        audio.play().catch(() => { artistName.textContent = '无法播放此音频，请选择浏览器支持的文件。'; syncPlayback(); });
+    }
+    audio.addEventListener('play', () => { syncPlayback(); GameBridge.notifyActive(); });
+    audio.addEventListener('pause', syncPlayback);
+    audio.addEventListener('error', () => { artistName.textContent = '音频格式不支持或文件无法读取。'; syncPlayback(); });
+    function releaseFiles() { playlist.forEach(track => URL.revokeObjectURL(track.url)); }
+    window.addEventListener('pagehide', () => { audio.pause(); audio.removeAttribute('src'); audio.load(); releaseFiles(); });
+
+    function playIndex(i) {
+        if (playlist.length === 0) return;
+        currentIndex = (i + playlist.length) % playlist.length;
+        const t = playlist[currentIndex];
+        audio.src = t.url;
+        trackName.textContent = t.name;
+        artistName.textContent = t.artist;
+        play();
+    }
+
+    linkFile.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        audio.pause();
+        releaseFiles();
+        playlist = files.map(loadFile).filter(Boolean);
+        fileInput.value = "";
+        playIndex(0);
+    });
+
+    btnPlay.addEventListener('click', () => {
+        if (!audio.src) { fileInput.click(); return; }
+        if (audio.paused) play(); else audio.pause();
+    });
+
+    btnPrev.addEventListener('click', () => playIndex(currentIndex - 1));
+    btnNext.addEventListener('click', () => playIndex(currentIndex + 1));
+
+    audio.addEventListener('timeupdate', () => {
+        currentTime.textContent = fmt(audio.currentTime);
+        totalTime.textContent = fmt(audio.duration);
+        const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
+        progressBar.value = Number.isFinite(pct) ? pct : 0;
+        progressBar.disabled = !Number.isFinite(audio.duration) || audio.duration <= 0;
+        progressBar.setAttribute('aria-valuetext', fmt(audio.currentTime) + ' / ' + fmt(audio.duration));
+    });
+    audio.addEventListener('ended', () => playIndex(currentIndex + 1));
+
+    progressBar.addEventListener('input', () => {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) audio.currentTime = audio.duration * Number(progressBar.value) / 100;
+    });
+    GameBridge.onVisibilityChange(hidden => { if (hidden) audio.pause(); });
+
+    // 切后台时暂停
+    GameBridge.onParentMessage((msg) => {
+        if (msg.type === 'pause' && !audio.paused) {
+            audio.pause();
+            cover.classList.remove('playing');
+            btnPlay.textContent = '▶';
+        }
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>扫雷</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.mine-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+}
+.mine-info {
+    display: flex;
+    gap: 16px;
+    color: var(--text-sub);
+    font-size: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.mine-info b { color: var(--primary); }
+.mine-grid-wrap {
+    max-width: 100%;
+    overflow: auto;
+    padding: 6px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    touch-action: manipulation;
+}
+.mine-grid { display: grid; gap: 2px; margin: 0 auto; width: max-content; }
+.mine-cell {
+    width: var(--cell, 30px);
+    height: var(--cell, 30px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: calc(var(--cell, 30px) * 0.5);
+    transition: background 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.mine-cell:hover { background: rgba(255,255,255,0.2); }
+.mine-cell.revealed { background: rgba(0,0,0,0.3); cursor: default; }
+.mine-cell.mine { background: var(--danger); color: #fff; }
+.mine-cell.flag { background: #fbbf24; color: #000; }
+.mine-cell.wrong-flag { background: rgba(239,68,68,0.6); color: #fff; }
+.mine-cell.n1 { color: #60a5fa; } .mine-cell.n2 { color: #4ade80; }
+.mine-cell.n3 { color: #f87171; } .mine-cell.n4 { color: #a78bfa; }
+.mine-cell.n5 { color: #fb923c; } .mine-cell.n6 { color: #22d3ee; }
+.mine-cell.n7 { color: #f472b6; } .mine-cell.n8 { color: #e5e7eb; }
+.mine-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+.mode-toggle {
+    display: none;
+    gap: 8px;
+    background: rgba(0,0,0,0.3);
+    padding: 6px;
+    border-radius: 12px;
+}
+.mode-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    min-height: 40px;
+}
+.mode-btn.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+@media (max-width: 767px) {
+    .mine-info { font-size: 12px; gap: 10px; }
+    .mode-toggle { display: flex; }
+    .mine-btns .btn { font-size: 12px; padding: 8px 14px; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="mine-wrap">
+        <div class="mine-info">
+            <span>💣 剩余 <b id="mineLeft">0</b></span>
+            <span>⏱ <b id="timeEl">0</b>s</span>
+            <span>难度 <b id="lvEl">—</b></span>
+        </div>
+
+        <div class="mode-toggle" id="modeToggle">
+            <button class="mode-btn active" data-mode="dig">⛏ 挖掘</button>
+            <button class="mode-btn" data-mode="flag">🚩 插旗</button>
+        </div>
+
+        <div class="mine-grid-wrap">
+            <div id="grid" class="mine-grid"></div>
+        </div>
+
+        <div class="mine-btns">
+            <button class="btn" id="btnNew">新游戏</button>
+            <button class="btn ghost" id="btnLv">切换难度</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h2 id="modalTitle">游戏结束</h2>
+        <p id="modalSub">——</p>
+        <div class="modal-actions">
+            <button class="btn" id="btnRestart">重新开始</button>
+            <button class="btn ghost" id="btnClose">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+
+    const LEVELS = [
+        { rows: 9,  cols: 9,  mines: 10, name: '简单' },
+        { rows: 16, cols: 16, mines: 40, name: '困难' },
+        { rows: 16, cols: 30, mines: 99, name: '专业' }
+    ];
+
+    let levelIdx = 0;
+    let rows, cols, mines;
+    let grid, revealed, flagged;
+    let gameOver, started, seconds, timer;
+    let touchMode = 'dig';
+
+    const gridEl = document.getElementById('grid');
+    const mineLeftEl = document.getElementById('mineLeft');
+    const timeEl = document.getElementById('timeEl');
+    const lvEl = document.getElementById('lvEl');
+    const modeToggle = document.getElementById('modeToggle');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnClose = document.getElementById('btnClose');
+
+    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+    function calcCellSize() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const availW = Math.min(vw - 60, 900);
+        const availH = vh * 0.55;
+        const byW = Math.floor((availW - cols * 2) / cols);
+        const byH = Math.floor((availH - rows * 2) / rows);
+        return Math.max(18, Math.min(byW, byH, 32));
+    }
+
+    function init() {
+        const lv = LEVELS[levelIdx];
+        rows = lv.rows; cols = lv.cols; mines = lv.mines;
+        grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+        revealed = Array.from({ length: rows }, () => Array(cols).fill(false));
+        flagged = Array.from({ length: rows }, () => Array(cols).fill(false));
+        gameOver = false;
+        started = false;
+        seconds = 0;
+        clearInterval(timer);
+        timeEl.textContent = '0';
+        mineLeftEl.textContent = mines;
+        lvEl.textContent = lv.name;
+        modal.classList.remove('show');
+
+        const cell = calcCellSize();
+        gridEl.style.setProperty('--cell', cell + 'px');
+        gridEl.style.gridTemplateColumns = `repeat(${cols}, ${cell}px)`;
+        gridEl.innerHTML = '';
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const el = document.createElement('div');
+                el.className = 'mine-cell';
+                el.dataset.x = x;
+                el.dataset.y = y;
+                gridEl.appendChild(el);
+            }
+        }
+        refreshAll();
+    }
+
+    function refreshAll() {
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) updateCellVisual(x, y);
+    }
+    function updateCellVisual(x, y) {
+        const el = gridEl.children[y * cols + x];
+        el.className = 'mine-cell';
+        el.textContent = '';
+        if (revealed[y][x]) {
+            el.classList.add('revealed');
+            if (grid[y][x] === -1) { el.classList.add('mine'); el.textContent = '💣'; }
+            else if (grid[y][x] > 0) { el.textContent = grid[y][x]; el.classList.add('n' + grid[y][x]); }
+        } else if (flagged[y][x]) {
+            el.classList.add('flag');
+            el.textContent = '🚩';
+        }
+    }
+
+    function placeMines(sx, sy) {
+        let placed = 0, attempts = 0;
+        while (placed < mines && attempts < 10000) {
+            attempts++;
+            const x = Math.floor(Math.random() * cols);
+            const y = Math.floor(Math.random() * rows);
+            if (grid[y][x] === -1) continue;
+            if (Math.abs(x - sx) <= 1 && Math.abs(y - sy) <= 1) continue;
+            grid[y][x] = -1;
+            placed++;
+        }
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (grid[y][x] === -1) continue;
+                let cnt = 0;
+                for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+                    const ny = y + dy, nx = x + dx;
+                    if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && grid[ny][nx] === -1) cnt++;
+                }
+                grid[y][x] = cnt;
+            }
+        }
+    }
+
+    let longPressTimer = null;
+    let longPressHandled = false;
+    let touchStartPos = null;
+
+    gridEl.addEventListener('click', e => {
+        if (gameOver) return;
+        const el = e.target.closest('.mine-cell');
+        if (!el) return;
+        if (longPressHandled) { longPressHandled = false; return; }
+        const x = +el.dataset.x, y = +el.dataset.y;
+        if (touchMode === 'flag' && isTouch) rightClick(x, y);
+        else leftClick(x, y);
+    });
+
+    gridEl.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        if (gameOver) return;
+        if (longPressHandled) { longPressHandled = false; return; }
+        const el = e.target.closest('.mine-cell');
+        if (!el) return;
+        const x = +el.dataset.x, y = +el.dataset.y;
+        rightClick(x, y);
+    });
+
+    gridEl.addEventListener('touchstart', e => {
+        if (gameOver) return;
+        const el = e.target.closest('.mine-cell');
+        if (!el) return;
+        const t = e.touches[0];
+        touchStartPos = { x: t.clientX, y: t.clientY };
+        longPressHandled = false;
+        const x = +el.dataset.x, y = +el.dataset.y;
+        longPressTimer = setTimeout(() => {
+            longPressHandled = true;
+            rightClick(x, y);
+        }, 500);
+    }, { passive: true });
+
+    gridEl.addEventListener('touchmove', e => {
+        if (!touchStartPos) return;
+        const t = e.touches[0];
+        const dx = Math.abs(t.clientX - touchStartPos.x);
+        const dy = Math.abs(t.clientY - touchStartPos.y);
+        if (dx > 8 || dy > 8) {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        }
+    }, { passive: true });
+
+    gridEl.addEventListener('touchcancel', () => { clearTimeout(longPressTimer); touchStartPos = null; longPressHandled = false; });
+    gridEl.addEventListener('touchend', () => {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        touchStartPos = null;
+    });
+
+    function leftClick(x, y) {
+        if (gameOver || revealed[y][x] || flagged[y][x]) return;
+        if (!started) {
+            started = true;
+            placeMines(x, y);
+            timer = setInterval(() => { if (!document.hidden) { seconds++; timeEl.textContent = seconds; } }, 1000);
+        }
+        if (grid[y][x] === -1) {
+            gameOver = true;
+            revealed[y][x] = true;
+            clearInterval(timer);
+            revealAllMines();
+            refreshAll();
+            modalTitle.textContent = '💥 踩雷了';
+            modalSub.textContent = `用时 ${seconds} 秒`;
+            btnRestart.textContent = '重新开始';
+            modal.classList.add('show');
+            return;
+        }
+        floodReveal(x, y);
+        refreshAll();
+        checkWin();
+    }
+
+    function floodReveal(x, y) {
+        const stack = [[x, y]];
+        while (stack.length) {
+            const [cx, cy] = stack.pop();
+            if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) continue;
+            if (revealed[cy][cx] || flagged[cy][cx]) continue;
+            revealed[cy][cx] = true;
+            if (grid[cy][cx] === 0) {
+                for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    stack.push([cx + dx, cy + dy]);
+                }
+            }
+        }
+    }
+
+    function revealAllMines() {
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+            if (grid[y][x] === -1 && !flagged[y][x]) revealed[y][x] = true;
+        }
+    }
+
+    function rightClick(x, y) {
+        if (gameOver || revealed[y][x]) return;
+        flagged[y][x] = !flagged[y][x];
+        let cnt = 0;
+        for (let yy = 0; yy < rows; yy++) for (let xx = 0; xx < cols; xx++) if (flagged[yy][xx]) cnt++;
+        mineLeftEl.textContent = mines - cnt;
+        updateCellVisual(x, y);
+    }
+
+    function checkWin() {
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+            if (grid[y][x] !== -1 && !revealed[y][x]) return;
+        }
+        gameOver = true;
+        clearInterval(timer);
+        modalTitle.textContent = '🎉 恭喜通关';
+        modalSub.textContent = `用时 ${seconds} 秒`;
+        btnRestart.textContent = '再来一局';
+        modal.classList.add('show');
+    }
+
+    modeToggle.addEventListener('click', e => {
+        const btn = e.target.closest('.mode-btn');
+        if (!btn) return;
+        touchMode = btn.dataset.mode;
+        modeToggle.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+
+    document.getElementById('btnNew').onclick = init;
+    document.getElementById('btnLv').onclick = () => {
+        levelIdx = (levelIdx + 1) % LEVELS.length;
+        init();
+    };
+    btnRestart.onclick = () => { modal.classList.remove('show'); init(); };
+    btnClose.onclick = () => { modal.classList.remove('show'); };
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const cell = calcCellSize();
+            gridEl.style.setProperty('--cell', cell + 'px');
+            gridEl.style.gridTemplateColumns = `repeat(${cols}, ${cell}px)`;
+        }, 200);
+    });
+
+    init();
+    GameBridge.notifyReady();
+})();
+</script>
+</body>
+</html>

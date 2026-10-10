@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>答案之书</title>
+<link rel="stylesheet" href="../css/common.css?v=5">
+<style>
+.answer-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    width: 100%;
+    min-height: 100%;
+    padding: 40px 0;
+}
+.answer-subtitle {
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-align: center;
+}
+.answer-box {
+    width: 100%;
+    max-width: 520px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid #E5E5E5;
+    border-bottom: 1px solid #E5E5E5;
+    padding: 80px 24px;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 26px;
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    color: #111;
+    font-weight: 300;
+    transition: opacity 0.15s;
+}
+.answer-box.rolling {
+    animation: answerPulse 0.1s ease-in-out infinite alternate;
+}
+@keyframes answerPulse {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+.answer-hint {
+    font-size: 11px;
+    color: #BBB;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+.answer-btn {
+    background: #111;
+    color: #FFF;
+    border: 1px solid #111;
+    padding: 16px 56px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    border-radius: 0;
+    min-height: 52px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+}
+.answer-btn:hover:not(:disabled) {
+    background: transparent;
+    color: #111;
+}
+.answer-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="answer-wrap">
+        <div class="answer-subtitle">闭上眼，默念你的问题</div>
+        <div class="answer-box" id="answerBox">翻开答案之书</div>
+        <button class="answer-btn" id="btnAsk">翻 开</button>
+        <div class="answer-hint">共 120 条答案</div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const ANSWERS = [
+        '是的，毫不犹豫。','现在还不是时候。','再等等看。','听从你的内心。','勇敢去做。',
+        '答案就在眼前。','你需要更多耐心。','别让自己后悔。','这是一个好机会。','三思而后行。',
+        '你早已知道答案。','放轻松，顺其自然。','不是现在。','值得一试。','重新考虑一下。',
+        '相信直觉。','会有转机的。','别急，慢慢来。','你已经准备好了。','放下执念。',
+        '也许你可以换个角度。','静下心来听。','向身边的人求助。','坚持下去。','答案是否定的。',
+        '答案在你手中。','不要害怕。','这条路是对的。','换个方向试试。','从容面对。',
+        '可能会有惊喜。','不要轻言放弃。','等待时机成熟。','勇敢一点。','保持沉默。',
+        '你已经拥有足够。','做你认为对的。','问问自己真正想要什么。','保持简单。','答案不重要，过程才是。',
+        '试着接受现状。','给自己一点时间。','主动一点。','别想太多。','答案会是美好的。',
+        '再努力一把。','时机未到。','你已经很接近了。','相信过程。','放下评判。',
+        '从心出发。','值得坚持。','答案很快会浮现。','不要逃避。','勇敢说不。',
+        '换个思路。','别犹豫。','跟随感觉。','会越来越好。','你已经知道。',
+        '答案在行动中。','现在就是开始。','不要比较。','守住本心。','给自己一个机会。',
+        '试着放下。','答案很简单。','相信你的判断。','会有人帮你。','不要停下。',
+        '可以尝试。','重新开始。','不必着急。','答案会来的。','允许自己休息。',
+        '走一步算一步。','答案藏在细节里。','给自己松绑。','不需要完美。','你已经尽力了。',
+        '向前看。','放下过去。','接受不确定。','可以拒绝。','允许自己犯错。',
+        '值得被爱。','先照顾好自己。','答案由你定义。','别怕改变。','时机正好。',
+        '慢慢来。','再想想。','答案是肯定的。','相信缘分。','心怀感激。',
+        '你是有选择的。','不需要证明什么。','答案在路上。','保持好奇。','问问孩子。',
+        '向远处看。','答案会自然浮现。','轻装上路。','记得微笑。','关注当下。',
+        '不必强求。','答案会来敲门。','给自己写信。','保持从容。','你做得很好。',
+        '会好起来的。','等风来。','答案，是你。','相信明天。','拥抱不确定。',
+        '此刻就很美好。','别忘了呼吸。','允许自己有情绪。','答案，值得等待。','一切都会好。'
+    ];
+
+    const box = document.getElementById('answerBox');
+    const btn = document.getElementById('btnAsk');
+    let rolling = false;
+
+    btn.addEventListener('click', () => {
+        if (rolling) return;
+        rolling = true;
+        btn.disabled = true;
+        box.classList.add('rolling');
+        const timer = setInterval(() => {
+            box.textContent = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+        }, 50);
+        setTimeout(() => {
+            clearInterval(timer);
+            box.textContent = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+            box.classList.remove('rolling');
+            btn.disabled = false;
+            rolling = false;
+        }, 600);
+    });
+})();
+</script>
+</body>
+</html>

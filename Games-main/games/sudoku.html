@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>数独</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.sudoku-layout {
+    display: grid;
+    grid-template-columns: 160px auto 180px;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    min-height: 100%;
+}
+.diff-list { display: flex; flex-direction: column; gap: 10px; }
+.diff-btn {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.2s;
+    font-family: inherit;
+    min-height: 44px;
+}
+.diff-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+.diff-btn.active { background: var(--primary); color: #000; font-weight: 700; border-color: var(--primary); }
+.diff-btn:disabled { background: rgba(71, 85, 105, 0.3); color: #64748b; cursor: not-allowed; border-color: transparent; }
+.diff-btn .prog { display: block; font-size: 11px; color: #94a3b8; margin-top: 3px; }
+.diff-btn.active .prog { color: #064e3b; }
+
+.sudoku-main { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(9, var(--cell-size, 48px));
+    grid-template-rows: repeat(9, var(--cell-size, 48px));
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+    max-width: 100%;
+}
+.sudoku-cell {
+    width: var(--cell-size, 48px);
+    height: var(--cell-size, 48px);
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-size: calc(var(--cell-size, 48px) * 0.45);
+    font-weight: 500;
+    text-align: center;
+    outline: none;
+    transition: background 0.15s;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+.sudoku-cell::-webkit-outer-spin-button,
+.sudoku-cell::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sudoku-cell:nth-child(3n) { border-right: 2px solid rgba(255, 255, 255, 0.3); }
+.sudoku-cell:nth-child(9n) { border-right: none; }
+.sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid rgba(255, 255, 255, 0.3); }
+
+.sudoku-cell.prefilled { color: #94a3b8; font-weight: 700; }
+.sudoku-cell.hl-light { background: var(--primary-dim); }
+.sudoku-cell.hl-same { background: var(--primary-mid); color: #fff; }
+.sudoku-cell.selected { background: rgba(74, 222, 128, 0.5); box-shadow: inset 0 0 0 2px var(--primary); }
+.sudoku-cell.error { color: var(--danger); }
+
+.number-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.num-btn {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    min-width: 44px;
+    min-height: 44px;
+}
+.num-btn:hover:not(:disabled) { background: rgba(255,255,255,0.15); }
+.num-btn:active:not(:disabled) { background: var(--primary-mid); }
+.num-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.num-btn.erase {
+    grid-column: span 3;
+    width: 100%;
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+    font-size: 14px;
+}
+
+.status-text { color: var(--text-sub); font-size: 13px; min-height: 18px; }
+
+@media (max-width: 1023px) {
+    .sudoku-layout { grid-template-columns: 120px auto 160px; gap: 16px; }
+    .sudoku-board { --cell-size: 40px; }
+}
+@media (max-width: 767px) {
+    .sudoku-layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        align-items: center;
+        justify-items: center;
+    }
+    .diff-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        gap: 6px;
+    }
+    .diff-btn {
+        flex: 1 1 auto;
+        min-width: 70px;
+        padding: 8px 10px;
+        font-size: 12px;
+        text-align: center;
+    }
+    .diff-btn .prog { font-size: 10px; }
+    .sudoku-board { --cell-size: min(9.5vw, 36px); }
+    .number-pad {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        padding: 8px;
+        max-width: 320px;
+        margin: 0 auto;
+    }
+    .num-btn { width: 100%; height: 48px; }
+    .num-btn.erase { grid-column: span 5; height: 44px; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="sudoku-layout">
+        <div class="diff-list" id="diffList">
+            <div class="card-title" style="margin-bottom:4px;">难度</div>
+        </div>
+
+        <div class="sudoku-main">
+            <div class="status-text" id="status">当前难度：简单</div>
+            <div class="sudoku-board" id="board"></div>
+        </div>
+
+        <div class="number-pad" id="numberPad"></div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h2 id="modalTitle">恭喜通关</h2>
+        <p id="modalSub">完美解题</p>
+        <div class="modal-actions">
+            <button class="btn" id="btnNext">下一题</button>
+            <button class="btn ghost" id="btnClose">关闭</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+
+    const SOLUTIONS = [
+        "534678912672195348198342567859761423426853791713924856961537284287419635345286179",
+        "435269781682571493197834562826195347374682915951743628519326874248957136763418259",
+        "295743861431865927876192543387459216612387495549216738763524189928671354154938672",
+        "123456789456789123789123456234567891567891234891234567345678912678912345912345678"
+    ];
+
+    const DIFFS = [
+        { name: '简单', holes: 20 },
+        { name: '困难', holes: 35 },
+        { name: '专业', holes: 45 },
+        { name: '大师', holes: 52 },
+        { name: '巅峰', holes: 58 }
+    ];
+
+    const STORAGE_KEY = 'sudokuProgress';
+    const UNLOCK_THRESHOLD = 10;
+
+    let solution = '';
+    let difficulty = 0;
+    let selectedIdx = null;
+    let locked = false;
+
+    const boardEl = document.getElementById('board');
+    const diffList = document.getElementById('diffList');
+    const numberPad = document.getElementById('numberPad');
+    const statusEl = document.getElementById('status');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+    const btnNext = document.getElementById('btnNext');
+    const btnClose = document.getElementById('btnClose');
+    const toastContainer = document.getElementById('toastContainer');
+
+    function toast(text, type = '') {
+        const el = document.createElement('div');
+        el.className = 'toast' + (type ? ' ' + type : '');
+        el.textContent = text;
+        toastContainer.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.3s';
+            setTimeout(() => el.remove(), 300);
+        }, 2000);
+    }
+
+    function isValidSolution(s) {
+        if (!/^[1-9]{81}$/.test(s)) return false;
+        for (let i = 0; i < 9; i++) {
+            const row = new Set(), col = new Set();
+            for (let j = 0; j < 9; j++) {
+                row.add(s[i * 9 + j]);
+                col.add(s[j * 9 + i]);
+            }
+            if (row.size !== 9 || col.size !== 9) return false;
+        }
+        for (let bi = 0; bi < 3; bi++) for (let bj = 0; bj < 3; bj++) {
+            const box = new Set();
+            for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+                box.add(s[(bi * 3 + i) * 9 + (bj * 3 + j)]);
+            }
+            if (box.size !== 9) return false;
+        }
+        return true;
+    }
+    (function selfTest() {
+        SOLUTIONS.forEach((s, i) => {
+            if (!isValidSolution(s)) console.error(`[sudoku] SOLUTIONS[${i}] 非法`);
+        });
+    })();
+
+    function loadProgress() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const arr = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(arr) && arr.length === DIFFS.length && arr.every(n => Number.isSafeInteger(n) && n >= 0)) return arr;
+        } catch (e) {}
+        return new Array(DIFFS.length).fill(0);
+    }
+    function saveProgress(p) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch (e) {}
+    }
+    function isUnlocked(level, progress) {
+        return level === 0 || progress[level - 1] >= UNLOCK_THRESHOLD;
+    }
+
+    function buildDiffButtons() {
+        const progress = loadProgress();
+        diffList.innerHTML = '<div class="card-title" style="margin-bottom:4px;">难度</div>';
+        DIFFS.forEach((d, i) => {
+            const btn = document.createElement('button');
+            const unlocked = isUnlocked(i, progress);
+            btn.className = 'diff-btn' + (i === difficulty ? ' active' : '');
+            if (!unlocked) {
+                btn.disabled = true;
+                btn.innerHTML = `${d.name} 🔒<span class="prog">通关前一难度 ${UNLOCK_THRESHOLD} 次解锁</span>`;
+            } else {
+                const p = progress[i];
+                const progText = i === DIFFS.length - 1
+                    ? (p >= UNLOCK_THRESHOLD ? '已满级' : `进度 ${p}/${UNLOCK_THRESHOLD}`)
+                    : `进度 ${p}/${UNLOCK_THRESHOLD}`;
+                btn.innerHTML = `${d.name}<span class="prog">${progText}</span>`;
+                btn.onclick = () => {
+                    if (i === difficulty) return;
+                    difficulty = i;
+                    buildDiffButtons();
+                    newGame();
+                };
+            }
+            diffList.appendChild(btn);
+        });
+    }
+
+    function buildNumberPad() {
+        numberPad.innerHTML = '';
+        for (let i = 1; i <= 9; i++) {
+            const b = document.createElement('button');
+            b.className = 'num-btn';
+            b.dataset.val = i;
+            b.textContent = i;
+            numberPad.appendChild(b);
+        }
+        const e = document.createElement('button');
+        e.className = 'num-btn erase';
+        e.dataset.val = '0';
+        e.textContent = '清除';
+        numberPad.appendChild(e);
+    }
+
+    function solutionCount(puzzle) {
+        const cells = [...puzzle].map(Number);
+        let count = 0;
+        function search() {
+            if (count >= 2) return;
+            let index = -1, choices = null;
+            for (let i = 0; i < 81; i++) if (!cells[i]) {
+                const row = Math.floor(i / 9), col = i % 9;
+                const used = new Set();
+                for (let k = 0; k < 9; k++) {
+                    used.add(cells[row * 9 + k]); used.add(cells[k * 9 + col]);
+                    used.add(cells[(Math.floor(row / 3) * 3 + Math.floor(k / 3)) * 9 + Math.floor(col / 3) * 3 + k % 3]);
+                }
+                const candidates = [1,2,3,4,5,6,7,8,9].filter(n => !used.has(n));
+                if (!candidates.length) return;
+                if (!choices || candidates.length < choices.length) { index = i; choices = candidates; }
+                if (choices.length === 1) break;
+            }
+            if (index === -1) { count++; return; }
+            for (const n of choices) { cells[index] = n; search(); cells[index] = 0; if (count >= 2) break; }
+        }
+        search();
+        return count;
+    }
+
+    function generatePuzzle(holes) {
+        solution = SOLUTIONS[Math.floor(Math.random() * SOLUTIONS.length)];
+        const arr = solution.split('');
+        const order = Array.from({ length: 81 }, (_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [order[i], order[j]] = [order[j], order[i]];
+        }
+        let removed = 0;
+        for (const idx of order) {
+            const value = arr[idx]; arr[idx] = '0';
+            if (solutionCount(arr) === 1) removed++;
+            else arr[idx] = value;
+            if (removed >= holes) break;
+        }
+        return arr.join('');
+    }
+
+    function renderBoard(puzzleStr) {
+        boardEl.innerHTML = '';
+        selectedIdx = null;
+        locked = false;
+        for (let i = 0; i < 81; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 1;
+            input.inputMode = 'none';
+            input.classList.add('sudoku-cell');
+            input.dataset.index = i;
+            input.setAttribute('aria-label', `第 ${Math.floor(i/9)+1} 行 第 ${i%9+1} 列`);
+            const v = puzzleStr[i];
+            if (v !== '0') {
+                input.value = v;
+                input.readOnly = true;
+                input.classList.add('prefilled');
+            } else {
+                input.addEventListener('input', onInput);
+            }
+            input.addEventListener('keydown', onKeydown);
+            input.addEventListener('click', () => selectCell(i));
+            boardEl.appendChild(input);
+        }
+        statusEl.textContent = `当前难度：${DIFFS[difficulty].name}`;
+    }
+
+    function selectCell(idx) {
+        if (locked) return;
+        if (selectedIdx === idx) {
+            clearHighlights();
+            selectedIdx = null;
+            return;
+        }
+        selectedIdx = idx;
+        refreshHighlights();
+    }
+
+    function refreshHighlights() {
+        clearHighlights();
+        if (selectedIdx === null) return;
+        const row = Math.floor(selectedIdx / 9), col = selectedIdx % 9;
+        const boxR = Math.floor(row / 3) * 3, boxC = Math.floor(col / 3) * 3;
+        const val = boardEl.children[selectedIdx].value;
+        for (let i = 0; i < 81; i++) {
+            const cell = boardEl.children[i];
+            const r = Math.floor(i / 9), c = i % 9;
+            const inBox = r >= boxR && r < boxR + 3 && c >= boxC && c < boxC + 3;
+            if (i !== selectedIdx && (r === row || c === col || inBox)) cell.classList.add('hl-light');
+            if (val && i !== selectedIdx && cell.value === val) cell.classList.add('hl-same');
+        }
+        boardEl.children[selectedIdx].classList.add('selected');
+    }
+
+    function clearHighlights() {
+        for (let i = 0; i < 81; i++) {
+            boardEl.children[i].classList.remove('hl-light', 'hl-same', 'selected');
+        }
+    }
+
+    function onInput(e) {
+        if (locked) { e.target.value = ''; return; }
+        const input = e.target;
+        input.value = input.value.replace(/[^1-9]/g, '');
+        input.classList.remove('error');
+        refreshHighlights();
+        checkCompletion();
+    }
+
+    function onKeydown(e) {
+        const idx = parseInt(e.target.dataset.index, 10);
+        let next = null;
+        if (e.key === 'ArrowUp' && idx >= 9) next = idx - 9;
+        if (e.key === 'ArrowDown' && idx < 72) next = idx + 9;
+        if (e.key === 'ArrowLeft' && idx % 9 !== 0) next = idx - 1;
+        if (e.key === 'ArrowRight' && idx % 9 !== 8) next = idx + 1;
+        if (next !== null) {
+            e.preventDefault();
+            boardEl.children[next].focus();
+            selectCell(next);
+        }
+    }
+
+    numberPad.addEventListener('click', e => {
+        if (locked) return;
+        const btn = e.target.closest('.num-btn');
+        if (!btn) return;
+        if (selectedIdx === null) { toast('请先点击棋盘上的空格', 'warn'); return; }
+        const input = boardEl.children[selectedIdx];
+        if (input.readOnly) { toast('预填数字不可修改', 'warn'); return; }
+        const val = btn.dataset.val;
+        input.value = val === '0' ? '' : val;
+        input.classList.remove('error');
+        refreshHighlights();
+        checkCompletion();
+    });
+
+    function isBoardValid() {
+        for (let r = 0; r < 9; r++) {
+            const seen = new Set();
+            for (let c = 0; c < 9; c++) {
+                const v = boardEl.children[r * 9 + c].value;
+                if (!v) return false;
+                if (seen.has(v)) return false;
+                seen.add(v);
+            }
+        }
+        for (let c = 0; c < 9; c++) {
+            const seen = new Set();
+            for (let r = 0; r < 9; r++) {
+                const v = boardEl.children[r * 9 + c].value;
+                if (seen.has(v)) return false;
+                seen.add(v);
+            }
+        }
+        for (let bi = 0; bi < 3; bi++) for (let bj = 0; bj < 3; bj++) {
+            const seen = new Set();
+            for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+                const v = boardEl.children[(bi * 3 + i) * 9 + (bj * 3 + j)].value;
+                if (seen.has(v)) return false;
+                seen.add(v);
+            }
+        }
+        return true;
+    }
+
+    function markConflicts() {
+        for (let i = 0; i < 81; i++) boardEl.children[i].classList.remove('error');
+        for (let r = 0; r < 9; r++) {
+            const seen = new Map();
+            for (let c = 0; c < 9; c++) {
+                const idx = r * 9 + c;
+                const v = boardEl.children[idx].value;
+                if (!v) continue;
+                if (seen.has(v)) {
+                    boardEl.children[seen.get(v)].classList.add('error');
+                    boardEl.children[idx].classList.add('error');
+                } else seen.set(v, idx);
+            }
+        }
+        for (let c = 0; c < 9; c++) {
+            const seen = new Map();
+            for (let r = 0; r < 9; r++) {
+                const idx = r * 9 + c;
+                const v = boardEl.children[idx].value;
+                if (!v) continue;
+                if (seen.has(v)) {
+                    boardEl.children[seen.get(v)].classList.add('error');
+                    boardEl.children[idx].classList.add('error');
+                } else seen.set(v, idx);
+            }
+        }
+        for (let bi = 0; bi < 3; bi++) for (let bj = 0; bj < 3; bj++) {
+            const seen = new Map();
+            for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+                const idx = (bi * 3 + i) * 9 + (bj * 3 + j);
+                const v = boardEl.children[idx].value;
+                if (!v) continue;
+                if (seen.has(v)) {
+                    boardEl.children[seen.get(v)].classList.add('error');
+                    boardEl.children[idx].classList.add('error');
+                } else seen.set(v, idx);
+            }
+        }
+    }
+
+    function checkCompletion() {
+        for (let i = 0; i < 81; i++) if (!boardEl.children[i].value) return;
+        if (!isBoardValid()) { markConflicts(); return; }
+        // 通关
+        locked = true;
+        boardEl.querySelectorAll('input').forEach(input => input.readOnly = true);
+        // 禁用数字键盘
+        numberPad.querySelectorAll('.num-btn').forEach(b => b.disabled = true);
+        const progress = loadProgress();
+        progress[difficulty]++;
+        saveProgress(progress);
+        buildDiffButtons();
+        modalTitle.textContent = '恭喜通关';
+        modalSub.textContent = `难度：${DIFFS[difficulty].name}`;
+        modal.classList.add('show');
+    }
+
+    btnNext.onclick = () => {
+        modal.classList.remove('show');
+        numberPad.querySelectorAll('.num-btn').forEach(b => b.disabled = false);
+        newGame();
+    };
+    btnClose.onclick = () => {
+        modal.classList.remove('show');
+    };
+
+    function newGame() {
+        const puzzle = generatePuzzle(DIFFS[difficulty].holes);
+        renderBoard(puzzle);
+        numberPad.querySelectorAll('.num-btn').forEach(b => b.disabled = false);
+    }
+
+    buildDiffButtons();
+    buildNumberPad();
+    newGame();
+    GameBridge.notifyReady();
+})();
+</script>
+</body>
+</html>

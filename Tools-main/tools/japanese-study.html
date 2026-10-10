@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>日语学习</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.jp-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    min-height: 100%;
+}
+.jp-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
+    color: #1A1A1A;
+}
+.jp-subtitle {
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.jp-card {
+    background: rgba(255, 250, 240, 0.9);
+    border: 1px solid rgba(44, 44, 44, 0.2);
+    border-radius: 2px;
+    box-shadow: inset 0 0 20px rgba(180, 160, 120, 0.15);
+    padding: 32px 24px;
+    text-align: center;
+}
+.jp-kanji {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #1A1A1A;
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", "Songti SC", serif;
+    line-height: 1.3;
+}
+.jp-kana {
+    font-size: 20px;
+    color: #B83B3B;
+    margin-top: 12px;
+    letter-spacing: 4px;
+}
+.jp-romaji {
+    font-size: 14px;
+    color: #8A7A60;
+    margin-top: 6px;
+    font-family: "Courier New", monospace;
+    letter-spacing: 2px;
+}
+.jp-meaning {
+    font-size: 16px;
+    color: #2C2C2C;
+    margin-top: 20px;
+    letter-spacing: 2px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(44, 44, 44, 0.2);
+}
+.jp-example {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #4A4A4A;
+    line-height: 1.8;
+}
+.jp-example .jp {
+    color: #1A1A1A;
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", "Songti SC", serif;
+    font-size: 15px;
+}
+.jp-example .zh {
+    color: #8A7A60;
+    font-size: 13px;
+    margin-top: 4px;
+}
+.jp-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+}
+.jp-btn {
+    background: transparent;
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    padding: 10px 24px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: all 0.15s;
+}
+.jp-btn:hover { background: rgba(44, 44, 44, 0.06); }
+.jp-btn.primary { background: #B83B3B; color: #F5EFE0; border-color: #8B2A2A; }
+.jp-btn.primary:hover { background: #8B2A2A; }
+.jp-progress {
+    text-align: center;
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 2px;
+}
+.jp-progress b { color: #B83B3B; font-size: 16px; }
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="jp-wrap">
+        <div>
+            <div class="jp-title">日 语 学 习</div>
+            <div class="jp-subtitle">JAPANESE VOCABULARY</div>
+        </div>
+        <div class="jp-card">
+            <div class="jp-kanji" id="kanji">—</div>
+            <div class="jp-kana" id="kana">—</div>
+            <div class="jp-romaji" id="romaji">—</div>
+            <div class="jp-meaning" id="meaning">—</div>
+            <div class="jp-example">
+                <div class="jp" id="exampleJp"></div>
+                <div class="zh" id="exampleZh"></div>
+            </div>
+        </div>
+        <div class="jp-controls">
+            <button class="jp-btn" id="btnPrev">上一个</button>
+            <button class="jp-btn primary" id="btnSpeak">🔊 发音</button>
+            <button class="jp-btn" id="btnNext">下一个</button>
+        </div>
+        <div class="jp-progress">
+            第 <b id="idx">1</b> / <b id="total">0</b> 词
+        </div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const WORDS = [
+        { kanji: 'こんにちは', kana: 'こんにちは', romaji: 'konnichiwa', meaning: '你好（白天问候）', jp: 'こんにちは、お元気ですか。', zh: '你好，你好吗？' },
+        { kanji: 'ありがとう', kana: 'ありがとう', romaji: 'arigatou', meaning: '谢谢（口语）', jp: '手伝ってくれてありがとう。', zh: '谢谢你帮我。' },
+        { kanji: 'すみません', kana: 'すみません', romaji: 'sumimasen', meaning: '对不起 / 打扰一下', jp: 'すみません、駅はどこですか。', zh: '打扰一下，车站在哪里？' },
+        { kanji: '学校', kana: 'がっこう', romaji: 'gakkou', meaning: '学校', jp: '毎日学校へ行きます。', zh: '每天去学校。' },
+        { kanji: '友達', kana: 'ともだち', romaji: 'tomodachi', meaning: '朋友', jp: '彼は私の友達です。', zh: '他是我的朋友。' },
+        { kanji: '先生', kana: 'せんせい', romaji: 'sensei', meaning: '老师 / 医生', jp: '先生に質問があります。', zh: '我有个问题问老师。' },
+        { kanji: '食べる', kana: 'たべる', romaji: 'taberu', meaning: '吃', jp: '朝ご飯を食べます。', zh: '吃早饭。' },
+        { kanji: '飲む', kana: 'のむ', romaji: 'nomu', meaning: '喝', jp: '水を飲みます。', zh: '喝水。' },
+        { kanji: '行く', kana: 'いく', romaji: 'iku', meaning: '去', jp: '東京へ行きます。', zh: '去东京。' },
+        { kanji: '見る', kana: 'みる', romaji: 'miru', meaning: '看', jp: '映画を見ます。', zh: '看电影。' },
+        { kanji: '大きい', kana: 'おおきい', romaji: 'ookii', meaning: '大的', jp: 'この犬は大きいです。', zh: '这只狗很大。' },
+        { kanji: '小さい', kana: 'ちいさい', romaji: 'chiisai', meaning: '小的', jp: 'この部屋は小さいです。', zh: '这个房间很小。' },
+        { kanji: '新しい', kana: 'あたらしい', romaji: 'atarashii', meaning: '新的', jp: '新しい車を買いました。', zh: '买了新车。' },
+        { kanji: '古い', kana: 'ふるい', romaji: 'furui', meaning: '旧的', jp: 'これは古い本です。', zh: '这是一本旧书。' },
+        { kanji: '日本', kana: 'にほん', romaji: 'nihon', meaning: '日本', jp: '日本は島国です。', zh: '日本是岛国。' },
+        { kanji: '中国', kana: 'ちゅうごく', romaji: 'chuugoku', meaning: '中国', jp: '中国は広いです。', zh: '中国很大。' },
+        { kanji: '時間', kana: 'じかん', romaji: 'jikan', meaning: '时间', jp: '時間がありません。', zh: '没有时间。' },
+        { kanji: '今日', kana: 'きょう', romaji: 'kyou', meaning: '今天', jp: '今日は暑いです。', zh: '今天很热。' },
+        { kanji: '明日', kana: 'あした', romaji: 'ashita', meaning: '明天', jp: '明日は雨です。', zh: '明天下雨。' },
+        { kanji: '好き', kana: 'すき', romaji: 'suki', meaning: '喜欢', jp: '私は日本料理が好きです。', zh: '我喜欢日本料理。' },
+        { kanji: '美味しい', kana: 'おいしい', romaji: 'oishii', meaning: '好吃的', jp: 'このケーキは美味しいです。', zh: '这个蛋糕很好吃。' },
+        { kanji: '頑張る', kana: 'がんばる', romaji: 'ganbaru', meaning: '努力 / 加油', jp: '試験を頑張ります。', zh: '考试加油。' }
+    ];
+
+    let idx = 0;
+    const els = {
+        kanji: document.getElementById('kanji'),
+        kana: document.getElementById('kana'),
+        romaji: document.getElementById('romaji'),
+        meaning: document.getElementById('meaning'),
+        exampleJp: document.getElementById('exampleJp'),
+        exampleZh: document.getElementById('exampleZh'),
+        idx: document.getElementById('idx'),
+        total: document.getElementById('total')
+    };
+
+    function render() {
+        const w = WORDS[idx];
+        els.kanji.textContent = w.kanji;
+        els.kana.textContent = w.kana;
+        els.romaji.textContent = w.romaji;
+        els.meaning.textContent = w.meaning;
+        els.exampleJp.textContent = w.jp;
+        els.exampleZh.textContent = w.zh;
+        els.idx.textContent = idx + 1;
+        els.total.textContent = WORDS.length;
+    }
+
+    function speak() {
+        if ('speechSynthesis' in window) {
+            const u = new SpeechSynthesisUtterance(WORDS[idx].kana);
+            u.lang = 'ja-JP';
+            u.rate = 0.9;
+            GameBridge.notifyActive();
+            speechSynthesis.cancel();
+            speechSynthesis.speak(u);
+        }
+    }
+
+    document.getElementById('btnPrev').onclick = () => {
+        idx = (idx - 1 + WORDS.length) % WORDS.length;
+        render();
+    };
+    document.getElementById('btnNext').onclick = () => {
+        idx = (idx + 1) % WORDS.length;
+        render();
+    };
+    document.getElementById('btnSpeak').onclick = speak;
+    if (!('speechSynthesis' in window)) { document.getElementById('btnSpeak').disabled = true; document.getElementById('btnSpeak').textContent = '浏览器不支持朗读'; }
+
+    render();
+})();
+</script>
+</body>
+</html>

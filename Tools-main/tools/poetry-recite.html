@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>古诗词背诵</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.poetry-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    min-height: 100%;
+}
+.poetry-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-align: center;
+    color: #1A1A1A;
+}
+.poetry-subtitle {
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.poetry-card {
+    background: rgba(255, 250, 240, 0.92);
+    border: 1px solid rgba(44, 44, 44, 0.2);
+    border-radius: 2px;
+    box-shadow: inset 0 0 20px rgba(180, 160, 120, 0.15);
+    padding: 32px 24px;
+    text-align: center;
+}
+.poetry-dynasty {
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+}
+.poetry-name {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #1A1A1A;
+    font-family: "KaiTi", "STKaiti", serif;
+}
+.poetry-author {
+    font-size: 14px;
+    color: #6A6050;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+}
+.poetry-content {
+    font-size: 18px;
+    line-height: 2.2;
+    letter-spacing: 4px;
+    color: #2C2C2C;
+    font-family: "KaiTi", "STKaiti", serif;
+    white-space: pre-line;
+}
+.poetry-content .blank {
+    display: inline-block;
+    min-width: 60px;
+    border-bottom: 1.5px solid #B83B3B;
+    color: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.poetry-content .blank.revealed {
+    color: #B83B3B;
+    border-color: transparent;
+    font-weight: 700;
+}
+.poetry-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 8px;
+}
+.poetry-btn {
+    background: transparent;
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    padding: 10px 24px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: all 0.15s;
+}
+.poetry-btn:hover { background: rgba(44, 44, 44, 0.06); }
+.poetry-btn.primary { background: #B83B3B; color: #F5EFE0; border-color: #8B2A2A; }
+.poetry-btn.primary:hover { background: #8B2A2A; }
+.poetry-hint {
+    text-align: center;
+    font-size: 12px;
+    color: #A89A80;
+    letter-spacing: 2px;
+}
+.poetry-hint b { color: #B83B3B; }
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="poetry-wrap">
+        <div>
+            <div class="poetry-title">古 诗 词</div>
+            <div class="poetry-subtitle">ANCIENT POETRY</div>
+        </div>
+        <div class="poetry-card">
+            <div class="poetry-dynasty" id="dynasty">—</div>
+            <div class="poetry-name" id="title">—</div>
+            <div class="poetry-author" id="author">—</div>
+            <div class="poetry-content" id="content">—</div>
+        </div>
+        <div class="poetry-controls">
+            <button class="poetry-btn" id="btnPrev">上一首</button>
+            <button class="poetry-btn primary" id="btnReveal">显示全文</button>
+            <button class="poetry-btn" id="btnNext">下一首</button>
+        </div>
+        <div class="poetry-hint">点击空白处显示内容 · <b id="idx">1</b> / <b id="total">0</b></div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const POEMS = [
+        {
+            dynasty: '唐', title: '静夜思', author: '李白',
+            lines: ['床前明月光', '疑是地上霜', '举头望明月', '低头思故乡']
+        },
+        {
+            dynasty: '唐', title: '登鹳雀楼', author: '王之涣',
+            lines: ['白日依山尽', '黄河入海流', '欲穷千里目', '更上一层楼']
+        },
+        {
+            dynasty: '唐', title: '春晓', author: '孟浩然',
+            lines: ['春眠不觉晓', '处处闻啼鸟', '夜来风雨声', '花落知多少']
+        },
+        {
+            dynasty: '唐', title: '相思', author: '王维',
+            lines: ['红豆生南国', '春来发几枝', '愿君多采撷', '此物最相思']
+        },
+        {
+            dynasty: '唐', title: '江雪', author: '柳宗元',
+            lines: ['千山鸟飞绝', '万径人踪灭', '孤舟蓑笠翁', '独钓寒江雪']
+        },
+        {
+            dynasty: '唐', title: '悯农', author: '李绅',
+            lines: ['锄禾日当午', '汗滴禾下土', '谁知盘中餐', '粒粒皆辛苦']
+        },
+        {
+            dynasty: '唐', title: '咏鹅', author: '骆宾王',
+            lines: ['鹅鹅鹅', '曲项向天歌', '白毛浮绿水', '红掌拨清波']
+        },
+        {
+            dynasty: '唐', title: '望庐山瀑布', author: '李白',
+            lines: ['日照香炉生紫烟', '遥看瀑布挂前川', '飞流直下三千尺', '疑是银河落九天']
+        },
+        {
+            dynasty: '唐', title: '绝句', author: '杜甫',
+            lines: ['两个黄鹂鸣翠柳', '一行白鹭上青天', '窗含西岭千秋雪', '门泊东吴万里船']
+        },
+        {
+            dynasty: '宋', title: '水调歌头', author: '苏轼',
+            lines: ['明月几时有', '把酒问青天', '不知天上宫阙', '今夕是何年']
+        },
+        {
+            dynasty: '宋', title: '如梦令', author: '李清照',
+            lines: ['常记溪亭日暮', '沉醉不知归路', '兴尽晚回舟', '误入藕花深处']
+        },
+        {
+            dynasty: '元', title: '天净沙·秋思', author: '马致远',
+            lines: ['枯藤老树昏鸦', '小桥流水人家', '古道西风瘦马', '夕阳西下', '断肠人在天涯']
+        }
+    ];
+
+    let idx = 0;
+    const dynastyEl = document.getElementById('dynasty');
+    const titleEl = document.getElementById('title');
+    const authorEl = document.getElementById('author');
+    const contentEl = document.getElementById('content');
+    const idxEl = document.getElementById('idx');
+    const totalEl = document.getElementById('total');
+
+    function render(hideContent = true) {
+        const p = POEMS[idx];
+        dynastyEl.textContent = `〔${p.dynasty}〕`;
+        titleEl.textContent = p.title;
+        authorEl.textContent = p.author;
+        contentEl.innerHTML = '';
+
+        p.lines.forEach((line, i) => {
+            const lineEl = document.createElement('div');
+            if (hideContent) {
+                // 每个字作为一个 span，隐藏起来
+                const chars = line.split('');
+                chars.forEach(ch => {
+                    const span = document.createElement('button');
+                    span.type = 'button';
+                    span.setAttribute('aria-label', '揭晓诗词中的一个字');
+                    span.setAttribute('aria-pressed', 'false');
+                    span.className = 'blank';
+                    span.textContent = ch;
+                    span.addEventListener('click', () => {
+                        span.classList.toggle('revealed');
+                        span.setAttribute('aria-pressed', String(span.classList.contains('revealed')));
+                    });
+                    lineEl.appendChild(span);
+                });
+            } else {
+                lineEl.textContent = line;
+            }
+            contentEl.appendChild(lineEl);
+        });
+
+        idxEl.textContent = idx + 1;
+        totalEl.textContent = POEMS.length;
+    }
+
+    function revealAll() {
+        contentEl.querySelectorAll('.blank').forEach(el => { el.classList.add('revealed'); el.setAttribute('aria-pressed', 'true'); });
+    }
+
+    document.getElementById('btnPrev').onclick = () => {
+        idx = (idx - 1 + POEMS.length) % POEMS.length;
+        render(true);
+    };
+    document.getElementById('btnNext').onclick = () => {
+        idx = (idx + 1) % POEMS.length;
+        render(true);
+    };
+    document.getElementById('btnReveal').onclick = revealAll;
+
+    render(true);
+})();
+</script>
+</body>
+</html>

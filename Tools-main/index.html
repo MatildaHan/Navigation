@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工具箱</title></head>
+<body><p><a href="../index.html#tools">进入工具箱</a></p>
+<script>
+'use strict';
+const ids = ['book', 'cyber-muyu', 'english-study', 'japanese-study', 'poetry-recite', 'history-events', 'music-player'];
+const id = location.hash.slice(1);
+location.replace('../index.html#' + (ids.includes(id) ? 'tool/' + id : 'tools'));
+</script></body></html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>赛博木鱼</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+body {
+    background-color: #14110A !important;
+    background-image:
+        radial-gradient(ellipse 60% 50% at 50% 30%,
+            rgba(212, 175, 55, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 50% 80%,
+            rgba(184, 59, 59, 0.08) 0%, transparent 70%),
+        linear-gradient(180deg, #14110A 0%, #0A0805 100%) !important;
+    color: #F5EFE0;
+}
+body::before { display: none; }
+
+.muyu-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    min-height: 100%;
+    padding: 24px 16px;
+    box-sizing: border-box;
+}
+.muyu-title {
+    font-size: 22px;
+    color: #D4AF37;
+    letter-spacing: 8px;
+    text-shadow: 0 0 24px rgba(212, 175, 55, 0.5);
+    font-weight: 400;
+}
+.muyu-count {
+    font-size: 14px;
+    color: #8A7A50;
+    letter-spacing: 4px;
+}
+.muyu-count b {
+    color: #D4AF37;
+    font-size: 26px;
+    margin: 0 8px;
+    font-family: "Courier New", monospace;
+}
+.muyu-merit {
+    font-size: 13px;
+    color: #8A7A50;
+    letter-spacing: 3px;
+}
+
+/* 木鱼 */
+.muyu-body {
+    width: min(240px, 65vw);
+    height: min(240px, 65vw);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 35% 30%,
+            #6B4A2A 0%,
+            #4A2F18 40%,
+            #2E1A0A 80%,
+            #1A0E05 100%);
+    box-shadow:
+        0 12px 40px rgba(212, 175, 55, 0.15),
+        inset 0 4px 12px rgba(212, 175, 55, 0.25),
+        inset 0 -12px 20px rgba(0, 0, 0, 0.8);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.06s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+.muyu-body::before {
+    content: '';
+    position: absolute;
+    inset: 18%;
+    border-radius: 50%;
+    border: 2px solid rgba(212, 175, 55, 0.35);
+}
+.muyu-body::after {
+    content: '卍';
+    font-size: calc(min(240px, 65vw) * 0.36);
+    color: rgba(212, 175, 55, 0.4);
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+.muyu-body.hit {
+    transform: scale(0.94);
+    box-shadow:
+        0 6px 20px rgba(212, 175, 55, 0.3),
+        inset 0 4px 12px rgba(212, 175, 55, 0.4),
+        inset 0 -12px 20px rgba(0, 0, 0, 0.9);
+}
+.muyu-hint {
+    font-size: 12px;
+    color: #6A5A40;
+    letter-spacing: 4px;
+    margin-top: 4px;
+}
+.muyu-btn {
+    background: transparent;
+    color: #D4AF37;
+    border: 1px solid #4A3A20;
+    padding: 10px 24px;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+.muyu-btn:hover {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: #D4AF37;
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="muyu-wrap">
+        <div class="muyu-title">赛 博 木 鱼</div>
+        <div class="muyu-count">已敲 <b id="count">0</b> 次</div>
+        <button type="button" class="muyu-body" id="muyu" aria-label="敲木鱼"></button>
+        <div class="muyu-hint">点击木鱼 · 功德 +1</div>
+        <div class="muyu-merit" id="merit">功德无量</div>
+        <button class="muyu-btn" id="btnReset">归 零</button>
+        <button class="muyu-btn" id="btnUndo" hidden>撤销归零</button>
+        <p id="storageStatus" role="status"></p>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const muyu = document.getElementById('muyu');
+    const countEl = document.getElementById('count');
+    const meritEl = document.getElementById('merit');
+    const btnReset = document.getElementById('btnReset');
+
+    let count = 0;
+    try { const saved = Number(localStorage.getItem('muyu.count')); if (Number.isSafeInteger(saved) && saved >= 0) count = saved; } catch (e) {}
+    let beforeReset = 0;
+    const undo = document.getElementById('btnUndo');
+    function save() {
+        try { localStorage.setItem('muyu.count', String(count)); document.getElementById('storageStatus').textContent = ''; }
+        catch { document.getElementById('storageStatus').textContent = '浏览器未能保存次数，刷新后可能丢失。'; }
+    }
+
+    const MERITS = ['功德无量', '心诚则灵', '善哉善哉', '福慧双修', '一花一世界', '佛在心中', '禅意盎然', '阿弥陀佛'];
+
+    function render() {
+        countEl.textContent = count;
+        if (count > 0 && count % 50 === 0) {
+            meritEl.textContent = MERITS[Math.floor(Math.random() * MERITS.length)];
+        }
+    }
+
+    let audioCtx = null;
+    function playSound() {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+            GameBridge.notifyActive();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        } catch (e) {}
+    }
+
+    function hit() {
+        if (count >= Number.MAX_SAFE_INTEGER) return;
+        count++;
+        render();
+        muyu.classList.add('hit');
+        setTimeout(() => muyu.classList.remove('hit'), 60);
+        playSound();
+        save();
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate(20);
+    }
+
+    muyu.addEventListener('click', hit);
+    btnReset.addEventListener('click', () => {
+        beforeReset = count;
+        undo.hidden = false;
+        count = 0;
+        save();
+        render();
+        meritEl.textContent = '功德无量';
+    });
+
+    undo.onclick = () => { count = Math.min(Number.MAX_SAFE_INTEGER, count + beforeReset); undo.hidden = true; save(); render(); };
+    GameBridge.onParentMessage(msg => { if (msg.type === 'pause') audioCtx?.suspend().catch(() => {}); });
+    window.addEventListener('pagehide', () => { audioCtx?.close().catch(() => {}); });
+    render();
+})();
+</script>
+</body>
+</html>

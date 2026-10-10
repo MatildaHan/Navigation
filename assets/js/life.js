@@ -1,10 +1,11 @@
 'use strict';
 
-/* 内容分页只移动网格，第一页和播放器节点保持原样。 */
+/* 内容分页只移动网格，主页和播放器节点保持原样。 */
 function initDeck() {
     const deck = document.getElementById('card-pages');
     const pages = [...deck.children];
     const links = [...document.querySelectorAll('[data-page]')];
+    const hashes = ['', 'life', 'games'];
     let page = 0;
     let scrollTimer;
     let drag = null;
@@ -15,13 +16,13 @@ function initDeck() {
         deck.style.height = matchMedia('(max-width: 860px)').matches ? `${pages[page].scrollHeight}px` : '';
     }
     function setPage(index) {
-        page = index;
+        page = Math.max(0, Math.min(pages.length - 1, index));
         pages.forEach((node, i) => { node.inert = i !== page; });
         links.forEach((link, i) => {
             if (i === page) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         });
-        document.getElementById('page-status').textContent = `第 ${page + 1} 页，共 2 页`;
+        document.getElementById('page-status').textContent = `第 ${page + 1} 页，共 ${pages.length} 页`;
         size();
         deck.scrollTo({ left: page * deck.clientWidth, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
     }
@@ -30,7 +31,7 @@ function initDeck() {
         scrollTimer = setTimeout(() => {
             if (document.getElementById('home-pages').hidden || !deck.clientWidth || drag) return;
             const index = Math.round(deck.scrollLeft / deck.clientWidth);
-            if (index !== page) location.hash = index ? 'life' : '';
+            if (index !== page) location.hash = hashes[index];
         }, 140);
     });
     deck.addEventListener('pointerdown', event => {
@@ -57,8 +58,8 @@ function initDeck() {
         deck.classList.remove('is-dragging');
         deck.style.scrollSnapType = '';
         if (moved) {
-            const index = Math.abs(dx) > 60 ? (dx < 0 ? 1 : 0) : page;
-            if (index !== page) location.hash = index ? 'life' : '';
+            const index = Math.max(0, Math.min(pages.length - 1, page + (Math.abs(dx) > 60 ? (dx < 0 ? 1 : -1) : 0)));
+            if (index !== page) location.hash = hashes[index];
             else setPage(index);
             setTimeout(() => { suppressClick = false; }, 0);
         }
@@ -72,8 +73,9 @@ function initDeck() {
     deck.addEventListener('keydown', event => {
         if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || event.target.closest('input, textarea, select')) return;
         event.preventDefault();
-        location.hash = event.key === 'ArrowRight' ? 'life' : '';
-        links[event.key === 'ArrowRight' ? 1 : 0].focus({ preventScroll: true });
+        const index = Math.max(0, Math.min(pages.length - 1, page + (event.key === 'ArrowRight' ? 1 : -1)));
+        location.hash = hashes[index];
+        links[index].focus({ preventScroll: true });
     });
     new ResizeObserver(() => {
         size();
@@ -263,7 +265,7 @@ const Life = (() => {
         const toolsBox = preview('tools', `${tools.length} 个常用工具`);
         const toolLinks = el('div', 'preview-tools');
         tools.slice(0, 4).forEach(item => {
-            const a = el('a', '', item.名称); a.href = safeUrl(item.网址, ['https:', 'http:']); a.target = '_blank'; a.rel = 'noopener noreferrer'; toolLinks.appendChild(a);
+            const a = el('a', '', item.名称); a.href = Apps.toolRoute(item) || safeUrl(item.网址, ['https:', 'http:']); if (!Apps.toolRoute(item)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } toolLinks.appendChild(a);
         });
         toolsBox.appendChild(toolLinks);
         const today = dateKey(new Date());
@@ -309,7 +311,7 @@ const Life = (() => {
             matches.forEach(item => {
                 const entry = panel(item.名称, item.分类, item.说明);
                 const actions = el('div', 'entry-actions');
-                const a = el('a', 'action-button', '打开工具'); a.href = safeUrl(item.网址, ['http:', 'https:']); a.target = '_blank'; a.rel = 'noopener noreferrer'; actions.appendChild(a);
+                const a = el('a', 'action-button', '打开工具'); a.href = Apps.toolRoute(item) || safeUrl(item.网址, ['http:', 'https:']); if (!Apps.toolRoute(item)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } actions.appendChild(a);
                 const saved = state.favorites.includes(item.标识);
                 const favorite = toggle('收藏', saved, () => { commit(next => { next.favorites = saved ? next.favorites.filter(id => id !== item.标识) : [...next.favorites, item.标识]; }); });
                 favorite.id = `favorite-${item.标识}`;

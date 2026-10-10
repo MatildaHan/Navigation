@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>华容道</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.klotski-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+}
+.klotski-info {
+    color: var(--text-sub);
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.6;
+}
+.klotski-info b { color: var(--primary); }
+.klotski-board {
+    position: relative;
+    width: min(400px, 90vw, calc((100dvh - 220px) * 0.8));
+    aspect-ratio: 4 / 5;
+    background: rgba(0,0,0,0.3);
+    border: 3px solid rgba(255,255,255,0.4);
+    border-radius: 8px;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+.block {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: calc(var(--cell) * 0.55);
+    color: #000;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: left 0.15s ease, top 0.15s ease;
+    border: 2px solid rgba(0,0,0,0.2);
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.15);
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: "KaiTi", "STKaiti", serif;
+    will-change: left, top;
+}
+.block.cao { background: #f87171; color: #fff; font-size: calc(var(--cell) * 0.7); }
+.block.general { background: #fbbf24; }
+.block.soldier { background: #93c5fd; }
+.block.hint {
+    background: rgba(74,222,128,0.15);
+    border: 2px dashed rgba(74,222,128,0.5);
+    pointer-events: none;
+    z-index: 0;
+    transition: none;
+}
+.touch-dpad {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 6px;
+    width: 200px;
+}
+.dpad-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    border-radius: 10px;
+    height: 48px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: inherit;
+}
+.dpad-btn:active { background: var(--primary-mid); }
+.dpad-empty { visibility: hidden; }
+@media (max-width: 767px) {
+    .klotski-info { font-size: 12px; }
+    .touch-dpad { display: grid; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="klotski-wrap">
+        <div class="klotski-info">目标：将「曹操」移动到最下方出口 · 步数 <b id="steps">0</b></div>
+        <div id="board" class="klotski-board"></div>
+        <button class="btn" id="btnReset">重新开始</button>
+
+        <div class="touch-dpad" id="dpad">
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="up">↑</button>
+            <div class="dpad-empty"></div>
+            <button class="dpad-btn" data-dir="left">←</button>
+            <button class="dpad-btn" data-dir="down">↓</button>
+            <button class="dpad-btn" data-dir="right">→</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h2>🎉 恭喜通关</h2>
+        <p>曹操成功逃脱<span class="big-value" id="finalSteps">0</span>步</p>
+        <div class="modal-actions">
+            <button class="btn" id="btnRestart">再来一次</button>
+            <button class="btn ghost" id="btnClose">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+
+    const LAYOUT = [
+        { id: 'cao',   name: '曹操', x: 1, y: 0, w: 2, h: 2, type: 'cao' },
+        { id: 'zhang', name: '张飞', x: 0, y: 0, w: 1, h: 2, type: 'general' },
+        { id: 'zhao',  name: '赵云', x: 3, y: 0, w: 1, h: 2, type: 'general' },
+        { id: 'ma',    name: '马超', x: 0, y: 2, w: 1, h: 2, type: 'general' },
+        { id: 'huang', name: '黄忠', x: 3, y: 2, w: 1, h: 2, type: 'general' },
+        { id: 'guan',  name: '关羽', x: 1, y: 2, w: 2, h: 1, type: 'general' },
+        { id: 's1',    name: '兵', x: 0, y: 4, w: 1, h: 1, type: 'soldier' },
+        { id: 's2',    name: '兵', x: 1, y: 3, w: 1, h: 1, type: 'soldier' },
+        { id: 's3',    name: '兵', x: 2, y: 3, w: 1, h: 1, type: 'soldier' },
+        { id: 's4',    name: '兵', x: 3, y: 4, w: 1, h: 1, type: 'soldier' }
+    ];
+
+    let blocks = [];
+    let selectedId = null;
+    let steps = 0;
+    let gameOver = false;
+
+    const boardEl = document.getElementById('board');
+    const dpad = document.getElementById('dpad');
+    const stepsEl = document.getElementById('steps');
+    const modal = document.getElementById('modal');
+    const finalStepsEl = document.getElementById('finalSteps');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnClose = document.getElementById('btnClose');
+
+    const blockEls = {};
+
+    function getCellSize() { return boardEl.clientWidth / 4; }
+
+    function reset() {
+        blocks = JSON.parse(JSON.stringify(LAYOUT));
+        selectedId = null;
+        steps = 0;
+        gameOver = false;
+        stepsEl.textContent = '0';
+        modal.classList.remove('show');
+        boardEl.innerHTML = '';
+        Object.keys(blockEls).forEach(k => delete blockEls[k]);
+
+        for (const b of blocks) {
+            const div = document.createElement('div');
+            div.className = 'block ' + b.type;
+            div.textContent = b.name;
+            div.onclick = () => selectBlock(b);
+            boardEl.appendChild(div);
+            blockEls[b.id] = div;
+        }
+        layout();
+    }
+
+    function layout() {
+        const cell = getCellSize();
+        boardEl.style.setProperty('--cell', cell + 'px');
+        for (const b of blocks) {
+            const el = blockEls[b.id];
+            if (!el) continue;
+            el.style.left = (b.x * cell) + 'px';
+            el.style.top = (b.y * cell) + 'px';
+            el.style.width = (b.w * cell - 4) + 'px';
+            el.style.height = (b.h * cell - 4) + 'px';
+            if (selectedId === b.id) {
+                el.style.boxShadow = '0 0 0 3px #4ade80, inset 0 -4px 0 rgba(0,0,0,0.15)';
+            } else {
+                el.style.boxShadow = 'inset 0 -4px 0 rgba(0,0,0,0.15)';
+            }
+        }
+        boardEl.querySelectorAll('.hint').forEach(el => el.remove());
+        if (selectedId) {
+            const b = blocks.find(x => x.id === selectedId);
+            if (b) {
+                for (const d of validDirs(b)) {
+                    const hint = document.createElement('div');
+                    hint.className = 'block hint';
+                    hint.style.left = ((b.x + d.dx) * cell) + 'px';
+                    hint.style.top = ((b.y + d.dy) * cell) + 'px';
+                    hint.style.width = (b.w * cell - 4) + 'px';
+                    hint.style.height = (b.h * cell - 4) + 'px';
+                    boardEl.appendChild(hint);
+                }
+            }
+        }
+    }
+
+    function selectBlock(b) {
+        if (gameOver) return;
+        if (selectedId === b.id) selectedId = null;
+        else selectedId = b.id;
+        layout();
+    }
+
+    function validDirs(b) {
+        const dirs = [];
+        for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+            if (canMove(b, dx, dy)) dirs.push({ dx, dy });
+        }
+        return dirs;
+    }
+
+    function canMove(b, dx, dy) {
+        const nx = b.x + dx, ny = b.y + dy;
+        if (nx < 0 || ny < 0 || nx + b.w > 4 || ny + b.h > 5) return false;
+        for (const o of blocks) {
+            if (o.id === b.id) continue;
+            if (nx < o.x + o.w && nx + b.w > o.x && ny < o.y + o.h && ny + b.h > o.y) return false;
+        }
+        return true;
+    }
+
+    function moveSelected(dx, dy) {
+        if (!selectedId || gameOver) return;
+        const b = blocks.find(x => x.id === selectedId);
+        if (!b) return;
+        if (canMove(b, dx, dy)) {
+            b.x += dx; b.y += dy;
+            steps++;
+            stepsEl.textContent = steps;
+            layout();
+            checkWin();
+        }
+    }
+
+    document.addEventListener('keydown', e => {
+        if (!selectedId || gameOver) return;
+        let dx = 0, dy = 0;
+        if (e.key === 'ArrowUp') dy = -1;
+        else if (e.key === 'ArrowDown') dy = 1;
+        else if (e.key === 'ArrowLeft') dx = -1;
+        else if (e.key === 'ArrowRight') dx = 1;
+        else return;
+        e.preventDefault();
+        moveSelected(dx, dy);
+    });
+
+    dpad.addEventListener('click', e => {
+        const btn = e.target.closest('.dpad-btn');
+        if (!btn) return;
+        const dir = btn.dataset.dir;
+        if (dir === 'up') moveSelected(0, -1);
+        else if (dir === 'down') moveSelected(0, 1);
+        else if (dir === 'left') moveSelected(-1, 0);
+        else if (dir === 'right') moveSelected(1, 0);
+    });
+
+    function checkWin() {
+        if (gameOver) return;
+        const cao = blocks.find(b => b.id === 'cao');
+        if (cao.x === 1 && cao.y === 3) {
+            gameOver = true;
+            finalStepsEl.textContent = steps;
+            modal.classList.add('show');
+        }
+    }
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(layout, 100);
+    });
+
+    document.getElementById('btnReset').onclick = reset;
+    btnRestart.onclick = () => { modal.classList.remove('show'); reset(); };
+    btnClose.onclick = () => { modal.classList.remove('show'); };
+
+    requestAnimationFrame(() => {
+        reset();
+        requestAnimationFrame(layout);
+    });
+    GameBridge.notifyReady();
+})();
+</script>
+</body>
+</html>

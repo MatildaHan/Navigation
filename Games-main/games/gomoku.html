@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>五子棋</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+body.ink-theme {
+    background-color: #F5EFE0;
+    background-image:
+        repeating-linear-gradient(95deg,
+            rgba(180, 160, 120, 0.05) 0px,
+            rgba(180, 160, 120, 0.05) 1px,
+            transparent 1px,
+            transparent 4px),
+        repeating-linear-gradient(175deg,
+            rgba(160, 140, 100, 0.04) 0px,
+            rgba(160, 140, 100, 0.04) 1px,
+            transparent 1px,
+            transparent 6px),
+        radial-gradient(ellipse 60% 40% at 20% 15%,
+            rgba(80, 70, 50, 0.08) 0%,
+            transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 90%,
+            rgba(80, 70, 50, 0.06) 0%,
+            transparent 70%),
+        linear-gradient(180deg, #F5EFE0 0%, #EBE2CE 100%);
+    color: #1A1A1A;
+    font-family: "KaiTi", "STKaiti", "Songti SC", serif;
+}
+body.ink-theme::before { display: none; }
+
+.gomoku-layout {
+    display: grid;
+    grid-template-columns: auto 200px;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+.gomoku-board-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ============================================================
+   棋盘：width 由 grid 内容决定
+   ============================================================ */
+.gomoku-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(15, var(--cell, 32px));
+    grid-template-rows: repeat(15, var(--cell, 32px));
+    background:
+        radial-gradient(ellipse at center, rgba(255,255,255,0.5) 0%, rgba(0,0,0,0) 70%),
+        repeating-linear-gradient(95deg,
+            rgba(180, 160, 120, 0.06) 0px,
+            rgba(180, 160, 120, 0.06) 1px,
+            transparent 1px,
+            transparent 3px),
+        repeating-linear-gradient(175deg,
+            rgba(160, 140, 100, 0.04) 0px,
+            rgba(160, 140, 100, 0.04) 1px,
+            transparent 1px,
+            transparent 5px),
+        linear-gradient(135deg, #F5EFE0 0%, #EBE2CE 60%, #E0D3B5 100%);
+    border: 12px solid #3A2E1F;
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 0 1px #C9A961,
+        inset 0 0 0 2px rgba(44, 44, 44, 0.6),
+        inset 0 0 60px rgba(120, 90, 40, 0.2),
+        0 10px 30px rgba(44, 30, 10, 0.35),
+        0 2px 6px rgba(44, 30, 10, 0.25);
+    background-clip: padding-box;
+    touch-action: manipulation;
+    box-sizing: border-box;
+    font-family: "KaiTi", "STKaiti", "Songti SC", serif;
+    width: max-content;
+    max-width: 100%;
+}
+
+.gomoku-board::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 2px;
+    background:
+        repeating-linear-gradient(92deg,
+            rgba(0,0,0,0.12) 0px,
+            rgba(0,0,0,0.12) 1px,
+            transparent 1px,
+            transparent 4px),
+        linear-gradient(180deg, #4A3A28 0%, #2E2418 50%, #3A2E1F 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.gomoku-board::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        linear-gradient(to right, rgba(44, 44, 44, 0.65) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(44, 44, 44, 0.65) 1px, transparent 1px);
+    background-size:
+        var(--cell) var(--cell),
+        var(--cell) var(--cell);
+    background-position:
+        calc(var(--cell) / 2) calc(var(--cell) / 2),
+        calc(var(--cell) / 2) calc(var(--cell) / 2);
+    opacity: 0.75;
+}
+
+.gomoku-star {
+    position: absolute;
+    width: calc(var(--cell) * 0.24);
+    height: calc(var(--cell) * 0.24);
+    border-radius: 50%;
+    background: #2C2C2C;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.85;
+}
+
+.gomoku-point {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.gomoku-piece {
+    width: calc(var(--cell, 32px) * 0.85);
+    height: calc(var(--cell, 32px) * 0.85);
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    animation: pieceDrop 0.18s ease;
+}
+
+.gomoku-piece.black {
+    background:
+        radial-gradient(circle at 35% 30%, #4A4A4A 0%, #2C2C2C 35%, #1A1A1A 70%, #000 100%);
+    box-shadow:
+        0 2px 4px rgba(44, 30, 10, 0.6),
+        0 1px 2px rgba(44, 30, 10, 0.4),
+        inset 0 1px 2px rgba(255,255,255,0.25),
+        inset 0 -3px 6px rgba(0,0,0,0.85);
+}
+.gomoku-piece.white {
+    background:
+        radial-gradient(circle at 35% 30%, #FFFFFF 0%, #FAF6EC 35%, #EFE6CE 70%, #D8CAA8 100%);
+    box-shadow:
+        0 2px 4px rgba(44, 30, 10, 0.5),
+        0 1px 2px rgba(44, 30, 10, 0.3),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -3px 6px rgba(120, 100, 50, 0.4);
+}
+
+@keyframes pieceDrop {
+    from { transform: scale(0.5); opacity: 0.4; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.gomoku-point.preview .gomoku-piece { opacity: 0.35; }
+.gomoku-point.lastmove .gomoku-piece {
+    box-shadow:
+        0 0 0 3px rgba(201, 169, 97, 0.9),
+        0 2px 6px rgba(44, 30, 10, 0.5);
+}
+.gomoku-point.win .gomoku-piece {
+    box-shadow:
+        0 0 0 3px #B83B3B,
+        0 0 20px rgba(184, 59, 59, 0.9),
+        0 2px 6px rgba(44, 30, 10, 0.5);
+    animation: winPulse 1s ease-in-out infinite;
+}
+@keyframes winPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+}
+
+.gomoku-side { display: flex; flex-direction: column; gap: 12px; }
+
+.ink-card {
+    background: rgba(245, 239, 224, 0.85);
+    border: 1px solid rgba(44, 44, 44, 0.2);
+    padding: 14px;
+    border-radius: 2px;
+    font-family: "KaiTi", "STKaiti", serif;
+    color: #2C2C2C;
+    box-shadow:
+        inset 0 0 20px rgba(180, 160, 120, 0.15),
+        0 2px 8px rgba(80, 60, 30, 0.08);
+    font-size: 14px;
+    letter-spacing: 1px;
+    line-height: 1.8;
+}
+.ink-card .card-title {
+    font-size: 13px;
+    color: #4A4A4A;
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(44, 44, 44, 0.15);
+    padding-bottom: 6px;
+}
+.ink-card b { color: #B83B3B; font-weight: 700; }
+
+.turn-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+.turn-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.turn-dot.black {
+    background: radial-gradient(circle at 35% 30%, #4A4A4A 0%, #1A1A1A 70%, #000 100%);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.25);
+}
+.turn-dot.white {
+    background: radial-gradient(circle at 35% 30%, #FFFFFF 0%, #EFE6CE 70%, #D8CAA8 100%);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.95);
+}
+
+.ink-select {
+    background: rgba(245, 239, 224, 0.95);
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    border-radius: 2px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: "KaiTi", "STKaiti", serif;
+    letter-spacing: 3px;
+    width: 100%;
+    cursor: pointer;
+    outline: none;
+    min-height: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%234A4A4A' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+.ink-select:focus { border-color: #B83B3B; }
+
+.ink-btn {
+    background: transparent;
+    color: #2C2C2C;
+    border: 1.5px solid #4A4A4A;
+    padding: 10px 20px;
+    font-family: "KaiTi", "STKaiti", serif;
+    font-size: 15px;
+    letter-spacing: 6px;
+    cursor: pointer;
+    border-radius: 2px;
+    min-height: 44px;
+    transition: all 0.2s;
+    width: 100%;
+}
+.ink-btn:hover:not(:disabled) {
+    background: rgba(44, 44, 44, 0.06);
+    border-color: #1A1A1A;
+}
+.ink-btn.primary {
+    background: #B83B3B;
+    color: #F5EFE0;
+    border-color: #8B2A2A;
+}
+.ink-btn.primary:hover:not(:disabled) { background: #8B2A2A; }
+.ink-btn:active:not(:disabled) { transform: translateY(1px); }
+
+@media (max-width: 1023px) {
+    .gomoku-layout { grid-template-columns: auto 170px; gap: 14px; }
+}
+
+/* 手机端：木框收窄到 6px，宽度由 grid 决定 */
+@media (max-width: 767px) {
+    body.ink-theme { padding: 0; }
+
+    .gomoku-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        align-items: stretch;
+        justify-items: center;
+        width: 100%;
+        padding: 0 6px;
+        box-sizing: border-box;
+    }
+    .gomoku-board-wrap {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .gomoku-board {
+        border-width: 6px;
+        width: max-content;
+        max-width: 100%;
+        box-sizing: border-box;
+        box-shadow:
+            inset 0 0 0 1px #C9A961,
+            inset 0 0 0 2px rgba(44, 44, 44, 0.6),
+            inset 0 0 30px rgba(120, 90, 40, 0.2),
+            0 6px 16px rgba(44, 30, 10, 0.3);
+    }
+    .gomoku-board::before { inset: -6px; }
+
+    .gomoku-side {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: stretch;
+        width: 100%;
+        gap: 6px;
+    }
+    .ink-card {
+        flex: 1 1 100%;
+        padding: 8px 12px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    .ink-card .card-title {
+        font-size: 12px;
+        letter-spacing: 3px;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+    }
+    .ink-select {
+        font-size: 13px;
+        padding: 6px 28px 6px 8px;
+        min-height: 36px;
+        letter-spacing: 2px;
+    }
+    .ink-btn {
+        flex: 1 1 calc(33% - 6px);
+        font-size: 14px;
+        letter-spacing: 3px;
+        padding: 8px 10px;
+        min-height: 42px;
+    }
+}
+
+body.ink-theme .modal-box {
+    background: #F5EFE0;
+    border: 1px solid #4A4A4A;
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 40px rgba(180, 160, 120, 0.2),
+        0 20px 60px rgba(44, 30, 10, 0.3);
+    font-family: "KaiTi", "STKaiti", serif;
+    padding: 40px 48px;
+    max-width: 90vw;
+    width: 420px;
+}
+body.ink-theme .modal-box h2 {
+    color: #1A1A1A;
+    font-size: 26px;
+    letter-spacing: 6px;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+body.ink-theme .modal-box p {
+    color: #4A4A4A;
+    font-size: 15px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+}
+body.ink-theme .modal-actions { display: flex; gap: 12px; justify-content: center; }
+body.ink-theme .modal-actions .ink-btn { flex: 1; }
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded ink-theme">
+<div class="game-inner">
+    <div class="gomoku-layout">
+        <div class="gomoku-board-wrap">
+            <div id="board" class="gomoku-board"></div>
+        </div>
+        <div class="gomoku-side">
+            <div class="ink-card">
+                <div class="card-title">对局</div>
+                <div class="turn-indicator">
+                    <div class="turn-dot" id="turnDot"></div>
+                    <span>行棋：<b id="turnLabel">黑方</b></span>
+                </div>
+                <div style="margin-top:4px;">执：<b id="playerSide">黑方</b></div>
+            </div>
+            <div class="ink-card">
+                <div class="card-title">棋力</div>
+                <select id="aiLevel" class="ink-select">
+                    <option value="1">入门</option>
+                    <option value="2" selected>进阶</option>
+                    <option value="3">高手</option>
+                </select>
+            </div>
+            <button class="ink-btn primary" id="btnNew">新　局</button>
+            <button class="ink-btn" id="btnUndo">悔　棋</button>
+            <button class="ink-btn" id="btnSwap">换　手</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="endModal">
+    <div class="modal-box">
+        <h2 id="endModalTitle">对局终了</h2>
+        <p id="endModalSub">——</p>
+        <div class="modal-actions">
+            <button class="ink-btn primary" id="btnEndNew">再　来</button>
+            <button class="ink-btn" id="btnEndClose">收　子</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+
+    document.body.classList.add('embedded', 'ink-theme');
+    GameBridge.notifyReady();
+
+    const SIZE = 15;
+    const EMPTY = 0, BLACK = 1, WHITE = 2;
+
+    let board;
+    let playerSide;
+    let turn;
+    let gameOver;
+    let aiThinking;
+    let lastMove;
+    let history;
+    let winCells;
+    let aiTimerId = null;
+
+    const boardEl = document.getElementById('board');
+    const turnLabel = document.getElementById('turnLabel');
+    const turnDot = document.getElementById('turnDot');
+    const playerSideEl = document.getElementById('playerSide');
+    const aiLevelEl = document.getElementById('aiLevel');
+    const endModal = document.getElementById('endModal');
+    const endModalTitle = document.getElementById('endModalTitle');
+    const endModalSub = document.getElementById('endModalSub');
+    const btnEndNew = document.getElementById('btnEndNew');
+    const btnEndClose = document.getElementById('btnEndClose');
+
+    // ============================================================
+    // 棋盘尺寸：--cell 唯一尺寸来源，木框 6px 手机 / 12px 桌面
+    // ============================================================
+    function calcCellSize() {
+        const wrap = document.querySelector('.gomoku-board-wrap');
+        const vw = wrap ? wrap.clientWidth : window.innerWidth;
+        const vh = window.innerHeight;
+        const isMobile = window.innerWidth <= 767;
+
+        const frame = isMobile ? 12 : 24;
+        const availW = vw - frame;
+        const availH = isMobile ? vh - 260 : vh - 220;
+        const byW = Math.floor(availW / SIZE);
+        const byH = Math.floor(availH / SIZE);
+        return Math.max(14, Math.min(byW, byH, isMobile ? 26 : 40));
+    }
+
+    let pointEls = null;
+
+    function buildBoardDOM() {
+        boardEl.innerHTML = '';
+        pointEls = new Array(SIZE * SIZE);
+
+        const stars = [
+            [3, 3], [11, 3], [7, 7], [3, 11], [11, 11]
+        ];
+
+        for (let y = 0; y < SIZE; y++) {
+            for (let x = 0; x < SIZE; x++) {
+                const el = document.createElement('div');
+                el.className = 'gomoku-point';
+                el.dataset.x = x;
+                el.dataset.y = y;
+                el.onclick = () => onClick(x, y);
+                el.onmouseenter = () => onHover(x, y, true);
+                el.onmouseleave = () => onHover(x, y, false);
+                boardEl.appendChild(el);
+                pointEls[y * SIZE + x] = el;
+            }
+        }
+
+        stars.forEach(([x, y]) => {
+            const star = document.createElement('div');
+            star.className = 'gomoku-star';
+            star.style.left = `calc(var(--cell) * ${x} + var(--cell) / 2)`;
+            star.style.top = `calc(var(--cell) * ${y} + var(--cell) / 2)`;
+            boardEl.appendChild(star);
+        });
+
+        updateBoardSize();
+    }
+
+    function updateBoardSize() {
+        const cell = calcCellSize();
+        boardEl.style.setProperty('--cell', cell + 'px');
+    }
+
+    function render() {
+        updateBoardSize();
+        for (let y = 0; y < SIZE; y++) {
+            for (let x = 0; x < SIZE; x++) {
+                const el = pointEls[y * SIZE + x];
+                el.className = 'gomoku-point';
+                const p = board[y][x];
+                el.innerHTML = '';
+                if (p !== EMPTY) {
+                    const piece = document.createElement('div');
+                    piece.className = 'gomoku-piece ' + (p === BLACK ? 'black' : 'white');
+                    el.appendChild(piece);
+                }
+                if (lastMove && lastMove.x === x && lastMove.y === y) el.classList.add('lastmove');
+                if (winCells && winCells.some(c => c.x === x && c.y === y)) el.classList.add('win');
+            }
+        }
+        turnDot.className = 'turn-dot ' + (turn === BLACK ? 'black' : 'white');
+        turnLabel.textContent = turn === BLACK ? '黑方' : '白方';
+    }
+
+    function onHover(x, y, entering) {
+        if (gameOver || aiThinking) return;
+        if (turn !== playerSide) return;
+        if (board[y][x] !== EMPTY) return;
+        const el = pointEls[y * SIZE + x];
+        if (entering) {
+            el.classList.add('preview');
+            const piece = document.createElement('div');
+            piece.className = 'gomoku-piece ' + (playerSide === BLACK ? 'black' : 'white');
+            el.appendChild(piece);
+        } else {
+            el.classList.remove('preview');
+            el.innerHTML = '';
+        }
+    }
+
+    function onClick(x, y) {
+        if (gameOver || aiThinking) return;
+        if (turn !== playerSide) return;
+        if (board[y][x] !== EMPTY) return;
+        doMove(x, y, playerSide);
+        render();
+        if (!gameOver) scheduleAI();
+    }
+
+    function doMove(x, y, side) {
+        board[y][x] = side;
+        history.push({ x, y, side });
+        lastMove = { x, y };
+        turn = side === BLACK ? WHITE : BLACK;
+
+        const win = checkWin(x, y, side);
+        if (win) {
+            winCells = win;
+            gameOver = true;
+            showEndModal(
+                side === BLACK ? '黑方胜' : '白方胜',
+                `五子连珠`
+            );
+            return;
+        }
+        if (history.length === SIZE * SIZE) {
+            gameOver = true;
+            showEndModal('和　棋', '棋满无胜负');
+        }
+    }
+
+    function checkWin(x, y, side) {
+        const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+        for (const [dx, dy] of dirs) {
+            const cells = [{ x, y }];
+            let nx = x + dx, ny = y + dy;
+            while (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === side) {
+                cells.push({ x: nx, y: ny });
+                nx += dx; ny += dy;
+            }
+            nx = x - dx; ny = y - dy;
+            while (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === side) {
+                cells.unshift({ x: nx, y: ny });
+                nx -= dx; ny -= dy;
+            }
+            if (cells.length >= 5) return cells;
+        }
+        return null;
+    }
+
+    const SCORE = {
+        FIVE: 1000000,
+        LIVE_FOUR: 100000,
+        RUSH_FOUR: 10000,
+        LIVE_THREE: 8000,
+        SLEEP_THREE: 1000,
+        LIVE_TWO: 500,
+        SLEEP_TWO: 100,
+        LIVE_ONE: 10
+    };
+
+    function evaluatePoint(x, y, side) {
+        const previous = board[y][x];
+        board[y][x] = side;
+        let score = 0;
+        const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+        for (const [dx, dy] of dirs) {
+            let count = 1;
+            let openLeft = 0, openRight = 0;
+            let nx = x + dx, ny = y + dy;
+            while (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === side) {
+                count++;
+                nx += dx; ny += dy;
+            }
+            if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === EMPTY) openRight = 1;
+            nx = x - dx; ny = y - dy;
+            while (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === side) {
+                count++;
+                nx -= dx; ny -= dy;
+            }
+            if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[ny][nx] === EMPTY) openLeft = 1;
+            score += scoreByCount(count, openLeft + openRight);
+        }
+        board[y][x] = previous;
+        return score;
+    }
+
+    function scoreByCount(count, open) {
+        if (count >= 5) return SCORE.FIVE;
+        if (count === 4) {
+            if (open === 2) return SCORE.LIVE_FOUR;
+            if (open === 1) return SCORE.RUSH_FOUR;
+            return 0;
+        }
+        if (count === 3) {
+            if (open === 2) return SCORE.LIVE_THREE;
+            if (open === 1) return SCORE.SLEEP_THREE;
+            return 0;
+        }
+        if (count === 2) {
+            if (open === 2) return SCORE.LIVE_TWO;
+            if (open === 1) return SCORE.SLEEP_TWO;
+            return 0;
+        }
+        if (count === 1) {
+            if (open === 2) return SCORE.LIVE_ONE;
+            return 0;
+        }
+        return 0;
+    }
+
+    function getCandidates() {
+        const cands = new Set();
+        for (let y = 0; y < SIZE; y++) {
+            for (let x = 0; x < SIZE; x++) {
+                if (board[y][x] === EMPTY) continue;
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) continue;
+                        if (board[ny][nx] === EMPTY) cands.add(ny * SIZE + nx);
+                    }
+                }
+            }
+        }
+        if (cands.size === 0) cands.add(7 * SIZE + 7);
+        return Array.from(cands).map(i => ({ x: i % SIZE, y: Math.floor(i / SIZE) }));
+    }
+
+    function aiMove() {
+        if (gameOver) return;
+        const side = turn;
+        const opp = side === BLACK ? WHITE : BLACK;
+        const level = parseInt(aiLevelEl.value, 10);
+        const candidates = getCandidates();
+
+        const attackWeight = 1.0;
+        const defenseWeight = 1.1;
+
+        const scored = candidates.map(c => {
+            const myScore = evaluatePoint(c.x, c.y, side);
+            const oppScore = evaluatePoint(c.x, c.y, opp);
+            return { ...c, myScore, oppScore, total: myScore * attackWeight + oppScore * defenseWeight };
+        });
+
+        scored.sort((a, b) => b.total - a.total);
+
+        let pick;
+        if (level === 1) {
+            const top = scored.slice(0, Math.min(5, scored.length));
+            pick = top[Math.floor(Math.random() * top.length)];
+        } else if (level === 2) {
+            pick = scored[0];
+        } else {
+            pick = pickBestMove(side, scored.slice(0, 16));
+        }
+
+        if (pick) doMove(pick.x, pick.y, side);
+    }
+
+    function pickBestMove(side, candidates) {
+        const opp = side === BLACK ? WHITE : BLACK;
+        let best = null;
+        let bestScore = -Infinity;
+
+        for (const c of candidates) {
+            board[c.y][c.x] = side;
+            let myScore = evaluatePoint(c.x, c.y, side);
+            if (checkWin(c.x, c.y, side)) {
+                board[c.y][c.x] = EMPTY;
+                return c;
+            }
+            let oppBest = 0;
+            const oppCands = getCandidates();
+            for (const oc of oppCands) {
+                const s = evaluatePoint(oc.x, oc.y, opp);
+                if (s > oppBest) oppBest = s;
+            }
+            board[c.y][c.x] = EMPTY;
+            const total = myScore - oppBest * 1.2;
+            if (total > bestScore) {
+                bestScore = total;
+                best = c;
+            }
+        }
+        return best;
+    }
+
+    function scheduleAI() {
+        if (gameOver || turn === playerSide) return;
+        if (aiTimerId) clearTimeout(aiTimerId);
+        aiThinking = true;
+        turnLabel.textContent = '思　索';
+        aiTimerId = setTimeout(() => {
+            aiTimerId = null;
+            aiMove();
+            aiThinking = false;
+            render();
+        }, 30);
+    }
+
+    function undo() {
+        if (history.length === 0 || aiThinking) return;
+        do {
+            const last = history.pop();
+            board[last.y][last.x] = EMPTY;
+            turn = last.side;
+            lastMove = history.length
+                ? { x: history[history.length - 1].x, y: history[history.length - 1].y }
+                : null;
+        } while (turn !== playerSide && history.length > 0);
+
+        gameOver = false;
+        winCells = null;
+        endModal.classList.remove('show');
+        render();
+    }
+
+    function showEndModal(title, sub) {
+        endModalTitle.textContent = title;
+        endModalSub.textContent = sub;
+        endModal.classList.add('show');
+        aiThinking = false;
+    }
+
+    function newGame() {
+        if (aiTimerId) { clearTimeout(aiTimerId); aiTimerId = null; }
+        board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+        turn = BLACK;
+        gameOver = false;
+        aiThinking = false;
+        lastMove = null;
+        history = [];
+        winCells = null;
+        endModal.classList.remove('show');
+        playerSideEl.textContent = playerSide === BLACK ? '黑方' : '白方';
+        render();
+        if (playerSide === WHITE) scheduleAI();
+    }
+
+    document.getElementById('btnNew').onclick = newGame;
+    document.getElementById('btnUndo').onclick = undo;
+    document.getElementById('btnSwap').onclick = () => {
+        if (aiTimerId) { clearTimeout(aiTimerId); aiTimerId = null; }
+        playerSide = playerSide === BLACK ? WHITE : BLACK;
+        newGame();
+    };
+    btnEndNew.onclick = () => { endModal.classList.remove('show'); newGame(); };
+    btnEndClose.onclick = () => { endModal.classList.remove('show'); };
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 150);
+    });
+
+    playerSide = BLACK;
+    buildBoardDOM();
+    newGame();
+})();
+</script>
+</body>
+</html>

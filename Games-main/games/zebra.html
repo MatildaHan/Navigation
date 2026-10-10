@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>斑马谜题</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.zebra-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    min-height: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+}
+.zebra-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--text-sub);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+.zebra-toolbar b { color: var(--primary); }
+.zebra-problem {
+    background: rgba(0,0,0,0.3);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--text-sub);
+    max-height: 240px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+.zebra-problem b { color: var(--primary); }
+.zebra-problem .q { color: #fff; font-weight: 700; margin-top: 6px; display: block; }
+.zebra-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+}
+.zebra-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;
+    min-width: 460px;
+}
+.zebra-table th, .zebra-table td {
+    padding: 5px 4px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px;
+}
+.zebra-table th {
+    background: rgba(0,0,0,0.3);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+.zebra-table select {
+    background: rgba(30,41,59,0.9);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 4px 2px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+    text-align-last: center;
+    min-height: 34px;
+}
+.zebra-table select option { background: #1e293b; }
+.zebra-table td.correct { background: rgba(74,222,128,0.25); }
+.zebra-table td.wrong { background: rgba(239,68,68,0.15); }
+.zebra-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+    .zebra-wrap { gap: 8px; }
+    .zebra-toolbar { font-size: 12px; padding: 8px 10px; }
+    .zebra-problem { font-size: 12px; padding: 10px 12px; max-height: 200px; }
+    .zebra-table th, .zebra-table td { font-size: 11px; padding: 4px 2px; }
+    .zebra-table select { font-size: 11px; padding: 3px 1px; min-height: 32px; }
+    .zebra-btns .btn { font-size: 12px; padding: 8px 12px; min-height: 40px; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="zebra-wrap">
+        <div class="zebra-toolbar">
+            <div><b id="titleLabel">爱因斯坦谜题</b></div>
+        </div>
+
+        <div class="zebra-problem" id="problem"></div>
+
+        <div class="zebra-table-wrap">
+            <div id="tableWrap"></div>
+        </div>
+
+        <div class="zebra-btns">
+            <button class="btn" id="btnCheck">检查答案</button>
+            <button class="btn ghost" id="btnHint">提示</button>
+            <button class="btn ghost" id="btnReset">重置</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+
+    document.body.classList.add('embedded');
+
+    // 立刻通知父页面：已就绪
+    GameBridge.notifyReady();
+
+    const MAX_HINTS = 3;
+    const HOUSE_COUNT = 5;
+
+    // ============================================================
+    // 唯一题目：经典爱因斯坦谜题
+    // ============================================================
+    const PUZZLE = {
+        title: '爱因斯坦谜题',
+        intro: '5 栋房子排成一排，每栋房子的主人国籍、饮料、香烟、宠物各不相同。',
+        clueTexts: [
+            '英国人住在红房子里。',
+            '瑞典人养狗。',
+            '丹麦人喝茶。',
+            '绿房子紧挨在白房子的左边。',
+            '绿房子的主人喝咖啡。',
+            '抽 Pall Mall 的人养鸟。',
+            '黄房子的主人抽 Dunhill。',
+            '中间房子的主人喝牛奶。',
+            '挪威人住在第一栋房子。',
+            '抽 Blend 的人住在养猫的人旁边。',
+            '养马的人住在抽 Dunhill 的人旁边。',
+            '抽 Blue Master 的人喝啤酒。',
+            '德国人抽 Prince。',
+            '挪威人住在蓝房子旁边。',
+            '抽 Blend 的人有一个喝水的邻居。'
+        ],
+        question: '谁养鱼？',
+        categories: {
+            nationality: { label: '国籍', values: ['挪威人','丹麦人','英国人','德国人','瑞典人'] },
+            color:       { label: '颜色', values: ['黄色','蓝色','红色','绿色','白色'] },
+            drink:       { label: '饮料', values: ['水','茶','牛奶','咖啡','啤酒'] },
+            smoke:       { label: '香烟', values: ['Dunhill','Blend','Pall Mall','Prince','Blue Master'] },
+            pet:         { label: '宠物', values: ['猫','马','鸟','鱼','狗'] }
+        },
+        // 经典答案（左到右）
+        answer: [
+            { nationality:'挪威人', color:'黄色', drink:'水',   smoke:'Dunhill',     pet:'猫' },
+            { nationality:'丹麦人', color:'蓝色', drink:'茶',   smoke:'Blend',       pet:'马' },
+            { nationality:'英国人', color:'红色', drink:'牛奶', smoke:'Pall Mall',   pet:'鸟' },
+            { nationality:'德国人', color:'绿色', drink:'咖啡', smoke:'Prince',      pet:'鱼' },
+            { nationality:'瑞典人', color:'白色', drink:'啤酒', smoke:'Blue Master', pet:'狗' }
+        ],
+        // 线索谓词（用于校验玩家填的格子是否满足所有线索）
+        clues: [
+            a => posOf(a,'nationality','英国人') >= 0 && a[posOf(a,'nationality','英国人')].color === '红色',
+            a => posOf(a,'nationality','瑞典人') >= 0 && a[posOf(a,'nationality','瑞典人')].pet === '狗',
+            a => posOf(a,'nationality','丹麦人') >= 0 && a[posOf(a,'nationality','丹麦人')].drink === '茶',
+            a => posOf(a,'color','绿色') >= 0 && posOf(a,'color','白色') >= 0 && posOf(a,'color','绿色') + 1 === posOf(a,'color','白色'),
+            a => a[posOf(a,'color','绿色')] && a[posOf(a,'color','绿色')].drink === '咖啡',
+            a => a[posOf(a,'smoke','Pall Mall')] && a[posOf(a,'smoke','Pall Mall')].pet === '鸟',
+            a => a[posOf(a,'color','黄色')] && a[posOf(a,'color','黄色')].smoke === 'Dunhill',
+            a => a[2] && a[2].drink === '牛奶',
+            a => a[0] && a[0].nationality === '挪威人',
+            a => adjacent(posOf(a,'smoke','Blend'), posOf(a,'pet','猫')),
+            a => adjacent(posOf(a,'pet','马'), posOf(a,'smoke','Dunhill')),
+            a => a[posOf(a,'smoke','Blue Master')] && a[posOf(a,'smoke','Blue Master')].drink === '啤酒',
+            a => a[posOf(a,'nationality','德国人')] && a[posOf(a,'nationality','德国人')].smoke === 'Prince',
+            a => adjacent(posOf(a,'nationality','挪威人'), posOf(a,'color','蓝色')),
+            a => adjacent(posOf(a,'smoke','Blend'), posOf(a,'drink','水'))
+        ],
+        target: { house: 3, key: 'nationality', value: '德国人' }
+    };
+
+    function posOf(assign, key, value) {
+        for (let i = 0; i < assign.length; i++) {
+            if (assign[i][key] === value) return i;
+        }
+        return -1;
+    }
+    function adjacent(a, b) {
+        return a >= 0 && b >= 0 && Math.abs(a - b) === 1;
+    }
+
+    // ============================================================
+    // 状态
+    // ============================================================
+    let state = [];
+    let revealed = [];
+    let hintCount = 0;
+    let locked = false;
+
+    const problemEl = document.getElementById('problem');
+    const wrap = document.getElementById('tableWrap');
+    const toastContainer = document.getElementById('toastContainer');
+    const btnHint = document.getElementById('btnHint');
+
+    function toast(text, type) {
+        const el = document.createElement('div');
+        el.className = 'toast' + (type ? ' ' + type : '');
+        el.textContent = text;
+        toastContainer.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.3s';
+            setTimeout(() => el.remove(), 300);
+        }, 2200);
+    }
+
+    // ============================================================
+    // 渲染
+    // ============================================================
+    function renderProblem() {
+        let html = `<b>题目：</b>${PUZZLE.intro}<br><b>线索：</b><br>`;
+        PUZZLE.clueTexts.forEach((c, i) => { html += `${i + 1}. ${c}<br>`; });
+        html += `<span class="q">问题：${PUZZLE.question}</span>`;
+        problemEl.innerHTML = html;
+    }
+
+    function renderTable() {
+        const cats = Object.keys(PUZZLE.categories);
+        let html = '<table class="zebra-table"><thead><tr><th style="width:70px;">房子</th>';
+        for (const k of cats) html += `<th>${PUZZLE.categories[k].label}</th>`;
+        html += '</tr></thead><tbody>';
+
+        for (let i = 0; i < HOUSE_COUNT; i++) {
+            html += `<tr><td><b>第 ${i + 1} 栋</b></td>`;
+            for (const k of cats) {
+                const isLocked = revealed[i][k];
+                html += `<td class="${isLocked ? 'correct' : ''}">`;
+                html += `<select aria-label="第 ${i + 1} 栋的${PUZZLE.categories[k].label}" data-house="${i}" data-cat="${k}" ${isLocked ? 'disabled' : ''}>`;
+                html += `<option value="">--</option>`;
+                for (const opt of PUZZLE.categories[k].values) {
+                    const sel = state[i][k] === opt ? ' selected' : '';
+                    html += `<option value="${opt}"${sel}>${opt}</option>`;
+                }
+                html += `</select></td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+
+        wrap.querySelectorAll('select').forEach(sel => {
+            sel.onchange = () => {
+                if (locked) {
+                    sel.value = state[+sel.dataset.house][sel.dataset.cat];
+                    return;
+                }
+                const h = parseInt(sel.dataset.house, 10);
+                const c = sel.dataset.cat;
+                state[h][c] = sel.value;
+                sel.parentElement.classList.remove('wrong');
+            };
+        });
+    }
+
+    // ============================================================
+    // 检查
+    // ============================================================
+    function check() {
+        if (locked) { toast('已完成，无需再检查', 'warn'); return; }
+        const cats = Object.keys(PUZZLE.categories);
+
+        // 1. 是否填满
+        for (let i = 0; i < HOUSE_COUNT; i++) {
+            for (const k of cats) {
+                if (!state[i][k]) { toast('还有格子未填写', 'warn'); return; }
+            }
+        }
+        // 2. 每列不重复
+        for (const k of cats) {
+            const vals = state.map(s => s[k]);
+            if (new Set(vals).size !== HOUSE_COUNT) {
+                toast(`「${PUZZLE.categories[k].label}」列有重复`, 'warn');
+                return;
+            }
+        }
+        // 3. 校验所有线索
+        const failed = [];
+        PUZZLE.clues.forEach((fn, i) => {
+            try { if (!fn(state)) failed.push(i + 1); }
+            catch (e) { failed.push(i + 1); }
+        });
+        if (failed.length > 0) {
+            toast(`违反线索：第 ${failed.join('、')} 条`, 'error');
+            return;
+        }
+        // 4. 通关
+        locked = true;
+        const t = PUZZLE.target;
+        toast(`🎉 完全正确！养鱼的是${t.value}（第 ${t.house + 1} 栋）。`, 'success');
+    }
+
+    // ============================================================
+    // 提示
+    // ============================================================
+    function hint() {
+        if (locked) { toast('已完成', 'warn'); return; }
+        if (hintCount >= MAX_HINTS) {
+            toast(`提示次数已用完（${MAX_HINTS} 次）`, 'warn');
+            btnHint.disabled = true;
+            return;
+        }
+        const cats = Object.keys(PUZZLE.categories);
+        const wrongSlots = [];
+        for (let i = 0; i < HOUSE_COUNT; i++) {
+            for (const k of cats) {
+                if (state[i][k] !== PUZZLE.answer[i][k]) wrongSlots.push({ house: i, cat: k });
+            }
+        }
+        if (wrongSlots.length === 0) {
+            toast('已经全部正确，无需提示', 'warn');
+            return;
+        }
+        const slot = wrongSlots[Math.floor(Math.random() * wrongSlots.length)];
+        state[slot.house][slot.cat] = PUZZLE.answer[slot.house][slot.cat];
+        revealed[slot.house][slot.cat] = true;
+        hintCount++;
+        toast(`💡 已揭示：第 ${slot.house + 1} 栋的「${PUZZLE.categories[slot.cat].label}」（剩余 ${MAX_HINTS - hintCount} 次）`, 'success');
+        renderTable();
+        if (hintCount >= MAX_HINTS) btnHint.disabled = true;
+    }
+
+    // ============================================================
+    // 重置
+    // ============================================================
+    function reset() {
+        state = Array.from({ length: HOUSE_COUNT }, () => {
+            const obj = {};
+            for (const k of Object.keys(PUZZLE.categories)) obj[k] = '';
+            return obj;
+        });
+        revealed = Array.from({ length: HOUSE_COUNT }, () => ({}));
+        hintCount = 0;
+        locked = false;
+        btnHint.disabled = false;
+        renderTable();
+    }
+
+    // ============================================================
+    // 事件
+    // ============================================================
+    document.getElementById('btnCheck').onclick = check;
+    btnHint.onclick = hint;
+    document.getElementById('btnReset').onclick = reset;
+
+    // ============================================================
+    // 启动
+    // ============================================================
+    renderProblem();
+    reset();
+})();
+</script>
+</body>
+</html>

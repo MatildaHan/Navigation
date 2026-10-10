@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>灭灯</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.lo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+    padding: 8px;
+}
+.lo-info {
+    color: var(--text-sub);
+    font-size: 14px;
+    text-align: center;
+    max-width: 500px;
+    line-height: 1.7;
+}
+.lo-info b { color: var(--primary); }
+.lo-grid {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    touch-action: manipulation;
+    max-width: 100%;
+}
+.lo-cell {
+    width: var(--cell, 56px);
+    height: var(--cell, 56px);
+    border-radius: 10px;
+    background: #334155;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.6);
+    user-select: none;
+    -webkit-user-select: none;
+    border: 2px solid rgba(0,0,0,0.3);
+}
+.lo-cell.on {
+    background: #facc15;
+    box-shadow: 0 0 20px rgba(250,204,21,0.7), inset 0 0 12px rgba(255,255,255,0.5);
+    border-color: rgba(255,255,255,0.4);
+}
+.lo-cell:active { transform: scale(0.94); }
+.lo-cell.locked { cursor: default; }
+.lo-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.lo-levels {
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.3);
+    padding: 6px;
+    border-radius: 12px;
+}
+.lo-level-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    min-height: 40px;
+    transition: all 0.15s;
+}
+.lo-level-btn:hover:not(.active) { background: rgba(255,255,255,0.08); }
+.lo-level-btn.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+@media (max-width: 767px) {
+    .lo-info { font-size: 12px; }
+    .lo-grid { gap: 4px; padding: 8px; }
+    .lo-btns .btn { font-size: 13px; padding: 8px 14px; }
+    .lo-level-btn { padding: 6px 12px; font-size: 12px; }
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="lo-wrap">
+        <div class="lo-info">
+            目标：让所有灯熄灭。<br>
+            点击一盏灯会翻转自己和上下左右的灯。步数 <b id="steps">0</b>
+        </div>
+        <div id="grid" class="lo-grid"></div>
+        <div class="lo-btns">
+            <button class="btn" id="btnNew">新游戏</button>
+        </div>
+        <div class="lo-levels" id="levels"></div>
+    </div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h2>🎉 全部熄灭</h2>
+        <p>完成步数<span class="big-value" id="finalSteps">0</span></p>
+        <div class="modal-actions">
+            <button class="btn" id="btnRestart">再来一次</button>
+            <button class="btn ghost" id="btnClose">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+
+    const SIZES = [3, 5, 7];
+    let sizeIdx = 0;
+    let N, grid, steps, gameOver;
+
+    const gridEl = document.getElementById('grid');
+    const stepsEl = document.getElementById('steps');
+    const levelsEl = document.getElementById('levels');
+    const modal = document.getElementById('modal');
+    const finalStepsEl = document.getElementById('finalSteps');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnClose = document.getElementById('btnClose');
+
+    function calcCellSize() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const availW = Math.min(vw - 80, 500);
+        const availH = Math.min(vh - 300, 500);
+        const byW = Math.floor((availW - N * 6 - 24) / N);
+        const byH = Math.floor((availH - N * 6 - 24) / N);
+        return Math.max(28, Math.min(byW, byH, 56));
+    }
+
+    function buildLevels() {
+        levelsEl.innerHTML = '';
+        SIZES.forEach((s, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'lo-level-btn' + (i === sizeIdx ? ' active' : '');
+            btn.textContent = `${s}×${s}`;
+            btn.onclick = () => {
+                sizeIdx = i;
+                buildLevels();
+                init();
+            };
+            levelsEl.appendChild(btn);
+        });
+    }
+
+    function init() {
+        N = SIZES[sizeIdx];
+        grid = Array.from({ length: N }, () => Array(N).fill(0));
+        steps = 0;
+        gameOver = false;
+        stepsEl.textContent = '0';
+        modal.classList.remove('show');
+
+        const times = N * N * 2;
+        for (let i = 0; i < times; i++) {
+            toggle(Math.floor(Math.random() * N), Math.floor(Math.random() * N), false);
+        }
+        if (grid.flat().every(v => v === 0)) toggle(0, 0, false);
+        render();
+    }
+
+    function toggle(x, y, count = true) {
+        for (const [dx, dy] of [[0,0],[0,1],[0,-1],[1,0],[-1,0]]) {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) grid[ny][nx] ^= 1;
+        }
+        if (count) { steps++; stepsEl.textContent = steps; }
+    }
+
+    function render() {
+        const cell = calcCellSize();
+        gridEl.style.setProperty('--cell', cell + 'px');
+        gridEl.style.gridTemplateColumns = `repeat(${N}, ${cell}px)`;
+        gridEl.innerHTML = '';
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const cellEl = document.createElement('div');
+                cellEl.className = 'lo-cell' + (grid[y][x] ? ' on' : '') + (gameOver ? ' locked' : '');
+                cellEl.dataset.x = x;
+                cellEl.dataset.y = y;
+                gridEl.appendChild(cellEl);
+            }
+        }
+    }
+
+    gridEl.addEventListener('click', e => {
+        if (gameOver) return;
+        const cellEl = e.target.closest('.lo-cell');
+        if (!cellEl) return;
+        const x = +cellEl.dataset.x, y = +cellEl.dataset.y;
+        toggle(x, y);
+        updateCell(x, y);
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < N && ny >= 0 && ny < N) updateCell(nx, ny);
+        }
+        if (grid.flat().every(v => v === 0)) {
+            gameOver = true;
+            finalStepsEl.textContent = steps;
+            modal.classList.add('show');
+            render();
+        }
+    });
+
+    function updateCell(x, y) {
+        const el = gridEl.querySelector(`.lo-cell[data-x="${x}"][data-y="${y}"]`);
+        if (el) el.classList.toggle('on', grid[y][x] === 1);
+    }
+
+    document.getElementById('btnNew').onclick = init;
+    btnRestart.onclick = () => { modal.classList.remove('show'); init(); };
+    btnClose.onclick = () => { modal.classList.remove('show'); };
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 200);
+    });
+
+    buildLevels();
+    init();
+    GameBridge.notifyReady();
+})();
+</script>
+</body>
+</html>

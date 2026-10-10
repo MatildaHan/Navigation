@@ -40,6 +40,7 @@
         <nav class="page-switcher glass-panel" id="page-switcher" aria-label="内容分页">
             <a href="#" data-page="0" aria-label="第一页：主页">主页</a>
             <a href="#life" data-page="1" aria-label="第二页：生活与工具">生活与工具</a>
+            <a href="#games" data-page="2" aria-label="第三页：游戏">游戏</a>
             <span id="page-status" class="sr-only" aria-live="polite"></span>
         </nav>
         <main class="main-board glass-panel">
@@ -147,7 +148,12 @@
                     <header class="card-header"><i class="fa-solid fa-star" aria-hidden="true"></i><span>愿望清单</span></header>
                     <div class="life-preview" id="wishlist-preview"></div>
                 </article>
+                <section class="bento-card life-apps" data-span="3" aria-labelledby="local-tools-title">
+                    <header class="card-header"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span id="local-tools-title">学习与放松</span></header>
+                    <div class="app-catalog tools-catalog" id="local-tools-catalog"></div>
+                </section>
             </div>
+            <div class="app-catalog deck-page" id="games-grid" aria-label="游戏卡片" inert></div>
             </div>
             </div>
             <section class="detail-view" id="detail-view" hidden aria-labelledby="detail-title">
@@ -178,5 +184,6 @@
 
     <script src="assets/js/script.js" defer></script>
     <script src="assets/js/life.js" defer></script>
+    <script src="assets/js/apps.js" defer></script>
 </body>
 </html>

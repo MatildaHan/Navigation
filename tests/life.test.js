@@ -49,6 +49,7 @@ function environment(saved = null) {
     });
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/script.js'), 'utf8'), ctx);
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/life.js'), 'utf8'), ctx);
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/apps.js'), 'utf8'), ctx);
     const config = vm.runInContext(`parseConfig(${JSON.stringify(fs.readFileSync(path.join(ROOT, 'config.md'), 'utf8'))})`, ctx);
     for (const file of fs.readdirSync(path.join(ROOT, 'configs')).filter(file => file.endsWith('.md') && file !== 'README.md')) {
         Object.assign(config, vm.runInContext(`parseConfig(${JSON.stringify(fs.readFileSync(path.join(ROOT, 'configs', file), 'utf8'))})`, ctx));
@@ -60,7 +61,7 @@ function environment(saved = null) {
 
 test('every module parses, identifiers are unique, and project steps reference real projects', () => {
     const e = environment();
-    for (const key of ['tools', 'checkins', 'habits', 'projects', 'steps', 'wishlist']) {
+    for (const key of ['tools', 'checkins', 'habits', 'projects', 'steps', 'wishlist', 'games']) {
         assert.ok(Array.isArray(e.config[key]) && e.config[key].length);
         assert.equal(new Set(e.config[key].map(item => item.标识)).size, e.config[key].length);
     }

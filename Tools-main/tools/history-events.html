@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>历史事件</title>
+<link rel="stylesheet" href="../css/common.css">
+<style>
+.hist-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    min-height: 100%;
+}
+.hist-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-align: center;
+    color: #1A1A1A;
+}
+.hist-subtitle {
+    font-size: 13px;
+    color: #8A7A60;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.hist-filter {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.hist-filter button {
+    background: transparent;
+    border: 1px solid rgba(44, 44, 44, 0.25);
+    color: #4A4A4A;
+    padding: 6px 14px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.hist-filter button:hover { border-color: #1A1A1A; }
+.hist-filter button.active {
+    background: #B83B3B;
+    color: #F5EFE0;
+    border-color: #8B2A2A;
+}
+.hist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.hist-item {
+    background: rgba(255, 250, 240, 0.85);
+    border: 1px solid rgba(44, 44, 44, 0.15);
+    border-left: 3px solid #B83B3B;
+    border-radius: 2px;
+    padding: 14px 18px;
+    box-shadow: inset 0 0 20px rgba(180, 160, 120, 0.1);
+    transition: all 0.15s;
+}
+.hist-item:hover {
+    background: rgba(255, 250, 240, 0.95);
+    border-left-color: #8B2A2A;
+}
+.hist-year {
+    font-size: 14px;
+    color: #B83B3B;
+    letter-spacing: 2px;
+    font-family: "Courier New", monospace;
+    font-weight: 700;
+}
+.hist-event {
+    font-size: 16px;
+    color: #1A1A1A;
+    letter-spacing: 2px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+.hist-desc {
+    font-size: 13px;
+    color: #6A6050;
+    letter-spacing: 1px;
+    line-height: 1.7;
+    margin-top: 6px;
+}
+.hist-era {
+    display: inline-block;
+    background: rgba(184, 59, 59, 0.1);
+    color: #B83B3B;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+</style>
+<link rel="stylesheet" href="../../assets/css/apps.css">
+</head>
+<body class="embedded">
+<div class="game-inner">
+    <div class="hist-wrap">
+        <div>
+            <div class="hist-title">历 史 事 件</div>
+            <div class="hist-subtitle">HISTORICAL EVENTS</div>
+        </div>
+        <div class="hist-filter" id="filter"></div>
+        <div class="hist-list" id="list"></div>
+    </div>
+</div>
+
+<script src="../js/bridge.js"></script>
+<script src="../../assets/js/app-common.js" defer></script>
+<script>
+(function () {
+    'use strict';
+    document.body.classList.add('embedded');
+    GameBridge.notifyReady();
+
+    const EVENTS = [
+        { year: '公元前 221 年', event: '秦统一六国', era: '秦', desc: '秦王嬴政先后灭韩、赵、魏、楚、燕、齐，建立中国历史上第一个中央集权制国家。' },
+        { year: '公元前 209 年', event: '陈胜吴广起义', era: '秦', desc: '中国历史上第一次大规模的农民起义，动摇了秦朝的统治。' },
+        { year: '公元前 202 年', event: '楚汉之争结束', era: '汉', desc: '刘邦击败项羽，建立西汉王朝。' },
+        { year: '公元前 138 年', event: '张骞出使西域', era: '汉', desc: '张骞两次出使西域，开辟了丝绸之路，促进了东西方交流。' },
+        { year: '公元 105 年', event: '蔡伦改进造纸术', era: '汉', desc: '蔡伦用树皮、麻头、破布等原料改进造纸术，使纸张普及。' },
+        { year: '公元 208 年', event: '赤壁之战', era: '三国', desc: '孙刘联军以少胜多击败曹操，奠定三国鼎立的基础。' },
+        { year: '公元 618 年', event: '唐朝建立', era: '唐', desc: '李渊称帝，建立唐朝，定都长安。' },
+        { year: '公元 627-649 年', event: '贞观之治', era: '唐', desc: '唐太宗李世民励精图治，政治清明，经济繁荣，国力强盛。' },
+        { year: '公元 755 年', event: '安史之乱', era: '唐', desc: '安禄山、史思明发动叛乱，是唐朝由盛转衰的转折点。' },
+        { year: '公元 960 年', event: '北宋建立', era: '宋', desc: '赵匡胤发动陈桥兵变，黄袍加身，建立宋朝。' },
+        { year: '公元 1271 年', event: '元朝建立', era: '元', desc: '忽必烈建立元朝，是中国历史上首个由少数民族建立的大一统王朝。' },
+        { year: '公元 1368 年', event: '明朝建立', era: '明', desc: '朱元璋推翻元朝，建立明朝，定都应天府（南京）。' },
+        { year: '公元 1405-1433 年', event: '郑和下西洋', era: '明', desc: '郑和七次远航，到达东南亚、印度、非洲东海岸，宣扬国威。' },
+        { year: '公元 1644 年', event: '清朝入关', era: '清', desc: '李自成攻入北京，明朝灭亡；清军入关，建立全国统治。' },
+        { year: '公元 1840 年', event: '鸦片战争', era: '近代', desc: '英国发动鸦片战争，中国战败，签订《南京条约》，近代史开端。' },
+        { year: '公元 1911 年', event: '辛亥革命', era: '近代', desc: '孙中山领导革命党人推翻清朝，结束两千多年封建帝制。' },
+        { year: '公元 1919 年', event: '五四运动', era: '近代', desc: '北京学生发起爱国运动，新民主主义革命的开端。' },
+        { year: '公元 1949 年', event: '中华人民共和国成立', era: '现代', desc: '10 月 1 日，毛泽东在天安门城楼上宣告中华人民共和国成立。' },
+        { year: '公元 1978 年', event: '改革开放', era: '现代', desc: '十一届三中全会召开，中国开始实行改革开放政策。' },
+        { year: '公元 1997 年', event: '香港回归', era: '现代', desc: '7 月 1 日，中国对香港恢复行使主权。' },
+        { year: '公元 1999 年', event: '澳门回归', era: '现代', desc: '12 月 20 日，中国对澳门恢复行使主权。' },
+        { year: '公元 2001 年', event: '中国加入 WTO', era: '现代', desc: '12 月 11 日，中国正式成为世界贸易组织成员。' },
+        { year: '公元 2008 年', event: '北京奥运会', era: '现代', desc: '第 29 届夏季奥林匹克运动会在北京举办，中国金牌总数第一。' }
+    ];
+
+    const ERAS = ['全部', '秦', '汉', '三国', '唐', '宋', '元', '明', '清', '近代', '现代'];
+    let currentEra = '全部';
+
+    const filterEl = document.getElementById('filter');
+    const listEl = document.getElementById('list');
+
+    function buildFilter() {
+        filterEl.innerHTML = '';
+        ERAS.forEach(era => {
+            const btn = document.createElement('button');
+            btn.textContent = era;
+            btn.classList.toggle('active', era === currentEra);
+            btn.addEventListener('click', () => {
+                currentEra = era;
+                buildFilter();
+                render();
+            });
+            filterEl.appendChild(btn);
+        });
+    }
+
+    function render() {
+        listEl.innerHTML = '';
+        const list = currentEra === '全部'
+            ? EVENTS
+            : EVENTS.filter(e => e.era === currentEra);
+        list.forEach(e => {
+            const item = document.createElement('div');
+            item.className = 'hist-item';
+            item.innerHTML = `
+                <div class="hist-year">${e.year}<span class="hist-era">${e.era}</span></div>
+                <div class="hist-event">${e.event}</div>
+                <div class="hist-desc">${e.desc}</div>
+            `;
+            listEl.appendChild(item);
+        });
+        if (list.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center;color:#8A7A60;padding:24px;letter-spacing:3px;">暂无记录</div>';
+        }
+    }
+
+    buildFilter();
+    render();
+})();
+</script>
+</body>
+</html>
