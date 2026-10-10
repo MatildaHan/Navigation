@@ -84,4 +84,4 @@ MD 定义公开内容、项目和目标。打卡、备注、工具收藏、专�
 
 `history-events.json` 维护历史事件内容，与现有 Markdown 卡片配置独立。`eras` 定义筛选顺序，`sources` 以标识维护资料标题与 HTTPS 地址，`events` 按 `sortYear` 升序排列（公元前年份为负数）。每条事件包含唯一且稳定的 `id`、展示年代 `year`、标题 `title`、时期 `era`、人物 `people`、地点 `place`、简介 `summary`、背景 `background`、经过 `course`、影响 `impact`、阅读提示 `note`、推荐史料 `reading` 和资料标识数组 `sources`。新增事件时须填写全部字段，并区分确切日期、约数与长期进程。
 
-列表支持时期与关键词组合筛选，详情通过工具内部的 `#event/标识` 地址打开；例如独立页面 `Tools-main/tools/history-events.html#event/zhang-qian`。返回目录会保留筛选条件与本次浏览的滚动位置，上一篇／下一篇沿当前筛选结果阅读。首页仍通过 `#tool/history-events` 打开工具；外部阅读资料在新窗口打开。详情不写入个人记录。内容和地址校验可运行 `node --test tests/history-events.test.js`。
+列表直接展示时期筛选与事件卡片，不显示额外标题、介绍或搜索栏；仍兼容早期地址中的关键词参数，点击时期按钮可清除该参数。详情通过工具内部的 `#event/标识` 地址打开；例如独立页面 `Tools-main/tools/history-events.html#event/zhang-qian`。返回目录会保留筛选条件与本次浏览的滚动位置，上一篇／下一篇沿当前筛选结果阅读。首页仍通过 `#tool/history-events` 打开工具；外部阅读资料在新窗口打开。详情不写入个人记录。内容和地址校验可运行 `node --test tests/history-events.test.js`。
