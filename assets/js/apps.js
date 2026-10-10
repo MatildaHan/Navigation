@@ -6,15 +6,32 @@ const Apps = (() => {
     const tools = ['book', 'cyber-muyu', 'english-study', 'japanese-study', 'poetry-recite', 'history-events', 'music-player'];
     const entries = new Map();
     const toolRoute = item => tools.some(id => item.网址 === `#tool/${id}`) ? item.网址 : null;
-    function tile(key, item, index) {
+    const icons = {
+        book: 'fa-book-open', 'cyber-muyu': 'fa-drum', 'english-study': 'fa-language', 'japanese-study': 'fa-language',
+        'poetry-recite': 'fa-feather-pointed', 'history-events': 'fa-landmark', 'music-player': 'fa-headphones',
+        tetris: 'fa-shapes', sudoku: 'fa-table-cells', nonogram: 'fa-border-all', chess: 'fa-chess', gomoku: 'fa-chess-board',
+        klotski: 'fa-puzzle-piece', minesweeper: 'fa-bomb', lightsout: 'fa-lightbulb', graphcoloring: 'fa-palette', zebra: 'fa-magnifying-glass',
+    };
+    function tile(key, item) {
         const localTool = key.startsWith('tool/');
-        const link = el('a', localTool ? 'bento-card app-tile card-life-app' : 'app-tile');
-        if (localTool) { link.dataset.span = '1'; link.dataset.localTool = key; }
+        const card = el('article', 'bento-card card-list card-life app-tile');
+        card.dataset.span = '1';
+        if (localTool) card.dataset.localTool = key;
+        const header = el('header', 'card-header');
+        const icon = el('i', `fa-solid ${icons[key.split('/')[1]] || 'fa-gamepad'}`);
+        icon.setAttribute('aria-hidden', 'true');
+        header.append(icon, el('span', '', item.名称));
+        const preview = el('div', 'life-preview');
+        preview.append(el('p', 'preview-stat', item.分类 || '休闲'), el('p', 'preview-line', item.说明));
+        const link = el('a', 'card-open');
         link.href = `#${key}`;
-        const top = el('span', 'app-tile-top');
-        top.append(el('span', 'app-number', String(index + 1).padStart(2, '0')), el('span', 'app-category', item.分类 || '休闲'));
-        link.append(top, el('strong', '', item.名称), el('span', 'app-description', item.说明), el('span', 'app-enter', '进入 →'));
-        return link;
+        link.setAttribute('aria-label', `打开${item.名称}`);
+        card.append(header, preview, link);
+        card.addEventListener('click', event => {
+            if (event.target.closest('a, button, input, select, textarea') || window.getSelection()?.toString()) return;
+            link.click();
+        });
+        return card;
     }
     function init(CFG) {
         entries.clear();
@@ -25,13 +42,12 @@ const Apps = (() => {
             const node = document.getElementById(container);
             if (kind === 'game') node.replaceChildren();
             else node.querySelectorAll('[data-local-tool]').forEach(tile => tile.remove());
-            let index = 0;
             (items || []).forEach(item => {
                 const id = kind === 'tool' ? toolRoute(item)?.split('/')[1] : item.标识;
                 const key = `${kind}/${id}`;
                 if (!ids.includes(id) || !item.名称 || entries.has(key)) return;
                 entries.set(key, { ...item, kind, path: `${directory}/${id}.html`, parent: kind === 'game' ? '#games' : '#life' });
-                node.appendChild(tile(key, item, index++));
+                node.appendChild(tile(key, item));
             });
         }
     }

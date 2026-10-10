@@ -253,12 +253,15 @@ const Life = (() => {
         lines.slice(0, 3).forEach(line => node.appendChild(el('p', 'preview-line', line)));
         return node;
     }
+    function externalTools() {
+        return items('tools').filter(item => !Apps.toolRoute(item) && safeUrl(item.网址, ['https:', 'http:']));
+    }
     function renderHome() {
-        const tools = items('tools').filter(item => safeUrl(item.网址, ['https:', 'http:']));
+        const tools = externalTools();
         const toolsBox = preview('tools', `${tools.length} 个常用工具`);
         const toolLinks = el('div', 'preview-tools');
         tools.slice(0, 4).forEach(item => {
-            const a = el('a', '', item.名称); a.href = Apps.toolRoute(item) || safeUrl(item.网址, ['https:', 'http:']); if (!Apps.toolRoute(item)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } toolLinks.appendChild(a);
+            const a = el('a', '', item.名称); a.href = safeUrl(item.网址, ['https:', 'http:']); a.target = '_blank'; a.rel = 'noopener noreferrer'; toolLinks.appendChild(a);
         });
         toolsBox.appendChild(toolLinks);
         const today = dateKey(new Date());
@@ -291,7 +294,7 @@ const Life = (() => {
 
     function renderTools(body) {
         const bar = controls(body), input = searchField('搜索工具');
-        const category = select('工具分类', ['全部分类', ...new Set(items('tools').map(item => item.分类).filter(Boolean))]);
+        const category = select('工具分类', ['全部分类', ...new Set(externalTools().map(item => item.分类).filter(Boolean))]);
         input.value = filters.tools.query; category.value = filters.tools.category;
         const favorites = button('只看收藏', () => { filters.tools.saved = !filters.tools.saved; favorites.setAttribute('aria-pressed', String(filters.tools.saved)); draw(); });
         favorites.setAttribute('aria-pressed', String(filters.tools.saved)); bar.append(input, category, favorites);
@@ -300,11 +303,11 @@ const Life = (() => {
             list.replaceChildren();
             const query = input.value.trim().toLowerCase();
             filters.tools.query = input.value; filters.tools.category = category.value;
-            const matches = items('tools').filter(item => safeUrl(item.网址, ['http:', 'https:']) && `${item.名称} ${item.说明 || ''}`.toLowerCase().includes(query) && (category.value === '全部分类' || category.value === item.分类) && (favorites.getAttribute('aria-pressed') !== 'true' || state.favorites.includes(item.标识)));
+            const matches = externalTools().filter(item => `${item.名称} ${item.说明 || ''}`.toLowerCase().includes(query) && (category.value === '全部分类' || category.value === item.分类) && (favorites.getAttribute('aria-pressed') !== 'true' || state.favorites.includes(item.标识)));
             matches.forEach(item => {
                 const entry = panel(item.名称, item.分类, item.说明);
                 const actions = el('div', 'entry-actions');
-                const a = el('a', 'action-button', '打开工具'); a.href = Apps.toolRoute(item) || safeUrl(item.网址, ['http:', 'https:']); if (!Apps.toolRoute(item)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } actions.appendChild(a);
+                const a = el('a', 'action-button', '打开工具'); a.href = safeUrl(item.网址, ['http:', 'https:']); a.target = '_blank'; a.rel = 'noopener noreferrer'; actions.appendChild(a);
                 const saved = state.favorites.includes(item.标识);
                 const favorite = toggle('收藏', saved, () => { commit(next => { next.favorites = saved ? next.favorites.filter(id => id !== item.标识) : [...next.favorites, item.标识]; }); });
                 favorite.id = `favorite-${item.标识}`;

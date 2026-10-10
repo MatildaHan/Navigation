@@ -123,14 +123,8 @@ body::before {
 .card-pages #life-grid > * { min-height: 156px; }
 .app-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 #games-grid { grid-auto-rows: max-content; align-content: start; padding: 2px; }
-.app-tile { display: flex; flex-direction: column; gap: 10px; padding: 18px; color: var(--text-primary); background: rgba(0,0,0,.32); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; min-width: 0; min-height: 156px; overflow-wrap: anywhere; transition: background .2s; }
-.app-tile > * { flex-shrink: 0; }
+.app-tile { min-height: 156px; cursor: pointer; }
 .card-life .preview-line { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
-.app-tile:hover { background: rgba(0,0,0,.48); border-color: var(--accent); }
-.app-tile-top { display: flex; justify-content: space-between; gap: 8px; }
-.app-number, .app-category, .app-description { font-size: .75rem; color: var(--text-secondary); line-height: 1.65; }
-.app-number { color: var(--accent); font-family: 'Share Tech Mono', monospace; }
-.app-enter { color: var(--accent); font-size: .75rem; margin-top: auto; }
 .has-app .detail-body { display: flex; flex-direction: column; overflow: visible; min-height: 0; }
 .app-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .app-toolbar label { display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-size: .8rem; }
@@ -141,7 +135,6 @@ body::before {
 .app-help { color: var(--text-secondary); font-size: .75rem; line-height: 1.6; margin-top: 10px; flex-shrink: 0; }
 @media (max-width: 860px) {
     #games-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .app-tile { padding: 14px; }
     .page-switcher a { padding: 8px 12px; }
 }
 @media (max-width: 380px) {

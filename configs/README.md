@@ -64,7 +64,7 @@ MD 定义公开内容、项目和目标。打卡、备注、工具收藏、专�
 
 ## 本地工具与游戏
 
-`tools.md` 中的本地工具网址使用 `#tool/标识`，与外部工具共用搜索、分类和收藏；在生活页中也有同级独立卡片入口。本地工具包括 `book`、`cyber-muyu`、`english-study`、`japanese-study`、`poetry-recite`、`history-events`、`music-player`。它们在当前页面打开，返回生活与工具。
+`tools.md` 同时维护外部工具链接和本地工具卡片。工具箱的计数、搜索、分类与收藏只包含外部工具；本地工具使用 `#tool/标识` 地址，在生活页中以独立卡片打开。本地工具包括 `book`、`cyber-muyu`、`english-study`、`japanese-study`、`poetry-recite`、`history-events`、`music-player`。它们在当前页面打开，返回生活与工具。
 
 `games.md` 中的标识对应 `Games-main/games/` 中的文件名：`tetris`、`sudoku`、`nonogram`、`chess`、`gomoku`、`klotski`、`minesweeper`、`lightsout`、`graphcoloring`、`zebra`。详情地址使用 `#game/标识`，返回第三页。工具和游戏共用固定外壳，支持顶部选择器切换、深链接刷新与浏览器前进后退。游戏键盘操作可先点击游戏区域或「键盘操作」按钮。
 

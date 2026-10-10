@@ -81,6 +81,21 @@ test('one check-in persists across reload and updates the habit summary', () => 
     assert.equal(reload.snapshot().checkins['2026-10-08'].reading.done, false);
 });
 
+test('toolbox counts and lists external tools without duplicating standalone local cards', () => {
+    const e = environment();
+    const external = Array.from(e.config.tools).filter(item => /^https?:\/\//.test(item.网址));
+    const local = Array.from(e.config.tools).filter(item => item.网址.startsWith('#tool/'));
+    assert.equal(local.length, 7);
+    e.api.init(e.config);
+    assert.equal(e.root('tools-preview').querySelector('.preview-stat').textContent, `${external.length} 个常用工具`);
+    e.api.render(e.root('detail-body'), 'tools');
+    const names = e.root('detail-body').querySelectorAll('h2').map(node => node.textContent);
+    assert.deepEqual(names, external.map(item => item.名称));
+    assert.ok(local.every(item => !names.includes(item.名称)));
+    const categories = e.root('detail-body').querySelector('select').children.map(node => node.textContent);
+    assert.deepEqual(categories, ['全部分类', ...new Set(external.map(item => item.分类))]);
+});
+
 test('storage failure leaves the old record intact', () => {
     const e = environment(); e.api.init(e.config); e.storage.fail = true;
     e.root('checkin-preview').querySelector('button').listeners.click();
