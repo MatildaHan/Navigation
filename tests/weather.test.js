@@ -8,7 +8,8 @@ const source = fs.readFileSync(path.join(__dirname, '../assets/js/weather.js'), 
 const KEY = 'navigation-weather-mode';
 const ORDER = ['sun', 'rain', 'snow', 'leaves', 'off'];
 
-function environment({ saved = null, legacy = null, reduced = false, storageFails = false, noCanvas = false } = {}) {
+function environment({ saved = null, legacy = null, reduced = false, storageFails = false, noCanvas = false,
+    random = () => 0.5 } = {}) {
     const frames = new Map();
     const nodes = [];
     const commands = [];
@@ -38,7 +39,7 @@ function environment({ saved = null, legacy = null, reduced = false, storageFail
     const storage = { getItem(key) { if (storageFails) throw new Error('blocked'); return key === KEY ? saved : legacy; },
         setItem(key, value) { if (storageFails) throw new Error('blocked'); assert.equal(key, KEY); saved = value; } };
     const deterministicMath = Object.create(Math);
-    deterministicMath.random = () => 0.5;
+    deterministicMath.random = random;
     vm.runInNewContext(source, { document, window, Math: deterministicMath, matchMedia: () => motion, localStorage: storage,
         requestAnimationFrame(fn) { frames.set(++nextFrame, fn); return nextFrame; },
         cancelAnimationFrame(id) { frames.delete(id); } });
@@ -77,13 +78,14 @@ test('rain, snow and leaves drift left and down', () => {
 
 test('one broad sunlight beam is continuous, fades outward and is cached between frames', () => {
     const e = environment({ saved: 'sun' });
-    const rays = e.commands.filter(command => command[0] === 'arc');
+    const rays = e.commands.filter(command => command[0] === 'arc' && command[5] !== Math.PI * 2);
     assert.ok(rays.length > 0);
     const [, x, y] = rays[0];
     assert.ok(x > e.window.innerWidth && y < 0);
     assert.ok(rays.every(ray => ray[1] === x && ray[2] === y));
-    assert.ok(rays.every(ray => ray[4] > Math.PI / 2 && ray[5] < Math.PI));
-    assert.ok(rays.at(-1)[5] - rays[0][4] > 0.7);
+    const center = (rays.at(-1)[5] + rays[0][4]) / 2;
+    assert.ok(center > Math.PI / 2 && center < Math.PI);
+    assert.ok(Math.abs(rays.at(-1)[5] - rays[0][4] - 0.84 * 2) < 1e-10);
     assert.ok(rays.slice(1).every((ray, index) => Math.abs(ray[4] - rays[index][5]) < 1e-10));
     const stops = e.commands.filter(command => command[0] === 'colorStop');
     assert.ok(stops.some(stop => stop[1] === 1 && /, 0\)$/.test(stop[2])));
@@ -94,6 +96,24 @@ test('one broad sunlight beam is continuous, fades outward and is cached between
         assert.equal(commands.filter(command => command[0].startsWith('create')).length, 0);
         assert.equal(commands.filter(command => command[0] === 'arc').length, 0);
     }
+});
+
+test('sunlight adds a small set of random soft spots within the viewport and caches them', () => {
+    let seed = 123;
+    const e = environment({ saved: 'sun', random: () => {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        return seed / 4294967296;
+    } });
+    const spots = e.commands.filter(command => command[0] === 'createRadialGradient' && command[6] <= 50);
+    assert.ok(spots.length >= 6 && spots.length <= 12);
+    assert.ok(spots.every(spot => spot[1] > 0 && spot[1] < e.window.innerWidth
+        && spot[2] > 0 && spot[2] < e.window.innerHeight && spot[6] >= 18));
+    assert.equal(new Set(spots.map(spot => `${spot[1]},${spot[2]}`)).size, spots.length);
+    const spotAlphas = e.commands.filter(command => command[0] === 'colorStop' && command[1] === 0.85)
+        .map(command => Number(command[2].match(/, ([\d.]+)\)$/)[1]));
+    assert.equal(spotAlphas.length, spots.length);
+    assert.ok(spotAlphas.every(alpha => alpha >= 0.04 && alpha <= 0.08));
+    for (const time of [16, 32]) assert.ok(!e.tick(time).some(command => command[0] === 'createRadialGradient'));
 });
 
 test('removed fog preferences recover to off and the next click selects sun', () => {

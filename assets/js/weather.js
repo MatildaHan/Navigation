@@ -216,7 +216,7 @@
             beam.addColorStop(1, 'rgba(255, 242, 207, 0)');
             light.fillStyle = beam;
             const center = 132 * Math.PI / 180;
-            const spread = 0.42;
+            const spread = 0.84; // 发散范围扩大为原来的两倍。
             // 连续分片羽化一束光的两侧，不再分成多条光线。
             const slices = 80;
             for (let i = 0; i < slices; i += 1) {
@@ -228,6 +228,24 @@
                     center - spread + i / slices * spread * 2,
                     center - spread + (i + 1) / slices * spread * 2);
                 light.closePath();
+                light.fill();
+            }
+            // 少量随机散景光斑，保持低透明度，并与光束一起缓存。
+            light.globalAlpha = 1;
+            const spotCount = Math.round(Math.max(6, Math.min(12, width * height / 120000)));
+            for (let i = 0; i < spotCount; i += 1) {
+                const x = random(width * 0.08, width * 0.92);
+                const y = random(height * 0.08, height * 0.92);
+                const radius = random(18, 50) * (width <= 860 ? 0.6 : 1);
+                const alpha = random(0.04, 0.08);
+                const spot = light.createRadialGradient(x, y, 0, x, y, radius);
+                spot.addColorStop(0, `rgba(255, 246, 220, ${alpha * 0.6})`);
+                spot.addColorStop(0.65, `rgba(255, 246, 220, ${alpha * 0.4})`);
+                spot.addColorStop(0.85, `rgba(255, 246, 220, ${alpha})`);
+                spot.addColorStop(1, 'rgba(255, 246, 220, 0)');
+                light.fillStyle = spot;
+                light.beginPath();
+                light.arc(x, y, radius, 0, Math.PI * 2);
                 light.fill();
             }
             return layer;
