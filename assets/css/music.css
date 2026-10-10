@@ -1,5 +1,6 @@
 /* Music detail keeps the shared shell, with a dark record-player stage. */
 body.music-page::before { inset: 0; filter: none; background: radial-gradient(ellipse at 20% 65%, rgba(30,75,72,.22), transparent 60%), #05090d; }
+body.music-page::after { display: none; }
 .music-page .main-board { background: rgba(8,14,19,.95); border-color: rgba(255,255,255,.12); }
 .music-page .sidebar, .music-page .bottom-dock { background: rgba(255,255,255,.035); }
 .music-page .detail-header { color: #dfe7eb; }
