@@ -8,8 +8,12 @@
 头像网址：assets/images/avatar.jpg
 
 --- links ---
-名称：博客
+名称：主页
 图标：fa-solid fa-house
+网址：#
+
+名称：博客
+图标：fa-solid fa-blog
 网址：https://firefly-8vy.pages.dev
 
 名称：GitHub
