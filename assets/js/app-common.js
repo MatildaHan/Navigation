@@ -1,21 +1,19 @@
 'use strict';
 
 /* Shared by embedded and direct app pages; no game state lives in the parent. */
+// Direct pages establish their frame dimensions before games measure their boards.
+if (window.parent === window) {
+    const games = location.pathname.includes('/Games-main/');
+    const id = location.pathname.split('/').pop().replace(/\.html$/, '');
+    const back = document.createElement('a');
+    back.className = 'standalone-back'; back.href = `../../index.html#${games ? 'game' : 'tool'}/${id}`;
+    back.textContent = '← 返回个人主页';
+    document.body.prepend(back);
+    document.body.classList.add('standalone-app');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const games = location.pathname.includes('/Games-main/');
-    if (games) {
-        document.body.classList.add('game-app');
-        // Recalculate boards after the shared game layout has been applied.
-        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-    }
-    const id = location.pathname.split('/').pop().replace(/\.html$/, '');
-    if (window.parent === window) {
-        const back = document.createElement('a');
-        back.className = 'standalone-back'; back.href = `../../index.html#${games ? 'game' : 'tool'}/${id}`;
-        back.textContent = '← 返回个人主页';
-        document.body.prepend(back);
-        document.body.classList.add('standalone-app');
-    }
     GameBridge.onParentMessage(message => {
         if (message.type === 'theme') {
             const hue = Number(message.payload?.hue);
@@ -46,5 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cell = event.target.closest(cells);
         if (cell && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); cell.click(); }
     });
-    GameBridge.notifyReady();
+    // Reveal games after initial board layout (including animation-frame setup).
+    if (games) requestAnimationFrame(() => requestAnimationFrame(() => GameBridge.notifyReady()));
+    else GameBridge.notifyReady();
 });

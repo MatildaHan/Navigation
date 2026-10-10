@@ -65,10 +65,16 @@ const Apps = (() => {
         const protocol = item.kind === 'game' ? 'game-hub' : 'tool-hub';
         function theme() {
             const root = getComputedStyle(document.documentElement);
-            frame.contentWindow?.postMessage({ protocol, type: 'theme', payload: { accent: root.getPropertyValue('--accent').trim(), hue: root.getPropertyValue('--accent-hue').trim() } }, location.origin);
+            const hue = root.getPropertyValue('--accent-hue').trim();
+            // Apply the same-origin theme before revealing the initialized frame.
+            if (Number.isFinite(Number(hue)) && Number(hue) >= 0 && Number(hue) <= 360) {
+                frame.contentDocument?.documentElement.style.setProperty('--accent-hue', hue);
+            }
+            frame.contentWindow?.postMessage({ protocol, type: 'theme', payload: { accent: root.getPropertyValue('--accent').trim(), hue } }, location.origin);
         }
         function ready() {
-            clearTimeout(timeout); status.hidden = true; retry.hidden = true; theme();
+            if (disposed) return;
+            clearTimeout(timeout); theme(); status.hidden = true; retry.hidden = true;
         }
         function message(event) {
             if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.protocol !== protocol) return;
@@ -85,7 +91,7 @@ const Apps = (() => {
         frame.addEventListener('load', () => {
             if (disposed) return;
             try {
-                if (!frame.contentDocument?.querySelector('.game-inner')) return;
+                if (item.kind === 'game' || !frame.contentDocument?.querySelector('.game-inner')) return;
                 ready();
             } catch { /* The stage retains an explicit retry on load failure. */ }
         });

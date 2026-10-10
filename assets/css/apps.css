@@ -150,3 +150,6 @@ body.game-app .px-theme .px-btn { min-height: 40px; }
     body.game-app .diff-btn .prog { font-size: 9px; }
     body.game-app .px-theme .tetris-rail { width: 88px; flex-basis: 88px; }
 }
+
+/* Dense boards keep digits readable as difficulty increases. */
+body.game-app .mine-cell { font-size: max(7px, calc(var(--cell, 30px) * .45)); }
