@@ -33,7 +33,7 @@ body.ink-theme::before { display: none; }
 
 .chess-layout {
     display: grid;
-    grid-template-columns: auto 200px;
+    grid-template-columns: minmax(0, 1fr) 200px;
     gap: 24px;
     align-items: flex-start;
     justify-content: center;
@@ -43,12 +43,16 @@ body.ink-theme::before { display: none; }
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 0;
+    width: 100%;
 }
 
 /* ============================================================
-   棋盘：width 由 grid 内容决定，木框计入 box-sizing
+   棋盘：网格和点击区域共用 --cell，木框不压缩网格
    ============================================================ */
 .chess-board {
+    --cell: 52px;
+    --frame: 12px;
     position: relative;
     display: grid;
     grid-template-columns: repeat(9, var(--cell, 52px));
@@ -66,7 +70,7 @@ body.ink-theme::before { display: none; }
             transparent 1px,
             transparent 5px),
         linear-gradient(135deg, #F5EFE0 0%, #EBE2CE 60%, #E0D3B5 100%);
-    border: 12px solid #3A2E1F;
+    border: var(--frame) solid #3A2E1F;
     border-radius: 2px;
     box-shadow:
         inset 0 0 0 1px #C9A961,
@@ -77,14 +81,15 @@ body.ink-theme::before { display: none; }
     background-clip: padding-box;
     touch-action: manipulation;
     font-family: "KaiTi", "STKaiti", "Songti SC", serif;
-    width: max-content;
-    max-width: 100%;
+    width: calc(var(--cell) * 9 + var(--frame) * 2);
+    height: calc(var(--cell) * 10 + var(--frame) * 2);
+    max-width: none;
     box-sizing: border-box;
 }
 .chess-board::before {
     content: '';
     position: absolute;
-    inset: -12px;
+    inset: calc(var(--frame) * -1);
     border-radius: 2px;
     background:
         repeating-linear-gradient(92deg,
@@ -96,53 +101,33 @@ body.ink-theme::before { display: none; }
     z-index: -1;
     pointer-events: none;
 }
-.chess-board::after {
-    content: '';
+.chess-grid {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-    z-index: 0;
-    background-image:
-        linear-gradient(to right, rgba(44, 44, 44, 0.6) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(44, 44, 44, 0.6) 1px, transparent 1px);
-    background-size:
-        var(--cell) var(--cell),
-        var(--cell) var(--cell);
-    background-position:
-        calc(var(--cell) / 2) 0,
-        0 calc(var(--cell) / 2);
-    opacity: 0.75;
+    z-index: 1;
+    fill: none;
+    stroke: #514434;
+    stroke-width: 1.2px;
 }
-
-/* 九宫斜线 */
-.chess-board .palace-top,
-.chess-board .palace-bottom {
-    position: absolute;
-    width: calc(var(--cell) * 3);
-    height: calc(var(--cell) * 3);
-    left: calc(var(--cell) * 3);
-    pointer-events: none;
-    z-index: 2;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><line x1='0' y1='0' x2='100' y2='100' stroke='%232C2C2C' stroke-width='1.5' vector-effect='non-scaling-stroke' opacity='0.7'/><line x1='100' y1='0' x2='0' y2='100' stroke='%232C2C2C' stroke-width='1.5' vector-effect='non-scaling-stroke' opacity='0.7'/></svg>");
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-}
-.chess-board .palace-top { top: 0; }
-.chess-board .palace-bottom { bottom: 0; }
+.chess-grid line, .chess-grid path { vector-effect: non-scaling-stroke; }
+.chess-grid .chess-markers { stroke-width: 1px; opacity: .8; }
 
 /* 楚河汉界 */
 .chess-river {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(var(--cell) * 4);
-    height: calc(var(--cell) * 2);
+    left: calc(var(--cell) * 0.5);
+    width: calc(var(--cell) * 8);
+    top: calc(var(--cell) * 4.5);
+    height: var(--cell);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 10%;
     font-family: "KaiTi", "STKaiti", serif;
-    font-size: calc(var(--cell) * 0.85);
+    font-size: calc(var(--cell) * 0.65);
     color: #2C2C2C;
     pointer-events: none;
     user-select: none;
@@ -336,7 +321,7 @@ body.ink-theme::before { display: none; }
 .ink-btn:active:not(:disabled) { transform: translateY(1px); }
 
 @media (max-width: 1023px) {
-    .chess-layout { grid-template-columns: auto 170px; gap: 14px; }
+    .chess-layout { grid-template-columns: minmax(0, 1fr) 170px; gap: 14px; }
 }
 
 /* 手机端：木框收窄到 6px，棋盘宽度由 grid 决定 */
@@ -358,17 +343,13 @@ body.ink-theme::before { display: none; }
         justify-content: center;
     }
     .chess-board {
-        border-width: 6px;
-        width: max-content;
-        max-width: 100%;
-        box-sizing: border-box;
+        --frame: 6px;
         box-shadow:
             inset 0 0 0 1px #C9A961,
             inset 0 0 0 2px rgba(44, 44, 44, 0.6),
             inset 0 0 30px rgba(120, 90, 40, 0.2),
             0 6px 16px rgba(44, 30, 10, 0.3);
     }
-    .chess-board::before { inset: -6px; }
     .chess-river {
         font-size: calc(var(--cell) * 0.7);
         letter-spacing: 0.1em;
@@ -450,10 +431,9 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
 <div class="game-inner">
     <div class="chess-layout">
         <div class="chess-board-wrap">
-            <div id="board" class="chess-board">
+            <div id="board" class="chess-board" aria-label="中国象棋棋盘">
                 <div class="chess-river"><span>楚　河</span><span>汉　界</span></div>
-                <div class="palace-top"></div>
-                <div class="palace-bottom"></div>
+                <svg class="chess-grid" viewBox="0 0 9 10" aria-hidden="true" focusable="false"></svg>
             </div>
         </div>
         <div class="chess-side">
@@ -536,22 +516,48 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
     const isBlack = p => p && p === p.toLowerCase();
     const sameSide = (a, b) => (isRed(a) && isRed(b)) || (isBlack(a) && isBlack(b));
 
-    // ============================================================
-    // 棋盘尺寸：--cell 是唯一尺寸来源，木框宽 6px 手机 / 12px 桌面
-    // ============================================================
+    // Size the whole nine-file, ten-rank board from the stable layout column.
     function calcCellSize() {
         const wrap = document.querySelector('.chess-board-wrap');
-        const vw = wrap ? wrap.clientWidth : window.innerWidth;
-        const vh = window.innerHeight;
+        const style = getComputedStyle(boardEl);
+        const frame = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+        const availW = Math.max(0, wrap.clientWidth - frame);
         const isMobile = window.innerWidth <= 767;
+        const availH = Math.max(120, window.innerHeight - (isMobile ? 260 : 220));
+        return Math.max(12, Math.floor(Math.min(availW / 9, availH / 10, isMobile ? 44 : 56)));
+    }
 
-        // 木框：手机 6px×2 = 12，桌面 12px×2 = 24
-        const frame = isMobile ? 12 : 24;
-        const availW = vw - frame;
-        const availH = isMobile ? vh - 260 : vh - 220;
-        const byW = Math.floor(availW / 9);
-        const byH = Math.floor(availH / 10);
-        return Math.max(20, Math.min(byW, byH, isMobile ? 44 : 56));
+    function drawBoardGrid() {
+        const svg = boardEl.querySelector('.chess-grid');
+        const namespace = 'http://www.w3.org/2000/svg';
+        function line(x1, y1, x2, y2) {
+            const node = document.createElementNS(namespace, 'line');
+            for (const [key, value] of Object.entries({ x1, y1, x2, y2 })) node.setAttribute(key, value);
+            svg.appendChild(node);
+        }
+        // Chess pieces sit on 9 × 10 intersections, half a cell inside the frame.
+        for (let y = 0; y < 10; y++) line(.5, y + .5, 8.5, y + .5);
+        for (let x = 0; x < 9; x++) {
+            if (x === 0 || x === 8) line(x + .5, .5, x + .5, 9.5);
+            else { line(x + .5, .5, x + .5, 4.5); line(x + .5, 5.5, x + .5, 9.5); }
+        }
+        for (const y of [.5, 7.5]) {
+            line(3.5, y, 5.5, y + 2);
+            line(5.5, y, 3.5, y + 2);
+        }
+        const markers = document.createElementNS(namespace, 'path');
+        markers.classList.add('chess-markers');
+        const positions = [[1,2],[7,2],[1,7],[7,7], ...[0,2,4,6,8].flatMap(x => [[x,3],[x,6]])];
+        const paths = [];
+        for (const [x, y] of positions) for (const dx of [-1, 1]) {
+            if (x + dx < 0 || x + dx > 8) continue;
+            for (const dy of [-1, 1]) {
+                const cx = x + .5, cy = y + .5;
+                paths.push(`M ${cx + dx * .18} ${cy + dy * .06} H ${cx + dx * .06} V ${cy + dy * .18}`);
+            }
+        }
+        markers.setAttribute('d', paths.join(' '));
+        svg.appendChild(markers);
     }
 
     let cellEls = null;
@@ -560,12 +566,15 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
         const decorations = Array.from(boardEl.children);
         boardEl.innerHTML = '';
         decorations.forEach(d => boardEl.appendChild(d));
+        drawBoardGrid();
 
         cellEls = new Array(90);
         for (let y = 0; y < 10; y++) {
             for (let x = 0; x < 9; x++) {
                 const el = document.createElement('div');
                 el.className = 'chess-cell';
+                el.dataset.x = x;
+                el.dataset.y = y;
                 el.onclick = () => onClick(x, y);
                 boardEl.appendChild(el);
                 cellEls[y * 9 + x] = el;
@@ -586,6 +595,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
                 const el = cellEls[y * 9 + x];
                 const p = board[y][x];
                 el.className = 'chess-cell';
+                el.setAttribute('aria-label', `第 ${y + 1} 行，第 ${x + 1} 列，${p ? (isRed(p) ? '红方' : '黑方') + NAMES[p] : '空位'}`);
                 el.innerHTML = '';
                 if (p) {
                     const piece = document.createElement('div');
@@ -765,11 +775,12 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
     let resizeTimer = null;
     window.addEventListener('resize', () => {
         if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(render, 150);
+        resizeTimer = setTimeout(updateBoardSize, 150);
     });
 
     playerSide = 'red';
     buildBoardDOM();
+    new ResizeObserver(updateBoardSize).observe(document.querySelector('.chess-board-wrap'));
     newGame();
 })();
 </script>
