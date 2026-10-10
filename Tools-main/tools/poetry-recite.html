@@ -17,20 +17,6 @@
     box-sizing: border-box;
     min-height: 100%;
 }
-.poetry-title {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    text-align: center;
-    color: #1A1A1A;
-}
-.poetry-subtitle {
-    font-size: 13px;
-    color: #8A7A60;
-    letter-spacing: 4px;
-    text-align: center;
-    margin-bottom: 8px;
-}
 .poetry-card {
     background: rgba(255, 250, 240, 0.92);
     border: 1px solid rgba(44, 44, 44, 0.2);
@@ -96,11 +82,9 @@
 @media (max-width: 600px) {
     .poetry-content { font-size: 17px; letter-spacing: 2px; }
     .poetry-name { font-size: 22px; letter-spacing: 2px; }
-    .poetry-subtitle { letter-spacing: 1px; }
 }
 @media (max-height: 360px) {
     .game-inner > .poetry-wrap { gap: 8px; }
-    .poetry-subtitle { display: none; }
     .game-inner > .poetry-wrap .poetry-card { min-height: 140px; }
 }
 .poetry-controls {
@@ -136,10 +120,6 @@
 <body class="embedded">
 <div class="game-inner">
     <div class="poetry-wrap">
-        <div>
-            <div class="poetry-title">古 诗 词</div>
-            <div class="poetry-subtitle">经典篇目 · 查看全文 · 线下背诵</div>
-        </div>
         <label class="poetry-picker" for="poemSelect">
             选择篇目
             <select class="poetry-select" id="poemSelect"></select>
@@ -167,44 +147,55 @@
     document.body.classList.add('embedded');
     GameBridge.notifyReady();
 
+    // 古文岛原文核对于 2026-10-10；采用页面正文，不混入异文、译文或赏析。
     const POEMS = [
         {
+            // https://www.guwendao.net/shiwenv_c35a60c1a8e2.aspx
             dynasty: '唐', title: '静夜思', author: '李白',
             lines: ['床前明月光，', '疑是地上霜。', '举头望明月，', '低头思故乡。']
         },
         {
+            // https://www.guwendao.net/shiwenv_c90ff9ea5a71.aspx
             dynasty: '唐', title: '登鹳雀楼', author: '王之涣',
             lines: ['白日依山尽，', '黄河入海流。', '欲穷千里目，', '更上一层楼。']
         },
         {
+            // https://www.guwendao.net/shiwenv_ccee5691ba93.aspx
             dynasty: '唐', title: '春晓', author: '孟浩然',
             lines: ['春眠不觉晓，', '处处闻啼鸟。', '夜来风雨声，', '花落知多少。']
         },
         {
+            // https://www.guwendao.net/shiwenv_f324eea45183.aspx
             dynasty: '唐', title: '相思', author: '王维',
             lines: ['红豆生南国，', '春来发几枝。', '愿君多采撷，', '此物最相思。']
         },
         {
+            // https://www.guwendao.net/shiwenv_58313be2d918.aspx
             dynasty: '唐', title: '江雪', author: '柳宗元',
             lines: ['千山鸟飞绝，', '万径人踪灭。', '孤舟蓑笠翁，', '独钓寒江雪。']
         },
         {
+            // https://www.guwendao.net/shiwenv_6e878b858e01.aspx
             dynasty: '唐', title: '悯农·其二', author: '李绅',
             lines: ['锄禾日当午，', '汗滴禾下土。', '谁知盘中餐，', '粒粒皆辛苦。']
         },
         {
+            // https://www.guwendao.net/shiwenv_eeb3869b6242.aspx
             dynasty: '唐', title: '咏鹅', author: '骆宾王',
             lines: ['鹅，鹅，鹅，', '曲项向天歌。', '白毛浮绿水，', '红掌拨清波。']
         },
         {
+            // https://www.guwendao.net/shiwenv_62802abab937.aspx
             dynasty: '唐', title: '望庐山瀑布', author: '李白',
             lines: ['日照香炉生紫烟，', '遥看瀑布挂前川。', '飞流直下三千尺，', '疑是银河落九天。']
         },
         {
+            // https://www.guwendao.net/shiwenv_549473b5211c.aspx
             dynasty: '唐', title: '绝句', author: '杜甫',
             lines: ['两个黄鹂鸣翠柳，', '一行白鹭上青天。', '窗含西岭千秋雪，', '门泊东吴万里船。']
         },
         {
+            // https://www.guwendao.net/shiwenv_632c5beb84eb.aspx
             dynasty: '宋', title: '水调歌头·明月几时有', author: '苏轼',
             preface: '丙辰中秋，欢饮达旦，大醉，作此篇，兼怀子由。',
             lines: [
@@ -219,34 +210,42 @@
             ]
         },
         {
+            // https://www.guwendao.net/shiwenv_3e33bfbb8f79.aspx
             dynasty: '宋', title: '如梦令·常记溪亭日暮', author: '李清照',
             lines: ['常记溪亭日暮，', '沉醉不知归路。', '兴尽晚回舟，', '误入藕花深处。', '争渡，争渡，', '惊起一滩鸥鹭。']
         },
         {
+            // https://www.guwendao.net/shiwenv_9dcf133d25cc.aspx
             dynasty: '元', title: '天净沙·秋思', author: '马致远',
             lines: ['枯藤老树昏鸦，', '小桥流水人家，', '古道西风瘦马。', '夕阳西下，', '断肠人在天涯。']
         },
         {
+            // https://www.guwendao.net/shiwenv_89d3a63c6d7f.aspx
             dynasty: '唐', title: '春望', author: '杜甫',
             lines: ['国破山河在，', '城春草木深。', '感时花溅泪，', '恨别鸟惊心。', '烽火连三月，', '家书抵万金。', '白头搔更短，', '浑欲不胜簪。']
         },
         {
+            // https://www.guwendao.net/shiwenv_3c36881bd247.aspx
             dynasty: '唐', title: '山行', author: '杜牧',
             lines: ['远上寒山石径斜，', '白云生处有人家。', '停车坐爱枫林晚，', '霜叶红于二月花。']
         },
         {
+            // https://www.guwendao.net/shiwenv_8949464433f0.aspx
             dynasty: '宋', title: '饮湖上初晴后雨·其二', author: '苏轼',
             lines: ['水光潋滟晴方好，', '山色空蒙雨亦奇。', '欲把西湖比西子，', '淡妆浓抹总相宜。']
         },
         {
+            // https://www.guwendao.net/shiwenv_f2f5469a6044.aspx
             dynasty: '宋', title: '题西林壁', author: '苏轼',
             lines: ['横看成岭侧成峰，', '远近高低各不同。', '不识庐山真面目，', '只缘身在此山中。']
         },
         {
+            // https://www.guwendao.net/shiwenv_09294abb5f67.aspx
             dynasty: '宋', title: '游山西村', author: '陆游',
             lines: ['莫笑农家腊酒浑，', '丰年留客足鸡豚。', '山重水复疑无路，', '柳暗花明又一村。', '箫鼓追随春社近，', '衣冠简朴古风存。', '从今若许闲乘月，', '拄杖无时夜叩门。']
         },
         {
+            // https://www.guwendao.net/shiwenv_f090d65212f4.aspx
             dynasty: '宋', title: '西江月·夜行黄沙道中', author: '辛弃疾',
             lines: ['明月别枝惊鹊，', '清风半夜鸣蝉。', '稻花香里说丰年，', '听取蛙声一片。', '七八个星天外，', '两三点雨山前。', '旧时茅店社林边，', '路转溪桥忽见。']
         }
