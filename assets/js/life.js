@@ -13,7 +13,9 @@ function initDeck() {
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     function size() {
         if (!deck.clientWidth) return;
-        deck.style.height = matchMedia('(max-width: 860px)').matches ? `${pages[page].scrollHeight}px` : '';
+        // Each page keeps its natural height; only the active page sizes the shell.
+        const height = `${Math.ceil(pages[page].getBoundingClientRect().height)}px`;
+        if (deck.style.height !== height) deck.style.height = height;
     }
     function setPage(index) {
         page = Math.max(0, Math.min(pages.length - 1, index));

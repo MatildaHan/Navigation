@@ -119,11 +119,16 @@ body::before {
 .card-pages::-webkit-scrollbar { display: none; }
 .card-pages.is-dragging { user-select: none; cursor: grabbing; }
 .card-pages .deck-page { width: 100%; flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
-.card-pages #life-grid { grid-template-rows: none; grid-auto-rows: minmax(156px, auto); overflow-y: auto; max-height: 100%; }
+.card-pages #life-grid { height: auto; grid-template-rows: none; grid-auto-rows: minmax(156px, auto); }
+.main-board:has(#home-pages:not([hidden])), .desktop-container:has(#home-pages:not([hidden])) { height: auto; }
+#home-grid { height: 526px; }
 .life-apps { grid-column: span 3; }
 .app-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-#games-grid { height: 100%; overflow-y: auto; grid-auto-rows: minmax(142px, auto); padding: 2px; }
-.app-tile { display: flex; flex-direction: column; gap: 10px; padding: 18px; color: var(--text-primary); background: rgba(0,0,0,.32); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; min-width: 0; transition: background .2s; }
+#games-grid { height: auto; grid-auto-rows: minmax(142px, auto); padding: 2px; }
+.app-tile { display: flex; flex-direction: column; gap: 10px; padding: 18px; color: var(--text-primary); background: rgba(0,0,0,.32); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; min-width: 0; overflow-wrap: anywhere; transition: background .2s; }
+.app-tile > * { flex-shrink: 0; }
+.card-life .life-preview { flex: none; overflow: visible; }
+.card-life .preview-line { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .app-tile:hover { background: rgba(0,0,0,.48); border-color: var(--accent); }
 .app-tile-top { display: flex; justify-content: space-between; gap: 8px; }
 .app-number, .app-category, .app-description { font-size: .75rem; color: var(--text-secondary); line-height: 1.65; }
@@ -141,8 +146,8 @@ body::before {
 .app-retry { position: absolute; top: 58%; left: 50%; transform: translateX(-50%); }
 .app-help { color: var(--text-secondary); font-size: .75rem; line-height: 1.6; margin-top: 10px; flex-shrink: 0; }
 @media (max-width: 860px) {
-    .card-pages #life-grid { max-height: none; overflow-y: visible; }
-    #games-grid { height: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-y: visible; }
+    #home-grid { height: auto; }
+    #games-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .life-apps { grid-column: span 1; }
     .tools-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .main-board.has-app { height: auto; }
@@ -574,6 +579,7 @@ body::before {
    响应式：小屏时收缩（保持大致比例）
    ========================================================================== */
 @media (max-width: 1080px) {
+    #home-grid { height: 486px; }
     .desktop-container {
         width: 100%;
         max-width: calc(100vw - 24px);
@@ -595,6 +601,7 @@ body::before {
 
 /* 移动端：纵向堆叠 */
 @media (max-width: 860px) {
+    #home-grid { height: auto; }
     body {
         height: auto;
         min-height: 100dvh;
