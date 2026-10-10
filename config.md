@@ -22,6 +22,9 @@
 
 --- assets ---
 壁纸：assets/images/background.jpg
+轮播壁纸：assets/images/background2.jpg
+壁纸切换间隔：5
+# 切换间隔单位为秒；删除轮播壁纸配置可恢复单张背景。
 
 --- theme ---
 强调色相：165
