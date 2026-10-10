@@ -1,0 +1,74 @@
+/* Isolated from the other tool and game detail styles. */
+.muyu-view .game-inner > .muyu-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+}
+.muyu-view .muyu-title { font-size: 20px; letter-spacing: 6px; }
+.muyu-view .muyu-count { font-size: 14px; letter-spacing: 2px; }
+.muyu-view .muyu-count b { font-size: 24px; margin: 0 6px; font-variant-numeric: tabular-nums; }
+.muyu-view .muyu-body {
+    position: relative;
+    flex-shrink: 0;
+    width: min(280px, 65vw, 58vh);
+    height: min(240px, 56vw, 48vh);
+    border: 0;
+    border-radius: 18px;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.muyu-view .muyu-body::before, .muyu-view .muyu-body::after { display: none; }
+.muyu-view .muyu-wood {
+    position: absolute;
+    width: 80%;
+    height: 85%;
+    bottom: 0;
+    left: 8%;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 10px rgba(0,0,0,.35));
+    pointer-events: none;
+    user-select: none;
+}
+.muyu-view .muyu-mallet {
+    position: absolute;
+    top: 8%;
+    right: 2%;
+    width: 48%;
+    height: 12px;
+    border-radius: 8px;
+    background: linear-gradient(#b77c42, #e0b27c 35%, #86532c 80%);
+    box-shadow: 0 3px 5px rgba(0,0,0,.3);
+    transform: rotate(-20deg);
+    transform-origin: 95% 50%;
+    pointer-events: none;
+}
+.muyu-view .muyu-mallet::before {
+    content: '';
+    position: absolute;
+    left: -4%;
+    top: -13px;
+    width: 30px;
+    height: 38px;
+    border-radius: 45%;
+    background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(108,74,40,.13) 4px 5px), linear-gradient(100deg, #b38b58, #eed6af 45%, #c59c69);
+    box-shadow: inset -5px -2px 5px rgba(98,60,27,.25), 0 2px 4px rgba(0,0,0,.25);
+}
+.muyu-view .muyu-feedback { position: absolute; top: 30%; left: 30%; color: #ffe3a9; font-size: 15px; opacity: 0; pointer-events: none; }
+.muyu-view .muyu-body.hit .muyu-mallet { animation: muyu-strike .26s ease-out; }
+.muyu-view .muyu-body.hit .muyu-wood { animation: muyu-tap .26s ease-out; }
+.muyu-view .muyu-body.hit .muyu-feedback { animation: muyu-merit .6s ease-out; }
+.muyu-view .muyu-hint, .muyu-view .muyu-merit { font-size: 12px; }
+.muyu-view #storageStatus, .muyu-view #soundStatus { max-width: 100%; font-size: 12px; line-height: 1.5; color: var(--text-sub); text-align: center; }
+.muyu-view #storageStatus:empty, .muyu-view #soundStatus:empty { display: none; }
+@keyframes muyu-strike { 0%, 100% { transform: rotate(-20deg); } 35% { transform: rotate(-48deg); } }
+@keyframes muyu-tap { 0%, 100% { transform: translateY(0); } 35% { transform: translateY(4px) scale(.98); } }
+@keyframes muyu-merit { 0% { opacity: 0; transform: translateY(0); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-28px); } }
+@media (prefers-reduced-motion: reduce) {
+    .muyu-view .muyu-body.hit .muyu-feedback { opacity: 1; }
+}
