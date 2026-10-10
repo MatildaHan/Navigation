@@ -16,6 +16,7 @@
     --bg-wallpaper: url('../images/background.jpg');
     --bg-blur: 8px;
     --glass-blur: 10px;
+    --board-height: min(560px, calc(100dvh - 100px));
 }
 
 /* ==========================================================================
@@ -26,10 +27,9 @@
 [hidden] { display: none !important; }
 
 body {
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -103,7 +103,7 @@ body::before {
     display: flex;
     gap: 20px;
     width: 1000px;
-    height: 560px;
+    height: var(--board-height);
     max-width: calc(100vw - 32px);
     align-items: center;
     position: relative;
@@ -118,25 +118,19 @@ body::before {
 .card-pages { display: flex; width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; align-items: flex-start; }
 .card-pages::-webkit-scrollbar { display: none; }
 .card-pages.is-dragging { user-select: none; cursor: grabbing; }
-.card-pages .deck-page { width: 100%; flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
-.card-pages #life-grid { height: auto; grid-template-rows: none; grid-auto-rows: minmax(156px, auto); }
-.main-board:has(#home-pages:not([hidden])), .desktop-container:has(#home-pages:not([hidden])) { height: auto; }
-#home-grid { height: 526px; }
-.life-apps { grid-column: span 3; }
+.card-pages .deck-page { width: 100%; flex: 0 0 100%; min-width: 0; height: 100%; overflow-y: auto; overscroll-behavior-y: contain; scroll-snap-align: start; scroll-snap-stop: always; }
+.card-pages #life-grid { grid-template-rows: none; grid-auto-rows: max-content; align-content: start; }
+.card-pages #life-grid > * { min-height: 156px; }
 .app-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-#games-grid { height: auto; grid-auto-rows: minmax(142px, auto); padding: 2px; }
-.app-tile { display: flex; flex-direction: column; gap: 10px; padding: 18px; color: var(--text-primary); background: rgba(0,0,0,.32); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; min-width: 0; overflow-wrap: anywhere; transition: background .2s; }
+#games-grid { grid-auto-rows: max-content; align-content: start; padding: 2px; }
+.app-tile { display: flex; flex-direction: column; gap: 10px; padding: 18px; color: var(--text-primary); background: rgba(0,0,0,.32); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; min-width: 0; min-height: 156px; overflow-wrap: anywhere; transition: background .2s; }
 .app-tile > * { flex-shrink: 0; }
-.card-life .life-preview { flex: none; overflow: visible; }
 .card-life .preview-line { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
 .app-tile:hover { background: rgba(0,0,0,.48); border-color: var(--accent); }
 .app-tile-top { display: flex; justify-content: space-between; gap: 8px; }
 .app-number, .app-category, .app-description { font-size: .75rem; color: var(--text-secondary); line-height: 1.65; }
 .app-number { color: var(--accent); font-family: 'Share Tech Mono', monospace; }
 .app-enter { color: var(--accent); font-size: .75rem; margin-top: auto; }
-.tools-catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.tools-catalog .app-tile { padding: 14px; }
-.main-board.has-app { height: 740px; max-height: none; }
 .has-app .detail-body { display: flex; flex-direction: column; overflow: visible; min-height: 0; }
 .app-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .app-toolbar label { display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-size: .8rem; }
@@ -146,17 +140,11 @@ body::before {
 .app-retry { position: absolute; top: 58%; left: 50%; transform: translateX(-50%); }
 .app-help { color: var(--text-secondary); font-size: .75rem; line-height: 1.6; margin-top: 10px; flex-shrink: 0; }
 @media (max-width: 860px) {
-    #home-grid { height: auto; }
     #games-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .life-apps { grid-column: span 1; }
-    .tools-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .main-board.has-app { height: auto; }
-    .has-app .app-stage { flex: none; height: max(540px, calc(100dvh - 230px)); }
     .app-tile { padding: 14px; }
     .page-switcher a { padding: 8px 12px; }
 }
 @media (max-width: 380px) {
-    .tools-catalog { grid-template-columns: 1fr; }
     .app-toolbar label { gap: 8px; }
 }
 .life-preview { flex: 1; min-height: 0; overflow-y: auto; }
@@ -174,6 +162,7 @@ body::before {
     flex: 0 0 80px;
     width: 80px;
     height: 500px;
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -214,7 +203,7 @@ body::before {
 .main-board {
     flex: 0 0 900px;
     width: 900px;
-    height: 560px;
+    height: var(--board-height);
     padding: 16px;
     position: relative;
     overflow: hidden;
@@ -579,12 +568,12 @@ body::before {
    响应式：小屏时收缩（保持大致比例）
    ========================================================================== */
 @media (max-width: 1080px) {
-    #home-grid { height: 486px; }
+    :root { --board-height: min(520px, calc(100dvh - 100px)); }
     .desktop-container {
         width: 100%;
         max-width: calc(100vw - 24px);
-        height: auto;
-        min-height: 480px;
+        height: var(--board-height);
+        min-height: 0;
     }
     .sidebar {
         flex: 0 0 70px;
@@ -595,17 +584,16 @@ body::before {
         flex: 1;
         width: auto;
         min-width: 0;
-        height: 520px;
+        height: var(--board-height);
     }
 }
 
 /* 移动端：纵向堆叠 */
 @media (max-width: 860px) {
-    #home-grid { height: auto; }
+    :root { --board-height: min(560px, calc(100dvh - 176px)); }
     body {
-        height: auto;
-        min-height: 100dvh;
-        overflow: auto;
+        height: 100dvh;
+        overflow: hidden;
         padding: 16px 12px 96px;
         align-items: flex-start;
     }
@@ -614,27 +602,27 @@ body::before {
         width: 100%;
         max-width: 100%;
         height: auto;
+        min-height: 0;
+        margin-bottom: 0;
         gap: 16px;
     }
     .sidebar { display: none; }
     .bottom-dock { display: flex; }
     .page-switcher { position: sticky; top: 8px; order: -1; left: auto; right: auto; margin: 0 auto; z-index: 25; background: rgba(30,30,30,0.65); }
-    .home-pages { width: 100%; height: auto; }
-    .card-pages { height: auto; }
+    .home-pages { width: 100%; }
 
     .main-board {
         flex: none;
         width: 100%;
-        height: auto;
-        min-height: auto;
+        height: var(--board-height);
+        min-height: 0;
         padding: 16px;
     }
     .bento-grid {
         grid-template-columns: 1fr;
         grid-template-rows: none;
         grid-auto-rows: minmax(140px, auto);
-        padding-top: 52px;
-        height: auto;
+        padding-top: 0;
     }
     .bento-card[data-span="2"],
     .bento-card[data-span="3"] {
@@ -734,8 +722,8 @@ select.life-input option { background: #252525; color: #fff; }
 .backup-panel textarea { width: 100%; margin-top: 12px; }
 
 @media (max-width: 860px) {
-    .detail-view { min-height: 500px; height: auto; }
-    .detail-body { flex: none; overflow: visible; padding: 18px; }
+    .detail-view { min-height: 0; height: 100%; }
+    .detail-body { flex: 1; overflow-y: auto; padding: 18px; }
     .detail-header { gap: 10px; }
     .detail-header h1 { font-size: 1rem; }
     .calendar-detail-layout { grid-template-columns: 1fr; gap: 28px; }
@@ -759,4 +747,3 @@ select.life-input option { background: #252525; color: #fff; }
 /* App details share one stage size without the extra inset of text details. */
 .has-app .detail-body { padding: 0; border: 0; background: transparent; }
 .app-toolbar select { color: var(--text-primary); background: #233232; border: 1px solid var(--glass-border); border-radius: 10px; min-height: 38px; padding: 8px 28px 8px 12px; max-width: 100%; font: inherit; }
-@media (min-width: 861px) { .desktop-container:has(.has-app) { height: 740px; } }

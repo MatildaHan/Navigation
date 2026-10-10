@@ -11,12 +11,6 @@ function initDeck() {
     let drag = null;
     let suppressClick = false;
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-    function size() {
-        if (!deck.clientWidth) return;
-        // Each page keeps its natural height; only the active page sizes the shell.
-        const height = `${Math.ceil(pages[page].getBoundingClientRect().height)}px`;
-        if (deck.style.height !== height) deck.style.height = height;
-    }
     function setPage(index) {
         page = Math.max(0, Math.min(pages.length - 1, index));
         pages.forEach((node, i) => { node.inert = i !== page; });
@@ -25,7 +19,6 @@ function initDeck() {
             else link.removeAttribute('aria-current');
         });
         document.getElementById('page-status').textContent = `第 ${page + 1} 页，共 ${pages.length} 页`;
-        size();
         deck.scrollTo({ left: page * deck.clientWidth, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
     }
     deck.addEventListener('scroll', () => {
@@ -80,10 +73,8 @@ function initDeck() {
         links[index].focus({ preventScroll: true });
     });
     new ResizeObserver(() => {
-        size();
         if (deck.clientWidth) deck.scrollTo({ left: page * deck.clientWidth, behavior: 'instant' });
     }).observe(deck.parentElement);
-    pages.forEach(node => new ResizeObserver(size).observe(node));
     window.deckController = { setPage };
 }
 

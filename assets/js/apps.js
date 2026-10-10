@@ -7,7 +7,9 @@ const Apps = (() => {
     const entries = new Map();
     const toolRoute = item => tools.some(id => item.网址 === `#tool/${id}`) ? item.网址 : null;
     function tile(key, item, index) {
-        const link = el('a', 'app-tile');
+        const localTool = key.startsWith('tool/');
+        const link = el('a', localTool ? 'bento-card app-tile card-life-app' : 'app-tile');
+        if (localTool) { link.dataset.span = '1'; link.dataset.localTool = key; }
         link.href = `#${key}`;
         const top = el('span', 'app-tile-top');
         top.append(el('span', 'app-number', String(index + 1).padStart(2, '0')), el('span', 'app-category', item.分类 || '休闲'));
@@ -15,18 +17,21 @@ const Apps = (() => {
         return link;
     }
     function init(CFG) {
+        entries.clear();
         for (const [kind, ids, items, container, directory] of [
             ['game', games, CFG.games, 'games-grid', 'Games-main/games'],
-            ['tool', tools, CFG.tools?.filter(toolRoute), 'local-tools-catalog', 'Tools-main/tools'],
+            ['tool', tools, CFG.tools?.filter(toolRoute), 'life-grid', 'Tools-main/tools'],
         ]) {
             const node = document.getElementById(container);
-            node.replaceChildren();
+            if (kind === 'game') node.replaceChildren();
+            else node.querySelectorAll('[data-local-tool]').forEach(tile => tile.remove());
+            let index = 0;
             (items || []).forEach(item => {
                 const id = kind === 'tool' ? toolRoute(item)?.split('/')[1] : item.标识;
                 const key = `${kind}/${id}`;
                 if (!ids.includes(id) || !item.名称 || entries.has(key)) return;
                 entries.set(key, { ...item, kind, path: `${directory}/${id}.html`, parent: kind === 'game' ? '#games' : '#life' });
-                node.appendChild(tile(key, item, node.children.length));
+                node.appendChild(tile(key, item, index++));
             });
         }
     }
