@@ -9,45 +9,64 @@
 <link rel="stylesheet" href="../css/japanese-study.css">
 </head>
 <body class="embedded">
-<main class="game-inner">
-    <div class="jp-wrap">
-        <nav class="jp-switches" id="stages" aria-label="学习阶段"></nav>
-        <div class="jp-switches jp-categories" id="categories" role="group" aria-label="学习分类"></div>
-        <div class="jp-switches" id="scripts" role="group" aria-label="假名写法">
-            <button type="button" class="jp-btn" data-script="hiragana" aria-pressed="true">平假名</button>
-            <button type="button" class="jp-btn" data-script="katakana" aria-pressed="false">片假名</button>
-        </div>
-        <p class="jp-description" id="description"></p>
-        <section class="jp-card" aria-label="当前学习内容">
-            <div id="entry" aria-live="polite" aria-atomic="true">
-                <div class="jp-kanji" id="kanji" lang="ja"></div>
-                <div class="jp-kana" id="kana" lang="ja"></div>
-                <div class="jp-romaji" id="romaji"></div>
-                <div class="jp-meaning" id="meaning"></div>
-                <p class="jp-note" id="note"></p>
+<main class="game-inner jp-shell">
+    <div class="jp-wrap" data-view="study">
+        <div class="jp-toolbar">
+            <nav class="jp-switches" id="stages" aria-label="学习阶段"></nav>
+            <div class="jp-switches jp-views" role="group" aria-label="内容视图">
+                <button type="button" class="jp-btn" data-view="study" aria-pressed="true">学习</button>
+                <button type="button" class="jp-btn" data-view="overview" aria-pressed="false">一览</button>
             </div>
-        </section>
-        <div class="jp-controls">
-            <button type="button" class="jp-btn" id="btnPrev">上一个</button>
-            <button type="button" class="jp-btn primary" id="btnSpeak">朗读</button>
-            <button type="button" class="jp-btn" id="btnNext">下一个</button>
         </div>
-        <p class="jp-progress" id="progress"></p>
-        <p class="jp-description jp-speech-status" id="speechStatus" role="status"></p>
-        <section class="jp-overview" aria-labelledby="overviewTitle">
-            <h2 id="overviewTitle">本组一览</h2>
-            <div class="jp-list" id="list"></div>
-        </section>
-        <details class="jp-guide">
-            <summary>学习路线与参考</summary>
-            <p>先认全平假名、片假名与变音，再练生活词汇和礼貌句子；读字幕时，继续练普通形、否定、过去、て形与口语缩略。罗马字只作入门辅助，长音写法按假名保留（如 ou、ei）。</p>
-            <p>本页是日常交流与字幕阅读的基础练习。不同作品的专有名词、汉字和语速不同，可把遇到的生词结合上下文继续学习。</p>
-            <p>假名表参考 <a href="https://www.irodori.jpf.go.jp/assets/data/Kana_all.pdf" target="_blank" rel="noopener noreferrer">国际交流基金《いろどり》</a>；可配合 <a href="https://www.erin.jpf.go.jp/en/section/key-phrases/" target="_blank" rel="noopener noreferrer">Erin 日常会话</a>练习真实发音。此页朗读由浏览器日语语音提供。</p>
-        </details>
+        <div class="jp-filterbar">
+            <label class="jp-category">分类<select id="categories" aria-label="学习分类"></select></label>
+            <div class="jp-switches jp-scripts" id="scripts" role="group" aria-label="假名写法">
+                <button type="button" class="jp-btn" data-script="hiragana" aria-pressed="true">平假名</button>
+                <button type="button" class="jp-btn" data-script="katakana" aria-pressed="false">片假名</button>
+            </div>
+        </div>
+        <div class="jp-layout">
+            <section class="jp-card" aria-label="当前学习内容">
+                <div class="jp-reading">
+                    <div id="entry" tabindex="-1" aria-live="polite" aria-atomic="true">
+                        <div class="jp-kanji" id="kanji" lang="ja"></div>
+                        <div class="jp-kana" id="kana" lang="ja"></div>
+                        <div class="jp-romaji" id="romaji"></div>
+                        <div class="jp-meaning" id="meaning"></div>
+                        <p class="jp-note" id="note"></p>
+                    </div>
+                    <details class="jp-guide">
+                        <summary>本组说明与学习参考</summary>
+                        <p id="description"></p>
+                        <p>假名 → 生活词汇 → 日常句式。读字幕时重点练普通形、否定、过去、て形与口语缩略。罗马字仅作辅助；不同作品还需积累专有名词和汉字。</p>
+                        <p>参考 <a href="https://www.irodori.jpf.go.jp/assets/data/Kana_all.pdf" target="_blank" rel="noopener noreferrer">《いろどり》假名表</a>及 <a href="https://www.erin.jpf.go.jp/en/section/key-phrases/" target="_blank" rel="noopener noreferrer">Erin 日常会话</a>。</p>
+                    </details>
+                </div>
+                <p class="jp-progress" id="progress"></p>
+            </section>
+            <section class="jp-overview" aria-labelledby="overviewTitle">
+                <div class="jp-list-header">
+                    <h2 id="overviewTitle">本组一览</h2>
+                    <input id="search" type="search" placeholder="搜索日文、读音或中文" aria-label="搜索学习内容" autocomplete="off">
+                </div>
+                <div class="jp-list" id="list"></div>
+                <p id="emptyList" hidden>没有匹配内容，请换个关键词或选择全部分类。</p>
+                <p class="jp-list-hint">点击条目查看读音、中文与用法</p>
+            </section>
+        </div>
+        <footer class="jp-footer">
+            <p class="jp-speech-status" id="speechStatus" role="status"></p>
+            <div class="jp-controls">
+                <button type="button" class="jp-btn" id="btnPrev">上一个</button>
+                <button type="button" class="jp-btn primary" id="btnSpeak">朗读</button>
+                <button type="button" class="jp-btn" id="btnNext">下一个</button>
+            </div>
+        </footer>
     </div>
 </main>
 <script src="../js/bridge.js"></script>
 <script src="../../assets/js/app-common.js" defer></script>
+<script src="../js/japanese-life-data.js"></script>
 <script src="../js/japanese-data.js"></script>
 <script src="../js/japanese-study.js"></script>
 </body>
