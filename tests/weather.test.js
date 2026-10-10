@@ -1,0 +1,139 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const source = fs.readFileSync(path.join(__dirname, '../assets/js/weather.js'), 'utf8');
+const KEY = 'navigation-weather-mode';
+const ORDER = ['sun', 'rain', 'snow', 'fog', 'leaves', 'off'];
+
+function environment({ saved = null, legacy = null, reduced = false, storageFails = false, noCanvas = false } = {}) {
+    const frames = new Map();
+    const nodes = [];
+    const commands = [];
+    const events = () => ({ listeners: {}, addEventListener(name, fn) { this.listeners[name] = fn; } });
+    let nextFrame = 0;
+    const context = {};
+    for (const method of ['setTransform', 'clearRect', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'arc',
+        'fill', 'save', 'restore', 'translate', 'rotate', 'scale', 'bezierCurveTo', 'fillRect', 'closePath']) {
+        context[method] = (...args) => commands.push([method, ...args]);
+    }
+    for (const method of ['createLinearGradient', 'createRadialGradient']) {
+        context[method] = (...args) => { commands.push([method, ...args]); return { addColorStop() {} }; };
+    }
+    const document = { ...events(), readyState: 'complete', hidden: false,
+        body: { append(...children) { nodes.push(...children); } },
+        querySelector: () => nodes.find(node => node.className === 'navigation-weather'),
+        querySelectorAll: () => [],
+        createElement: tag => ({ ...events(), tag, style: {}, dataset: {}, attributes: {}, children: [],
+            setAttribute(name, value) { this.attributes[name] = value; },
+            append(...children) { this.children.push(...children); },
+            getContext: () => noCanvas ? null : context }),
+    };
+    const motion = { ...events(), matches: reduced };
+    const window = { ...events(), innerWidth: 1280, innerHeight: 800, devicePixelRatio: 2 };
+    const storage = { getItem(key) { if (storageFails) throw new Error('blocked'); return key === KEY ? saved : legacy; },
+        setItem(key, value) { if (storageFails) throw new Error('blocked'); assert.equal(key, KEY); saved = value; } };
+    const deterministicMath = Object.create(Math);
+    deterministicMath.random = () => 0.5;
+    vm.runInNewContext(source, { document, window, Math: deterministicMath, matchMedia: () => motion, localStorage: storage,
+        requestAnimationFrame(fn) { frames.set(++nextFrame, fn); return nextFrame; },
+        cancelAnimationFrame(id) { frames.delete(id); } });
+    const canvas = nodes.find(node => node.tag === 'canvas');
+    const toggle = nodes.find(node => node.tag === 'button');
+    return { document, window, motion, frames, canvas, toggle, commands,
+        saved: () => saved, mode: () => toggle.dataset.mode,
+        tick(time) { commands.length = 0; const [id, fn] = frames.entries().next().value; frames.delete(id); fn(time); return [...commands]; } };
+}
+
+test('six modes cycle in order, survive reload, and off cancels the only animation loop', () => {
+    const e = environment({ saved: 'sun' });
+    for (let i = 0; i < 12; i += 1) {
+        const mode = ORDER[i % ORDER.length];
+        assert.equal(e.mode(), mode);
+        assert.equal(e.frames.size, mode === 'off' ? 0 : 1);
+        assert.equal(e.canvas.hidden, mode === 'off');
+        if (mode !== 'off') assert.ok(e.tick(i * 16 + 16).some(command => ['stroke', 'fill', 'fillRect'].includes(command[0])));
+        const reload = environment({ saved: mode });
+        assert.equal(reload.mode(), mode);
+        assert.equal(reload.toggle.attributes['aria-label'], e.toggle.attributes['aria-label']);
+        e.toggle.listeners.click();
+        assert.equal(e.saved(), ORDER[(i + 1) % ORDER.length]);
+    }
+});
+
+test('rain, snow, fog and leaves drift left and down; sunlight beams point the same way', () => {
+    for (const [mode, method] of [['rain', 'moveTo'], ['snow', 'arc'], ['fog', 'translate'], ['leaves', 'translate']]) {
+        const e = environment({ saved: mode });
+        const first = e.tick(16).find(command => command[0] === method);
+        const second = e.tick(32).find(command => command[0] === method);
+        assert.ok(second[1] < first[1], `${mode} moves left`);
+        assert.ok(second[2] > first[2], `${mode} moves down`);
+    }
+    const sun = environment({ saved: 'sun' });
+    const beam = sun.tick(16).find(command => command[0] === 'createLinearGradient');
+    assert.ok(beam[3] < beam[1]);
+    assert.ok(beam[4] > beam[2]);
+});
+
+test('background and page-cache lifecycle pause and resume one loop for every active mode', () => {
+    for (const mode of ORDER.filter(value => value !== 'off')) {
+        const e = environment({ saved: mode });
+        e.document.hidden = true;
+        e.document.listeners.visibilitychange();
+        assert.equal(e.frames.size, 0);
+        e.document.hidden = false;
+        e.document.listeners.visibilitychange();
+        e.window.listeners.pageshow();
+        assert.equal(e.frames.size, 1);
+        e.window.listeners.pagehide();
+        assert.equal(e.frames.size, 0);
+        e.window.listeners.pageshow();
+        assert.equal(e.frames.size, 1);
+    }
+});
+
+test('legacy off choice is kept, reduced motion defaults to off, and explicit selection is allowed', () => {
+    assert.equal(environment({ legacy: 'false' }).mode(), 'off');
+    assert.equal(environment({ legacy: 'true' }).mode(), 'rain');
+    assert.equal(environment({ saved: 'snow', legacy: 'false' }).mode(), 'snow');
+    const e = environment({ reduced: true });
+    assert.equal(e.frames.size, 0);
+    e.toggle.listeners.click();
+    assert.equal(e.mode(), 'sun');
+    assert.equal(e.frames.size, 1);
+    e.motion.listeners.change();
+    assert.equal(e.mode(), 'off');
+    assert.equal(e.frames.size, 0);
+});
+
+test('blocked storage and invalid preferences remain usable; unsupported canvas adds no controls', () => {
+    for (const options of [{ storageFails: true }, { saved: 'invalid' }]) {
+        const e = environment(options);
+        assert.equal(e.mode(), 'rain');
+        e.toggle.listeners.click();
+        assert.equal(e.mode(), 'snow');
+        assert.equal(e.frames.size, 1);
+    }
+    assert.equal(environment({ saved: 'invalid', reduced: true }).mode(), 'off');
+    const unsupported = environment({ noCanvas: true });
+    assert.equal(unsupported.canvas, undefined);
+    assert.equal(unsupported.toggle, undefined);
+    assert.equal(unsupported.frames.size, 0);
+});
+
+test('another tab can change the mode; invalid modes and unrelated records cannot break the module', () => {
+    const e = environment();
+    e.window.listeners.storage({ key: 'navigation-life-v1', newValue: 'off' });
+    assert.equal(e.mode(), 'rain');
+    e.window.listeners.storage({ key: KEY, newValue: 'fog' });
+    assert.equal(e.mode(), 'fog');
+    e.tick(16);
+    e.window.listeners.storage({ key: KEY, newValue: 'off' });
+    assert.equal(e.frames.size, 0);
+    e.window.listeners.storage({ key: KEY, newValue: '__proto__' });
+    assert.equal(e.mode(), 'rain');
+    e.window.listeners.storage({ key: null, newValue: null });
+    assert.equal(e.frames.size, 1);
+});
