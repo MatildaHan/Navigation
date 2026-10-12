@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="../../assets/css/apps.css">
 <style>
 body.tetris-app .game-inner { padding: 12px; overflow: hidden; background: rgba(15, 34, 39, .86); }
-body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-width: 116px; --layout-gap: 24px; display: grid; grid-template-columns: var(--info-width) var(--board-width, 225px) var(--controls-width); gap: var(--layout-gap); align-items: center; justify-content: center; width: max-content; max-width: 100%; height: var(--board-height, 450px); min-height: 0; margin: auto; }
-.tetris-main { grid-column: 2; grid-row: 1; width: var(--board-width, 225px); }
+body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-width: 116px; --layout-gap: 24px; display: grid; grid-template-columns: var(--info-width) var(--board-width, 337.5px) var(--controls-width); gap: var(--layout-gap); align-items: center; justify-content: center; width: max-content; max-width: 100%; height: var(--board-height, 450px); min-height: 0; margin: auto; }
+.tetris-main { grid-column: 2; grid-row: 1; width: var(--board-width, 337.5px); }
 #tetris-canvas { display: block; width: 100%; height: var(--board-height, 450px); border: 1px solid var(--border); border-radius: 8px; background: #102125; touch-action: none; }
 #tetris-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tetris-info, .tetris-controls { display: grid; grid-template-rows: minmax(0, 1fr) 90px 34px; row-gap: 14px; height: 100%; min-height: 0; }
@@ -96,7 +96,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
             </div>
         </aside>
         <div class="tetris-main" id="tetrisMain">
-            <canvas id="tetris-canvas" width="240" height="480" tabindex="0" aria-label="俄罗斯方块棋盘，方向键移动和旋转，空格快速落下，P 暂停"></canvas>
+            <canvas id="tetris-canvas" width="360" height="480" tabindex="0" aria-label="俄罗斯方块棋盘，15 列 20 行，方向键移动和旋转，空格快速落下，P 暂停"></canvas>
         </div>
         <aside class="tetris-controls" aria-label="游戏操作">
             <div class="tetris-actions">
@@ -133,7 +133,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
 
     document.body.classList.add('embedded');
 
-    const COLS = 10, ROWS = 20, BLOCK = 24;
+    const COLS = 15, ROWS = 20, BLOCK = 24;
     const BASE_INTERVAL = 800;
     const MIN_INTERVAL = 100;
 
@@ -167,8 +167,8 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     const layoutEl = document.querySelector('.tetris-layout');
 
     // 逻辑尺寸固定
-    canvas.width = 240;
-    canvas.height = 480;
+    canvas.width = COLS * BLOCK;
+    canvas.height = ROWS * BLOCK;
     ctx.imageSmoothingEnabled = false;
     nextCanvas.width = 120;
     nextCanvas.height = 120;
@@ -204,9 +204,9 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         const widthBudget = innerEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
             - infoWidth - (narrow ? gap : controlsWidth + gap * 2);
         const heightBudget = innerEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - controlsHeight;
-        const boardW = Math.max(1, Math.floor(Math.min(widthBudget, heightBudget / 2)));
+        const boardW = Math.max(1, Math.floor(Math.min(widthBudget, heightBudget * COLS / ROWS)));
         layoutEl.style.setProperty('--board-width', boardW + 'px');
-        layoutEl.style.setProperty('--board-height', boardW * 2 + 'px');
+        layoutEl.style.setProperty('--board-height', boardW * ROWS / COLS + 'px');
     }
     new ResizeObserver(updateBoardWidth).observe(innerEl);
     updateBoardWidth();
@@ -350,22 +350,22 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     }
 
     function draw() {
-        ctx.clearRect(0, 0, 240, 480);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#102125';
-        ctx.fillRect(0, 0, 240, 480);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.strokeStyle = 'rgba(134, 162, 165, 0.2)';
         ctx.lineWidth = 1;
         for (let i = 1; i < COLS; i++) {
             ctx.beginPath();
             ctx.moveTo(i * BLOCK + 0.5, 0);
-            ctx.lineTo(i * BLOCK + 0.5, 480);
+            ctx.lineTo(i * BLOCK + 0.5, canvas.height);
             ctx.stroke();
         }
         for (let i = 1; i < ROWS; i++) {
             ctx.beginPath();
             ctx.moveTo(0, i * BLOCK + 0.5);
-            ctx.lineTo(240, i * BLOCK + 0.5);
+            ctx.lineTo(canvas.width, i * BLOCK + 0.5);
             ctx.stroke();
         }
 

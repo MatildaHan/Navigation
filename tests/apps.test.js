@@ -73,3 +73,40 @@ test('gomoku evaluation preserves a placed stone and identifies an immediate fiv
     assert.ok(vm.runInContext('evaluatePoint(4,7,1)',ctx)>=1000000);
     assert.equal(vm.runInContext('board[7][4]',ctx),1);
 });
+
+function tetrisContext() {
+    const source = html('tetris');
+    const dimensions = source.slice(source.indexOf('    const COLS'), source.indexOf('    const PIECES'));
+    const collision = source.slice(source.indexOf('    function collide'), source.indexOf('    function merge'));
+    const clearing = source.slice(source.indexOf('    function clearLines'), source.indexOf('    function rotate'));
+    const ctx = vm.createContext({ localStorage: { setItem() {} } });
+    vm.runInContext(dimensions + `
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let current = null, score = 0, level = 1, lines = 0, bestScore = 0;
+        const scoreEl = { textContent: '' };
+        function updateLevelUI() {}
+    ` + collision + clearing, ctx);
+    return ctx;
+}
+
+test('tetris accepts column fifteen and rejects moves past either board edge', () => {
+    const ctx = tetrisContext();
+    assert.equal(vm.runInContext('collide([[1,1,1,1]], 11, 19)', ctx), false);
+    assert.equal(vm.runInContext('collide([[1,1,1,1]], 12, 19)', ctx), true);
+    assert.equal(vm.runInContext('collide([[1]], -1, 0)', ctx), true);
+    assert.equal(vm.runInContext('collide([[1]], 14, 20)', ctx), true);
+    vm.runInContext("board[19][14] = '#68dec0';", ctx);
+    assert.equal(vm.runInContext('collide([[1]], 14, 19)', ctx), true);
+});
+
+test('tetris clears only a full fifteen-cell row and keeps the widened board', () => {
+    const ctx = tetrisContext();
+    vm.runInContext("board[19].fill('#68dec0', 0, 10); clearLines();", ctx);
+    assert.equal(vm.runInContext('lines', ctx), 0);
+    vm.runInContext("board[19].fill('#68dec0', 10); board[18][14] = '#ed9488'; clearLines();", ctx);
+    assert.equal(vm.runInContext('lines', ctx), 1);
+    assert.equal(vm.runInContext('score', ctx), 100);
+    assert.equal(vm.runInContext('board.length === 20 && board.every(row => row.length === 15)', ctx), true);
+    assert.equal(vm.runInContext('board[0].every(cell => cell === 0)', ctx), true);
+    assert.equal(vm.runInContext('board[19][14]', ctx), '#ed9488');
+});
