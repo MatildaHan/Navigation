@@ -8,52 +8,82 @@
 <link rel="stylesheet" href="../../assets/css/apps.css">
 <style>
 body.tetris-app .game-inner { padding: 12px; overflow: hidden; background: rgba(15, 34, 39, .86); }
-body.tetris-app .game-inner > .tetris-layout { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 100%; min-height: 0; margin: 0; }
-.tetris-main { width: var(--board-width, 225px); flex: none; }
-#tetris-canvas { display: block; width: 100%; height: calc(var(--board-width, 225px) * 2); border: 1px solid var(--border); border-radius: 8px; background: #102125; touch-action: none; }
-.tetris-rail { display: flex; flex-direction: column; gap: 12px; width: 140px; flex: none; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
-.tetris-rail > * { flex-shrink: 0; }
-.tetris-stats { display: grid; gap: 6px; }
+body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-width: 116px; --layout-gap: 24px; display: grid; grid-template-columns: var(--info-width) var(--board-width, 225px) var(--controls-width); gap: var(--layout-gap); align-items: center; justify-content: center; width: max-content; max-width: 100%; height: var(--board-height, 450px); min-height: 0; margin: auto; }
+.tetris-main { grid-column: 2; grid-row: 1; width: var(--board-width, 225px); }
+#tetris-canvas { display: block; width: 100%; height: var(--board-height, 450px); border: 1px solid var(--border); border-radius: 8px; background: #102125; touch-action: none; }
+#tetris-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tetris-info, .tetris-controls { display: grid; grid-template-rows: minmax(0, 1fr) 90px 34px; row-gap: 14px; height: 100%; min-height: 0; }
+.tetris-info { grid-column: 1; grid-row: 1; }
+.tetris-controls { grid-column: 3; grid-row: 1; }
+.tetris-stats { display: grid; gap: 6px; align-self: center; }
 .tetris-stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tetris-stats dt, .tetris-next-label { font-size: 13px; color: var(--text-sub); }
 .tetris-stats dd { font-size: 16px; font-variant-numeric: tabular-nums; }
-.tetris-stats .tetris-score { display: block; }
+.tetris-stats .tetris-score { display: block; margin-bottom: 6px; }
 .tetris-score dd { margin-top: 2px; font-size: 28px; line-height: 1.2; }
 .tetris-stats .tetris-best { color: var(--text-sub); font-size: 12px; }
-.tetris-next { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tetris-next { grid-row: 2; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; justify-content: flex-end; }
+.tetris-next-label { line-height: 20px; }
 #next-canvas { display: block; width: 64px; height: 64px; border: 1px solid var(--border); border-radius: 8px; background: #102125; }
-.tetris-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.tetris-button, .tetris-touch { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 44px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: #243b40; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; touch-action: manipulation; }
+.tetris-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-self: center; }
+.tetris-button, .tetris-touch { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 32px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 8px; background: #243b40; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; touch-action: manipulation; }
 .tetris-button.primary { background: var(--accent); color: #06201a; border-color: transparent; }
 .tetris-button:disabled { opacity: .45; cursor: not-allowed; }
-.touch-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: '. rotate .' 'left down right'; gap: 6px; }
-.tetris-touch { font-size: 18px; padding: 0; }
+.touch-controls { grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: '. rotate .' 'left down right'; gap: 6px; align-self: end; }
+.tetris-touch { height: 32px; font-size: 18px; padding: 0; }
 .tetris-touch[data-action="left"] { grid-area: left; }
 .tetris-touch[data-action="rotate"] { grid-area: rotate; }
 .tetris-touch[data-action="right"] { grid-area: right; }
 .tetris-touch[data-action="down"] { grid-area: down; }
-.tetris-key-hint { color: var(--text-sub); font-size: 11px; line-height: 1.5; text-align: center; }
+.tetris-key-hint { grid-row: 3; color: var(--text-sub); font-size: 11px; line-height: 1.5; text-align: center; align-self: center; }
 .tetris-modal .modal-box { width: min(340px, calc(100% - 24px)); padding: 24px; }
 .tetris-modal .modal-actions { display: flex; flex-direction: row; gap: 8px; }
-.tetris-modal .modal-actions .tetris-button { flex: 1; }
+.tetris-modal .modal-actions .tetris-button { flex: 1; min-height: 40px; }
 body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90px)); }
 @media (max-width: 600px) {
-    body.tetris-app .game-inner > .tetris-layout { gap: 12px; }
-    .tetris-rail { width: 118px; gap: 10px; }
-    .tetris-stats dt, .tetris-next-label { font-size: 12px; }
+    body.tetris-app .game-inner > .tetris-layout { --info-width: 76px; --layout-gap: 12px; --controls-height: 94px; grid-template-columns: var(--info-width) minmax(0, 1fr); grid-template-rows: var(--board-height) var(--controls-height); column-gap: var(--layout-gap); row-gap: var(--layout-gap); width: 100%; height: 100%; }
+    .tetris-main { justify-self: center; }
+    .tetris-info { grid-template-rows: minmax(0, 1fr) auto; row-gap: 8px; }
+    .tetris-stats { gap: 4px; }
+    .tetris-stats dt, .tetris-next-label { font-size: 11px; }
+    .tetris-stats dd { font-size: 13px; }
+    .tetris-stats .tetris-best { font-size: 10px; }
     .tetris-score dd { font-size: 24px; }
     #next-canvas { width: 56px; height: 56px; }
+    .tetris-controls { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; justify-content: center; gap: 10px; height: auto; }
+    .tetris-actions { width: 94px; flex: none; }
+    .touch-controls { width: 132px; flex: none; align-self: center; }
+    .tetris-button, .tetris-touch { min-height: 44px; height: 44px; padding: 4px; }
     .tetris-key-hint { display: none; }
+}
+@media (max-width: 600px) and (max-height: 360px) {
+    .tetris-stats .tetris-score { display: flex; margin-bottom: 0; }
+    .tetris-score dd { margin-top: 0; font-size: 16px; }
+}
+@media (min-width: 601px) and (max-height: 300px) {
+    body.tetris-app .game-inner > .tetris-layout { --info-width: 190px; --layout-gap: 12px; }
+    .tetris-info { display: flex; align-items: center; gap: 12px; }
+    .tetris-stats { flex: 1; gap: 3px; }
+    .tetris-stats dt, .tetris-stats dd { font-size: 12px; }
+    .tetris-stats .tetris-score { margin: 0; }
+    .tetris-score dd { font-size: 20px; }
+    .tetris-next { flex: none; }
+    #next-canvas { width: 56px; height: 56px; }
+    .tetris-controls { grid-template-rows: 30px minmax(0, 1fr); row-gap: 6px; }
+    .tetris-button, .tetris-touch { min-height: 28px; height: 28px; }
+    .touch-controls { align-self: center; }
+    .tetris-key-hint { display: none; }
+}
+@media (pointer: coarse) and (min-width: 601px) and (min-height: 301px) {
+    .tetris-button, .tetris-touch { min-height: 44px; height: 44px; }
+    .tetris-info, .tetris-controls { grid-template-rows: minmax(0, 1fr) 94px 34px; }
 }
 </style>
 </head>
 <body class="game-app embedded tetris-app">
 <div class="game-inner">
     <div class="tetris-layout">
-        <div class="tetris-main" id="tetrisMain">
-            <canvas id="tetris-canvas" width="240" height="480" tabindex="0" aria-label="俄罗斯方块棋盘，方向键移动和旋转，空格快速落下，P 暂停"></canvas>
-        </div>
-        <aside class="tetris-rail" aria-label="游戏状态与操作">
+        <aside class="tetris-info" aria-label="得分与下一个方块">
             <dl class="tetris-stats">
                 <div class="tetris-score"><dt>得分</dt><dd id="score">0</dd></div>
                 <div><dt>等级</dt><dd id="level">1</dd></div>
@@ -64,6 +94,11 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
                 <span class="tetris-next-label">下一个</span>
                 <canvas id="next-canvas" width="120" height="120" aria-label="下一个方块预览"></canvas>
             </div>
+        </aside>
+        <div class="tetris-main" id="tetrisMain">
+            <canvas id="tetris-canvas" width="240" height="480" tabindex="0" aria-label="俄罗斯方块棋盘，方向键移动和旋转，空格快速落下，P 暂停"></canvas>
+        </div>
+        <aside class="tetris-controls" aria-label="游戏操作">
             <div class="tetris-actions">
                 <button class="tetris-button primary" id="btnStart">开始</button>
                 <button class="tetris-button" id="btnPause" disabled>暂停</button>
@@ -74,7 +109,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
                 <button class="tetris-touch" data-action="right" aria-label="向右移动">→</button>
                 <button class="tetris-touch" data-action="down" aria-label="向下移动">↓</button>
             </div>
-            <p class="tetris-key-hint">方向键移动与旋转<br>空格快速落下 · P 暂停</p>
+            <p class="tetris-key-hint">方向键移动与旋转<br>空格落下 · P 暂停</p>
         </aside>
     </div>
 </div>
@@ -129,7 +164,6 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     const ctx = canvas.getContext('2d');
     const nextCanvas = document.getElementById('next-canvas');
     const nextCtx = nextCanvas.getContext('2d');
-    const mainEl = document.getElementById('tetrisMain');
     const layoutEl = document.querySelector('.tetris-layout');
 
     // 逻辑尺寸固定
@@ -157,16 +191,22 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     let bestScore = 0;
     try { const saved = Number(localStorage.getItem('tetrisBest')); if (Number.isSafeInteger(saved) && saved >= 0) bestScore = saved; } catch (e) {}
 
-    // The canvas gets the full available height; controls live beside it.
+    // Reserve both side columns, or the touch row on narrow screens, before fitting the canvas.
     const innerEl = document.querySelector('.game-inner');
     function updateBoardWidth() {
         const style = getComputedStyle(innerEl);
-        const gap = parseFloat(getComputedStyle(layoutEl).columnGap) || 0;
-        const railWidth = document.querySelector('.tetris-rail').getBoundingClientRect().width;
-        const widthBudget = innerEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - railWidth - gap;
-        const heightBudget = innerEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        const layoutStyle = getComputedStyle(layoutEl);
+        const gap = parseFloat(layoutStyle.getPropertyValue('--layout-gap')) || 0;
+        const infoWidth = parseFloat(layoutStyle.getPropertyValue('--info-width')) || 0;
+        const controlsWidth = parseFloat(layoutStyle.getPropertyValue('--controls-width')) || 0;
+        const narrow = window.matchMedia('(max-width: 600px)').matches;
+        const controlsHeight = narrow ? parseFloat(layoutStyle.getPropertyValue('--controls-height')) + gap : 0;
+        const widthBudget = innerEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+            - infoWidth - (narrow ? gap : controlsWidth + gap * 2);
+        const heightBudget = innerEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - controlsHeight;
         const boardW = Math.max(1, Math.floor(Math.min(widthBudget, heightBudget / 2)));
-        mainEl.style.setProperty('--board-width', boardW + 'px');
+        layoutEl.style.setProperty('--board-width', boardW + 'px');
+        layoutEl.style.setProperty('--board-height', boardW * 2 + 'px');
     }
     new ResizeObserver(updateBoardWidth).observe(innerEl);
     updateBoardWidth();
