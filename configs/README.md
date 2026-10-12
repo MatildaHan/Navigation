@@ -68,7 +68,9 @@ MD 定义公开内容、项目和目标。打卡、备注、工具收藏、专�
 
 `games.md` 中的标识对应 `Games-main/games/` 中的文件名：`tetris`、`sudoku`、`nonogram`、`chess`、`gomoku`、`klotski`、`minesweeper`、`lightsout`、`graphcoloring`、`zebra`。详情地址使用 `#game/标识`，返回第三页。工具和游戏共用固定外壳，支持顶部选择器切换、深链接刷新与浏览器前进后退。游戏键盘操作可先点击游戏区域或「键盘操作」按钮。
 
-入口名称、分类与说明由 MD 配置，允许嵌入的本地文件在 `assets/js/apps.js` 中明确列出；新增实现时需同时更新清单。旧 `Games-main/index.html` 和 `Tools-main/index.html` 会转到主页相应入口；直接打开单个 HTML 时也有返回链接。通用外观在 `assets/css/apps.css` 中，保留棋盘必要的对比色。象棋规则和 AI 引擎在 `Games-main/js/chess-engine.js`，AI 在 Worker 中限时搜索。
+入口名称、分类与说明由 MD 配置，允许嵌入的本地文件在 `assets/js/apps.js` 中明确列出；新增实现时需同时更新清单。旧 `Games-main/index.html` 和 `Tools-main/index.html` 会转到主页相应入口；直接打开单个 HTML 时也有返回链接。通用外观在 `assets/css/apps.css` 中，游戏详情的棋盘与操作区布局在 `assets/css/game-detail.css` 中；俄罗斯方块保留独立布局，棋盘必要的对比色保持不变。象棋规则和 AI 引擎在 `Games-main/js/chess-engine.js`，AI 在 Worker 中限时搜索。
+
+每个游戏详情使用与主内容面板相同的尺寸，顶部「?」展开操作说明。桌面棋盘与操作栏并排，手机操作栏移到棋盘下方；数独通过折叠菜单选择已解锁难度。斑马谜题使用五栋房子的列和属性的行，桌面线索独立滚动，手机可展开线索并在表格内横向滑动。
 
 本地音乐使用浏览器文件选择器，不上传音频，离开工具会停止播放并释放资源。语音朗读依赖浏览器及系统安装的语音；没有对应语音时可能无法发音。木鱼次数、俄罗斯方块最高分、数独解锁记录分别使用原有键 `muyu.count`、`tetrisBest`、`sudokuProgress`，独立于生活记录 JSON 的导入导出。木鱼归零支持当次页面内撤销。切换游戏会开始新局，后台时俄罗斯方块暂停，象棋停止搜索。
 

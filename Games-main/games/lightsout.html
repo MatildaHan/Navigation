@@ -84,19 +84,15 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded">
+<body class="game-app game-detail embedded">
 <div class="game-inner">
-    <div class="lo-wrap">
-        <div class="lo-info">
-            目标：让所有灯熄灭。<br>
-            点击一盏灯会翻转自己和上下左右的灯。步数 <b id="steps">0</b>
-        </div>
-        <div id="grid" class="lo-grid"></div>
-        <div class="lo-btns">
+    <div class="lo-wrap game-layout">
+        <div class="game-board-area"><div id="grid" class="lo-grid"></div></div>
+        <aside class="game-rail" aria-label="游戏状态与操作"><div class="lo-info">步数 <b id="steps">0</b></div><div class="lo-btns">
             <button class="btn" id="btnNew">新游戏</button>
-        </div>
-        <div class="lo-levels" id="levels"></div>
+        </div><div class="lo-levels" id="levels"></div></aside>
     </div>
 </div>
 
@@ -228,6 +224,7 @@
 
     buildLevels();
     init();
+    new ResizeObserver(render).observe(document.querySelector('.game-board-area'));
 })();
 </script>
 </body>

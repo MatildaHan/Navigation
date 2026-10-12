@@ -383,14 +383,15 @@ body.ink-theme .modal-actions { display: flex; gap: 12px; justify-content: cente
 body.ink-theme .modal-actions .ink-btn { flex: 1; }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded ink-theme">
+<body class="game-app game-detail embedded ink-theme">
 <div class="game-inner">
-    <div class="gomoku-layout">
-        <div class="gomoku-board-wrap">
+    <div class="gomoku-layout game-layout">
+        <div class="gomoku-board-wrap game-board-area">
             <div id="board" class="gomoku-board"></div>
         </div>
-        <div class="gomoku-side">
+        <div class="gomoku-side game-rail">
             <div class="ink-card">
                 <div class="card-title">对局</div>
                 <div class="turn-indicator">
@@ -401,7 +402,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
             </div>
             <div class="ink-card">
                 <div class="card-title">棋力</div>
-                <select id="aiLevel" class="ink-select">
+                <select id="aiLevel" class="ink-select" aria-label="五子棋棋力">
                     <option value="1">入门</option>
                     <option value="2" selected>进阶</option>
                     <option value="3">高手</option>
@@ -425,6 +426,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
     </div>
 </div>
 
+<script src="../js/layout.js"></script>
 <script src="../js/bridge.js"></script>
 <script src="../../assets/js/app-common.js"></script>
 <script>
@@ -458,20 +460,11 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
     const btnEndClose = document.getElementById('btnEndClose');
 
     // ============================================================
-    // 棋盘尺寸：--cell 唯一尺寸来源，木框 6px 手机 / 12px 桌面
+    // 棋盘尺寸：--cell 按实际棋盘区的宽高和边框计算
     // ============================================================
     function calcCellSize() {
-        const wrap = document.querySelector('.gomoku-board-wrap');
-        const vw = wrap ? wrap.clientWidth : window.innerWidth;
-        const vh = window.innerHeight;
-        const isMobile = window.innerWidth <= 767;
-
-        const frame = isMobile ? 12 : 24;
-        const availW = vw - frame;
-        const availH = isMobile ? vh - 190 : vh - 52;
-        const byW = Math.floor(availW / SIZE);
-        const byH = Math.floor(availH / SIZE);
-        return Math.max(14, Math.min(byW, byH, isMobile ? 26 : 40));
+        const area = GameLayout.boardArea(boardEl);
+        return GameLayout.fitCells({ ...area, ...GameLayout.insets(boardEl), rows: SIZE, cols: SIZE, minCell: 8 });
     }
 
     let pointEls = null;
@@ -811,6 +804,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
     playerSide = BLACK;
     buildBoardDOM();
     newGame();
+    new ResizeObserver(updateBoardSize).observe(document.querySelector('.game-board-area'));
 })();
 </script>
 </body>

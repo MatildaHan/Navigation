@@ -56,10 +56,10 @@ const Apps = (() => {
         const board = body.closest('.main-board');
         board.dataset.app = key;
         let help;
-        if (key === 'game/tetris') {
-            help = el('details', 'tetris-help');
+        if (item.kind === 'game') {
+            help = el('details', 'game-help');
             const summary = el('summary', '', '?');
-            summary.setAttribute('aria-label', '俄罗斯方块操作说明');
+            summary.setAttribute('aria-label', `${item.名称}操作说明`);
             help.append(summary, el('p', '', item.说明));
             board.querySelector('.detail-header').appendChild(help);
             help.addEventListener('keydown', event => {

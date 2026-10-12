@@ -426,17 +426,18 @@ body.ink-theme .modal-actions { display: flex; gap: 12px; justify-content: cente
 body.ink-theme .modal-actions .ink-btn { flex: 1; }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded ink-theme">
+<body class="game-app game-detail embedded ink-theme">
 <div class="game-inner">
-    <div class="chess-layout">
-        <div class="chess-board-wrap">
+    <div class="chess-layout game-layout">
+        <div class="chess-board-wrap game-board-area">
             <div id="board" class="chess-board" aria-label="中国象棋棋盘">
                 <div class="chess-river"><span>楚　河</span><span>汉　界</span></div>
                 <svg class="chess-grid" viewBox="0 0 9 10" aria-hidden="true" focusable="false"></svg>
             </div>
         </div>
-        <div class="chess-side">
+        <div class="chess-side game-rail">
             <div class="ink-card">
                 <div class="card-title">对局</div>
                 执：<b id="playerSide">红方</b><br>
@@ -444,7 +445,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
             </div>
             <div class="ink-card">
                 <div class="card-title">棋力</div>
-                <select id="aiDepth" class="ink-select">
+                <select id="aiDepth" class="ink-select" aria-label="象棋棋力">
                     <option value="1">入门</option>
                     <option value="2" selected>进阶</option>
                     <option value="3">高手</option>
@@ -469,6 +470,7 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
 </div>
 
 <script src="../js/chess-engine.js"></script>
+<script src="../js/layout.js"></script>
 <script src="../js/bridge.js"></script>
 <script src="../../assets/js/app-common.js"></script>
 <script>
@@ -517,13 +519,8 @@ body.ink-theme .modal-actions .ink-btn { flex: 1; }
 
     // Size the whole nine-file, ten-rank board from the stable layout column.
     function calcCellSize() {
-        const wrap = document.querySelector('.chess-board-wrap');
-        const style = getComputedStyle(boardEl);
-        const frame = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
-        const availW = Math.max(0, wrap.clientWidth - frame);
-        const isMobile = window.innerWidth <= 767;
-        const availH = Math.max(120, window.innerHeight - (isMobile ? 190 : 52));
-        return Math.max(12, Math.floor(Math.min(availW / 9, availH / 10, isMobile ? 44 : 56)));
+        const area = GameLayout.boardArea(boardEl);
+        return GameLayout.fitCells({ ...area, ...GameLayout.insets(boardEl), rows: 10, cols: 9, minCell: 8 });
     }
 
     function drawBoardGrid() {

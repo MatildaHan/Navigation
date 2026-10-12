@@ -83,22 +83,19 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded">
+<body class="game-app game-detail embedded">
 <div class="game-inner">
-    <div class="gc-wrap">
-        <div class="gc-info">
-            目标：给所有区域着色，相邻区域不能同色。<br>
-            最多 <b id="maxColors">4</b> 色 · 已用 <b id="colorCount">0</b>
-        </div>
-        <div class="gc-canvas-wrap">
+    <div class="gc-wrap game-layout">
+        <div class="game-board-area"><div class="gc-canvas-wrap">
             <canvas id="gcCanvas" width="600" height="400"></canvas>
-        </div>
-        <div class="color-picker" id="colorPicker"></div>
-        <button class="btn" id="btnNew">新地图</button>
+        </div></div>
+        <aside class="game-rail" aria-label="游戏状态与操作"><div class="gc-info">最多 <b id="maxColors">4</b> 色 · 已用 <b id="colorCount">0</b></div><div class="color-picker" id="colorPicker"></div><button class="btn" id="btnNew">新地图</button></aside>
     </div>
 </div>
 
+<script src="../js/layout.js"></script>
 <script src="../js/bridge.js"></script>
 <script src="../../assets/js/app-common.js"></script>
 <script>
@@ -374,7 +371,15 @@
     document.getElementById('btnNew').onclick = newMap;
     document.getElementById('maxColors').textContent = MAX_COLORS;
 
+    function fitMap() {
+        const surface = document.querySelector('.gc-canvas-wrap');
+        const area = GameLayout.boardArea(surface);
+        const inset = GameLayout.insets(surface);
+        surface.style.width = Math.min(area.width, Math.max(0, area.height - inset.insetY) * 1.5 + inset.insetX) + 'px';
+    }
     newMap();
+    new ResizeObserver(fitMap).observe(document.querySelector('.game-board-area'));
+    fitMap();
 })();
 </script>
 </body>

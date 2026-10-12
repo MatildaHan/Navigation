@@ -87,29 +87,25 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded">
+<body class="game-app game-detail embedded">
 <div class="game-inner">
-    <div class="mine-wrap">
-        <div class="mine-info">
+    <div class="mine-wrap game-layout">
+        <div class="game-board-area"><div class="mine-grid-wrap">
+            <div id="grid" class="mine-grid"></div>
+        </div></div>
+        <aside class="game-rail" aria-label="游戏状态与操作"><div class="mine-info">
             <span>💣 剩余 <b id="mineLeft">0</b></span>
             <span>⏱ <b id="timeEl">0</b>s</span>
             <span>难度 <b id="lvEl">—</b></span>
-        </div>
-
-        <div class="mode-toggle" id="modeToggle">
+        </div><div class="mode-toggle" id="modeToggle">
             <button class="mode-btn active" data-mode="dig">⛏ 挖掘</button>
             <button class="mode-btn" data-mode="flag">🚩 插旗</button>
-        </div>
-
-        <div class="mine-grid-wrap">
-            <div id="grid" class="mine-grid"></div>
-        </div>
-
-        <div class="mine-btns">
+        </div><div class="mine-btns">
             <button class="btn" id="btnNew">新游戏</button>
             <button class="btn ghost" id="btnLv">切换难度</button>
-        </div>
+        </div></aside>
     </div>
 </div>
 
@@ -155,8 +151,6 @@
     const btnRestart = document.getElementById('btnRestart');
     const btnClose = document.getElementById('btnClose');
 
-    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-
     function calcCellSize() {
         const surface = document.querySelector('.mine-grid-wrap');
         const area = GameLayout.boardArea(surface);
@@ -167,6 +161,7 @@
     function init() {
         const lv = LEVELS[levelIdx];
         rows = lv.rows; cols = lv.cols; mines = lv.mines;
+        document.querySelector('.mine-wrap').style.setProperty('--game-board-ratio', cols / rows);
         grid = Array.from({ length: rows }, () => Array(cols).fill(0));
         revealed = Array.from({ length: rows }, () => Array(cols).fill(false));
         flagged = Array.from({ length: rows }, () => Array(cols).fill(false));
@@ -246,7 +241,7 @@
         if (!el) return;
         if (longPressHandled) { longPressHandled = false; return; }
         const x = +el.dataset.x, y = +el.dataset.y;
-        if (touchMode === 'flag' && isTouch) rightClick(x, y);
+        if (touchMode === 'flag') rightClick(x, y);
         else leftClick(x, y);
     });
 
@@ -383,6 +378,11 @@
     });
 
     init();
+    new ResizeObserver(() => {
+        const cell = calcCellSize();
+        gridEl.style.setProperty('--cell', cell + 'px');
+        gridEl.style.gridTemplateColumns = `repeat(${cols}, ${cell}px)`;
+    }).observe(document.querySelector('.game-board-area'));
 })();
 </script>
 </body>

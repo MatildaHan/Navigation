@@ -11,6 +11,14 @@ const GameLayout = (() => {
         };
     }
     function boardArea(board) {
+        const pane = board.closest('.game-board-area');
+        if (pane) {
+            const style = getComputedStyle(pane);
+            return {
+                width: Math.max(0, pane.clientWidth - number(style.paddingLeft) - number(style.paddingRight)),
+                height: Math.max(0, pane.clientHeight - number(style.paddingTop) - number(style.paddingBottom)),
+            };
+        }
         const inner = board.closest('.game-inner');
         const content = board.parentElement;
         const innerStyle = getComputedStyle(inner);

@@ -75,21 +75,21 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/css/apps.css">
+<link rel="stylesheet" href="../../assets/css/game-detail.css">
 </head>
-<body class="game-app embedded">
+<body class="game-app game-detail embedded">
 <div class="game-inner">
-    <div class="nono-wrap">
-        <div class="nono-toolbar">
+    <div class="nono-wrap game-layout">
+        <div class="game-board-area"><div id="grid" class="nono-grid"></div></div>
+        <aside class="game-rail" aria-label="游戏状态与操作"><div class="nono-toolbar">
             <span>尺寸 <b id="sizeLabel">—</b></span>
             <span>难度 <b id="levelLabel">—</b></span>
             <span>剩余 <b id="remainLabel" style="color: var(--primary);">—</b></span>
-        </div>
-        <div id="grid" class="nono-grid"></div>
-        <div class="nono-btns">
+        </div><div class="nono-btns">
             <button class="btn" id="btnNew">新游戏</button>
             <button class="btn ghost" id="btnCheck">检查</button>
             <button class="btn ghost" id="btnLevel">切换难度</button>
-        </div>
+        </div></aside>
     </div>
 </div>
 
@@ -387,6 +387,7 @@
     });
 
     newGame();
+    new ResizeObserver(render).observe(document.querySelector('.game-board-area'));
 })();
 </script>
 </body>

@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { fitCells } = require('../Games-main/js/layout.js');
+const { fitCells, boardArea } = require('../Games-main/js/layout.js');
 
 function extent(cell, count, gap, inset) { return cell * count + (count - 1) * gap + inset; }
 
@@ -32,4 +32,20 @@ test('rectangular minesweeper and nonogram clues remain inside their budgets', (
 
 test('unusable tiny spaces preserve the minimum cell size for local scrolling', () => {
     assert.equal(fitCells({ width: 100, height: 20, rows: 7, cols: 7, gap: 4, insetX: 16, insetY: 16, minCell: 16 }), 16);
+});
+
+test('nested game boards use their allocated pane without subtracting side controls', () => {
+    const pane = { clientWidth: 640, clientHeight: 448 };
+    const board = { closest: selector => selector === '.game-board-area' ? pane : null };
+    const original = global.getComputedStyle;
+    global.getComputedStyle = node => {
+        assert.equal(node, pane);
+        return { paddingLeft: '8px', paddingRight: '12px', paddingTop: '4px', paddingBottom: '6px' };
+    };
+    try {
+        assert.deepEqual(boardArea(board), { width: 620, height: 438 });
+    } finally {
+        if (original) global.getComputedStyle = original;
+        else delete global.getComputedStyle;
+    }
 });
