@@ -22,7 +22,6 @@ const Apps = (() => {
         icon.setAttribute('aria-hidden', 'true');
         header.append(icon, el('span', '', item.名称));
         const preview = el('div', 'life-preview');
-        if (localTool) preview.append(el('p', 'preview-stat', item.分类 || '休闲'));
         preview.append(el('p', 'preview-line', item.说明));
         const link = el('a', 'card-open');
         link.href = `#${key}`;
@@ -54,6 +53,19 @@ const Apps = (() => {
     }
     function render(body, key) {
         const item = entries.get(key);
+        const board = body.closest('.main-board');
+        board.dataset.app = key;
+        let help;
+        if (key === 'game/tetris') {
+            help = el('details', 'tetris-help');
+            const summary = el('summary', '', '?');
+            summary.setAttribute('aria-label', '俄罗斯方块操作说明');
+            help.append(summary, el('p', '', item.说明));
+            board.querySelector('.detail-header').appendChild(help);
+            help.addEventListener('keydown', event => {
+                if (event.key === 'Escape') { help.open = false; summary.focus(); }
+            });
+        }
         const stage = el('div', 'app-stage');
         const frame = el('iframe', 'app-frame');
         frame.title = item.名称;
@@ -102,6 +114,8 @@ const Apps = (() => {
         load();
         return () => {
             disposed = true; clearTimeout(timeout); pause();
+            help?.remove();
+            delete board.dataset.app;
             window.removeEventListener('message', message);
             document.removeEventListener('visibilitychange', visibility);
             frame.remove();

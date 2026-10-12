@@ -758,3 +758,17 @@ select.life-input option { background: #252525; color: #fff; }
 
 /* App details share one stage size without the extra inset of text details. */
 .has-app .detail-body { padding: 0; border: 0; background: transparent; }
+
+/* Tetris uses one main content card, with instructions behind a compact disclosure. */
+.main-board[data-app="game/tetris"] { height: var(--board-height); }
+[data-app="game/tetris"] .detail-header { height: 38px; min-height: 38px; align-items: center; }
+[data-app="game/tetris"] .app-title-help { display: none; }
+[data-app="game/tetris"] .detail-heading { flex-wrap: nowrap; }
+.tetris-help { position: relative; flex: none; }
+.tetris-help summary { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--glass-border); border-radius: 50%; cursor: pointer; font-size: 14px; list-style: none; }
+.tetris-help summary::-webkit-details-marker { display: none; }
+.tetris-help p { position: absolute; top: 40px; right: 0; z-index: 20; width: min(300px, calc(100vw - 70px)); padding: 14px; border: 1px solid var(--glass-border); border-radius: 12px; background: #203238; color: var(--text-primary); font-size: 13px; line-height: 1.7; box-shadow: var(--glass-shadow); }
+@media (max-width: 860px) {
+    [data-app="game/tetris"] .detail-header { padding-right: 48px; }
+    .tetris-help p { width: min(300px, calc(100vw - 100px)); }
+}

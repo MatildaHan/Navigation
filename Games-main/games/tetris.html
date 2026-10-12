@@ -5,348 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>俄罗斯方块</title>
 <link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../../assets/css/apps.css">
 <style>
-/* ============================================================
-   像素复古主题
-   ============================================================ */
-.px-theme,
-.px-theme * {
-    font-family: "Courier New", Consolas, Monaco, monospace;
-    letter-spacing: 1px;
-}
-.px-theme {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    --px-bg:        #0b0e1a;
-    --px-panel:     #1a2140;
-    --px-panel-2:   #222a52;
-    --px-border:    #3a4a7a;
-    --px-border-hi: #6a7ec4;
-    --px-text:      #e8f0ff;
-    --px-text-dim:  #8a9ac4;
-    --px-accent:    #f7d51d;
-}
-
-.px-theme.game-inner {
-    background:
-        radial-gradient(ellipse at center, #1a2140 0%, #0b0e1a 70%),
-        #0b0e1a;
-    padding: 8px;
-    position: relative;
-}
-.px-theme.game-inner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background-image:
-        linear-gradient(rgba(58, 74, 122, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(58, 74, 122, 0.15) 1px, transparent 1px);
-    background-size: 32px 32px;
-    pointer-events: none;
-}
-.px-theme.game-inner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.12) 0px,
-        rgba(0, 0, 0, 0.12) 2px,
-        transparent 2px,
-        transparent 6px
-    );
-    opacity: 0.25;
-}
-.px-theme .tetris-layout {
-    position: relative;
-    z-index: 2;
-}
-
-/* ============================================================
-   布局：主区 + 右栏（桌面/平板/手机统一）
-   ============================================================ */
-.px-theme .tetris-layout {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    align-items: stretch;
-    justify-content: center;
-    width: 100%;
-    min-height: 100%;
-}
-
-/* 主区：画布 + 底部按钮 */
-.px-theme .tetris-main {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-    flex: 0 0 auto;
-    /* 宽度由 JS 动态设置 --board-width */
-    width: var(--board-width, auto);
-}
-
-/* 右栏：信息卡 + 操作按钮 */
-.px-theme .tetris-rail {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 0 0 auto;
-    /* 宽度自适应剩余空间 */
-    width: auto;
-    min-width: 0;
-}
-
-/* ============================================================
-   画布
-   ============================================================ */
-.px-theme #tetris-canvas {
-    display: block;
-    background: #000;
-    border: 4px solid var(--px-border);
-    box-shadow:
-        inset 0 0 0 4px var(--px-bg),
-        0 0 0 4px var(--px-bg),
-        8px 8px 0 0 rgba(0, 0, 0, 0.6);
-    width: 100%;
-    height: auto;
-    touch-action: none;
-    image-rendering: pixelated;
-    box-sizing: border-box;
-}
-
-/* ============================================================
-   像素卡片
-   ============================================================ */
-.px-theme .px-card {
-    background: var(--px-panel);
-    border: 2px solid var(--px-border);
-    box-shadow:
-        inset 0 0 0 2px var(--px-bg),
-        inset 0 0 0 4px var(--px-panel-2),
-        0 0 0 2px var(--px-bg),
-        3px 3px 0 0 rgba(0, 0, 0, 0.5);
-    padding: 8px;
-    border-radius: 0;
-    position: relative;
-}
-.px-theme .px-card .card-title {
-    font-size: 9px;
-    color: var(--px-text-dim);
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    text-align: center;
-}
-.px-theme .px-card .card-value {
-    font-size: 16px;
-    color: var(--px-accent);
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 2px 2px 0 #000;
-    text-align: center;
-}
-
-.px-theme #next-canvas {
-    display: block;
-    margin: 0 auto;
-    max-width: 100%;
-    height: auto;
-    background: #000;
-    border: 2px solid var(--px-border);
-    image-rendering: pixelated;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* ============================================================
-   像素按钮
-   ============================================================ */
-.px-theme .px-btn {
-    background: var(--px-panel-2);
-    color: var(--px-text);
-    border: 3px solid var(--px-border);
-    box-shadow:
-        inset -3px -3px 0 0 rgba(0, 0, 0, 0.5),
-        inset 3px 3px 0 0 var(--px-border-hi),
-        0 0 0 3px var(--px-bg),
-        4px 4px 0 0 rgba(0, 0, 0, 0.6);
-    padding: 10px 8px;
-    font-size: 10px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 0;
-    font-family: inherit;
-    min-height: 40px;
-    text-transform: uppercase;
-    transition: transform 0.05s, box-shadow 0.05s;
-    width: 100%;
-}
-.px-theme .px-btn:hover:not(:disabled) {
-    background: var(--px-border);
-    color: #fff;
-}
-.px-theme .px-btn:active:not(:disabled) {
-    transform: translate(3px, 3px);
-    box-shadow:
-        inset -3px -3px 0 0 rgba(0, 0, 0, 0.5),
-        inset 3px 3px 0 0 var(--px-border-hi),
-        0 0 0 3px var(--px-bg),
-        1px 1px 0 0 rgba(0, 0, 0, 0.6);
-}
-.px-theme .px-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    color: var(--px-text-dim);
-}
-.px-theme .px-btn.primary {
-    background: var(--px-accent);
-    color: #000;
-    border-color: #8a6a00;
-}
-.px-theme .px-btn.primary:hover:not(:disabled) { background: #fff; }
-.px-theme .px-btn.tall {
-    height: 56px;
-    font-size: 12px;
-}
-
-/* 底部「重新开始」按钮：画布下方整行 */
-.px-theme .tetris-restart {
-    width: 100%;
-    min-height: 44px;
-    font-size: 12px;
-}
-
-/* ============================================================
-   触屏按钮（画布下方）
-   ============================================================ */
-.px-theme .touch-controls {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    width: 100%;
-}
-.px-theme .px-touch-btn {
-    background: var(--px-panel-2);
-    border: 3px solid var(--px-border);
-    box-shadow:
-        inset -3px -3px 0 0 rgba(0, 0, 0, 0.5),
-        inset 3px 3px 0 0 var(--px-border-hi),
-        0 0 0 3px var(--px-bg);
-    color: var(--px-text);
-    height: 48px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: inherit;
-    touch-action: manipulation;
-}
-.px-theme .px-touch-btn:active {
-    transform: translate(2px, 2px);
-    background: var(--px-border);
-}
-
-/* ============================================================
-   模态框
-   ============================================================ */
-.px-theme .modal-box {
-    background: var(--px-panel);
-    border: 4px solid var(--px-border);
-    box-shadow:
-        inset 0 0 0 3px var(--px-bg),
-        0 0 0 4px var(--px-bg),
-        8px 8px 0 0 rgba(0, 0, 0, 0.6);
-    border-radius: 0;
-    padding: 32px 40px;
-    font-family: "Courier New", monospace;
-}
-.px-theme .modal-box h2 {
-    color: var(--px-accent);
-    font-size: 18px;
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 0 #000;
-    margin-bottom: 16px;
-}
-.px-theme .modal-box p {
-    color: var(--px-text-dim);
-    font-size: 12px;
-    letter-spacing: 1px;
-}
-.px-theme .modal-box .big-value {
-    color: #fff;
-    font-size: 28px;
-    text-shadow: 3px 3px 0 var(--px-border);
-    font-weight: 700;
-}
-.px-theme .modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-}
-.px-theme .modal-actions .px-btn { flex: 1; }
-
-/* ============================================================
-   桌面端优化（可选）
-   ============================================================ */
-@media (min-width: 768px) {
-    .px-theme.game-inner { padding: 16px; }
-    .px-theme .tetris-layout { gap: 16px; }
-    .px-theme .px-card .card-title { font-size: 10px; }
-    .px-theme .px-card .card-value { font-size: 18px; }
-    .px-theme .px-btn { font-size: 11px; padding: 12px 8px; min-height: 44px; }
+body.tetris-app .game-inner { padding: 12px; overflow: hidden; background: rgba(15, 34, 39, .86); }
+body.tetris-app .game-inner > .tetris-layout { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 100%; min-height: 0; margin: 0; }
+.tetris-main { width: var(--board-width, 225px); flex: none; }
+#tetris-canvas { display: block; width: 100%; height: calc(var(--board-width, 225px) * 2); border: 1px solid var(--border); border-radius: 8px; background: #102125; touch-action: none; }
+.tetris-rail { display: flex; flex-direction: column; gap: 12px; width: 140px; flex: none; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.tetris-rail > * { flex-shrink: 0; }
+.tetris-stats { display: grid; gap: 6px; }
+.tetris-stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tetris-stats dt, .tetris-next-label { font-size: 13px; color: var(--text-sub); }
+.tetris-stats dd { font-size: 16px; font-variant-numeric: tabular-nums; }
+.tetris-stats .tetris-score { display: block; }
+.tetris-score dd { margin-top: 2px; font-size: 28px; line-height: 1.2; }
+.tetris-stats .tetris-best { color: var(--text-sub); font-size: 12px; }
+.tetris-next { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#next-canvas { display: block; width: 64px; height: 64px; border: 1px solid var(--border); border-radius: 8px; background: #102125; }
+.tetris-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.tetris-button, .tetris-touch { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 44px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: #243b40; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; touch-action: manipulation; }
+.tetris-button.primary { background: var(--accent); color: #06201a; border-color: transparent; }
+.tetris-button:disabled { opacity: .45; cursor: not-allowed; }
+.touch-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: '. rotate .' 'left down right'; gap: 6px; }
+.tetris-touch { font-size: 18px; padding: 0; }
+.tetris-touch[data-action="left"] { grid-area: left; }
+.tetris-touch[data-action="rotate"] { grid-area: rotate; }
+.tetris-touch[data-action="right"] { grid-area: right; }
+.tetris-touch[data-action="down"] { grid-area: down; }
+.tetris-key-hint { color: var(--text-sub); font-size: 11px; line-height: 1.5; text-align: center; }
+.tetris-modal .modal-box { width: min(340px, calc(100% - 24px)); padding: 24px; }
+.tetris-modal .modal-actions { display: flex; flex-direction: row; gap: 8px; }
+.tetris-modal .modal-actions .tetris-button { flex: 1; }
+body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90px)); }
+@media (max-width: 600px) {
+    body.tetris-app .game-inner > .tetris-layout { gap: 12px; }
+    .tetris-rail { width: 118px; gap: 10px; }
+    .tetris-stats dt, .tetris-next-label { font-size: 12px; }
+    .tetris-score dd { font-size: 24px; }
+    #next-canvas { width: 56px; height: 56px; }
+    .tetris-key-hint { display: none; }
 }
 </style>
-<link rel="stylesheet" href="../../assets/css/apps.css">
 </head>
-<body class="game-app embedded">
-<div class="game-inner px-theme">
+<body class="game-app embedded tetris-app">
+<div class="game-inner">
     <div class="tetris-layout">
-        <!-- 主区：画布 + 重新开始 + 触屏按钮 -->
         <div class="tetris-main" id="tetrisMain">
-            <canvas id="tetris-canvas" width="240" height="480"></canvas>
-            <button class="px-btn primary tetris-restart" id="btnStart">START</button>
-            <div class="touch-controls" id="touchControls">
-                <button class="px-touch-btn" data-action="left" aria-label="向左移动">←</button>
-                <button class="px-touch-btn" data-action="rotate" aria-label="旋转方块">↻</button>
-                <button class="px-touch-btn" data-action="right" aria-label="向右移动">→</button>
-                <button class="px-touch-btn" data-action="down" aria-label="向下移动">↓</button>
-            </div>
+            <canvas id="tetris-canvas" width="240" height="480" tabindex="0" aria-label="俄罗斯方块棋盘，方向键移动和旋转，空格快速落下，P 暂停"></canvas>
         </div>
-
-        <!-- 右栏：NEXT / SCORE / LEVEL / ROTATE / PAUSE -->
-        <div class="tetris-rail">
-            <div class="px-card">
-                <div class="card-title">NEXT</div>
-                <canvas id="next-canvas" width="120" height="120"></canvas>
+        <aside class="tetris-rail" aria-label="游戏状态与操作">
+            <dl class="tetris-stats">
+                <div class="tetris-score"><dt>得分</dt><dd id="score">0</dd></div>
+                <div><dt>等级</dt><dd id="level">1</dd></div>
+                <div><dt>消行</dt><dd id="lines">0</dd></div>
+                <div><dt class="tetris-best">最高分</dt><dd class="tetris-best" id="best">0</dd></div>
+            </dl>
+            <div class="tetris-next">
+                <span class="tetris-next-label">下一个</span>
+                <canvas id="next-canvas" width="120" height="120" aria-label="下一个方块预览"></canvas>
             </div>
-            <div class="px-card">
-                <div class="card-title">SCORE</div>
-                <div class="card-value" id="score">0</div>
+            <div class="tetris-actions">
+                <button class="tetris-button primary" id="btnStart">开始</button>
+                <button class="tetris-button" id="btnPause" disabled>暂停</button>
             </div>
-            <div class="px-card">
-                <div class="card-title">LEVEL / BEST</div>
-                <div class="card-value" style="font-size:12px;" id="level">1 / 0</div>
+            <div class="touch-controls" id="touchControls" aria-label="方向与旋转操作">
+                <button class="tetris-touch" data-action="left" aria-label="向左移动">←</button>
+                <button class="tetris-touch" data-action="rotate" aria-label="旋转方块">↻</button>
+                <button class="tetris-touch" data-action="right" aria-label="向右移动">→</button>
+                <button class="tetris-touch" data-action="down" aria-label="向下移动">↓</button>
             </div>
-            <button class="px-btn" id="btnRotate">ROTATE</button>
-            <button class="px-btn" id="btnPause">PAUSE</button>
-        </div>
+            <p class="tetris-key-hint">方向键移动与旋转<br>空格快速落下 · P 暂停</p>
+        </aside>
     </div>
 </div>
 
-<div class="modal px-theme" id="modal">
+<div class="modal tetris-modal" id="modal" aria-labelledby="modalTitle">
     <div class="modal-box">
-        <h2 id="modalTitle">GAME OVER</h2>
-        <p id="modalSub">FINAL SCORE<span class="big-value" id="finalScore">0</span></p>
+        <h2 id="modalTitle">游戏结束</h2>
+        <p id="modalSub">最终得分<span class="big-value" id="finalScore">0</span></p>
         <div class="modal-actions">
-            <button class="px-btn primary" id="btnRestart">RESTART</button>
-            <button class="px-btn" id="btnLeave">CLOSE</button>
+            <button class="tetris-button primary" id="btnRestart">重新开始</button>
+            <button class="tetris-button" id="btnLeave">关闭</button>
         </div>
     </div>
 </div>
@@ -403,8 +142,9 @@
 
     const scoreEl = document.getElementById('score');
     const levelEl = document.getElementById('level');
+    const linesEl = document.getElementById('lines');
+    const bestEl = document.getElementById('best');
     const btnStart = document.getElementById('btnStart');
-    const btnRotate = document.getElementById('btnRotate');
     const btnPause = document.getElementById('btnPause');
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modalTitle');
@@ -417,17 +157,18 @@
     let bestScore = 0;
     try { const saved = Number(localStorage.getItem('tetrisBest')); if (Number.isSafeInteger(saved) && saved >= 0) bestScore = saved; } catch (e) {}
 
-    // Reserve the actual frame padding, side rail, and controls before sizing the board.
+    // The canvas gets the full available height; controls live beside it.
+    const innerEl = document.querySelector('.game-inner');
     function updateBoardWidth() {
-        const innerStyle = getComputedStyle(document.querySelector('.game-inner'));
-        const layoutStyle = getComputedStyle(layoutEl);
+        const style = getComputedStyle(innerEl);
+        const gap = parseFloat(getComputedStyle(layoutEl).columnGap) || 0;
         const railWidth = document.querySelector('.tetris-rail').getBoundingClientRect().width;
-        const widthBudget = window.innerWidth - parseFloat(innerStyle.paddingLeft) - parseFloat(innerStyle.paddingRight) - railWidth - parseFloat(layoutStyle.columnGap);
-        const heightBudget = (window.innerHeight - parseFloat(innerStyle.paddingTop) - parseFloat(innerStyle.paddingBottom) - 112) / 2;
-        const boardW = Math.max(96, Math.floor(Math.min(widthBudget, heightBudget, 280)));
+        const widthBudget = innerEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - railWidth - gap;
+        const heightBudget = innerEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        const boardW = Math.max(1, Math.floor(Math.min(widthBudget, heightBudget / 2)));
         mainEl.style.setProperty('--board-width', boardW + 'px');
-        mainEl.style.width = boardW + 'px';
     }
+    new ResizeObserver(updateBoardWidth).observe(innerEl);
     updateBoardWidth();
 
     function reset() {
@@ -443,7 +184,8 @@
         if (rafId) cancelAnimationFrame(rafId);
         scoreEl.textContent = '0';
         updateLevelUI();
-        btnStart.textContent = 'START';
+        btnStart.textContent = '开始';
+        btnStart.setAttribute('aria-label', '开始游戏');
         btnStart.disabled = false;
         btnPause.disabled = true;
         modal.classList.remove('show');
@@ -452,7 +194,9 @@
     }
 
     function updateLevelUI() {
-        levelEl.textContent = `${level} / ${bestScore}`;
+        levelEl.textContent = level;
+        linesEl.textContent = lines;
+        bestEl.textContent = bestScore;
     }
 
     function dropInterval() {
@@ -567,10 +311,10 @@
 
     function draw() {
         ctx.clearRect(0, 0, 240, 480);
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#102125';
         ctx.fillRect(0, 0, 240, 480);
 
-        ctx.strokeStyle = 'rgba(58, 74, 122, 0.35)';
+        ctx.strokeStyle = 'rgba(134, 162, 165, 0.2)';
         ctx.lineWidth = 1;
         for (let i = 1; i < COLS; i++) {
             ctx.beginPath();
@@ -614,7 +358,7 @@
 
     function drawNext() {
         nextCtx.clearRect(0, 0, 120, 120);
-        nextCtx.fillStyle = '#000';
+        nextCtx.fillStyle = '#102125';
         nextCtx.fillRect(0, 0, 120, 120);
         if (!next) return;
         const shape = next.shape;
@@ -657,7 +401,9 @@
         lastTime = 0;
         dropCounter = 0;
         rafId = requestAnimationFrame(loop);
-        btnStart.textContent = 'RESTART';
+        btnStart.textContent = '重开';
+        btnStart.setAttribute('aria-label', '重新开始游戏');
+        canvas.focus({ preventScroll: true });
         btnPause.disabled = false;
     }
 
@@ -665,7 +411,7 @@
         if (state === 'running') {
             state = 'paused';
             if (rafId) cancelAnimationFrame(rafId);
-            showModal('PAUSED', '点击继续继续游戏', 'RESUME', 'CLOSE');
+            showModal('已暂停', '准备好后继续游戏', '继续', '结束');
             btnRestart.onclick = resume;
             btnLeave.onclick = () => { modal.classList.remove('show'); leave(); };
         }
@@ -677,12 +423,13 @@
         lastTime = 0;
         dropCounter = 0;
         rafId = requestAnimationFrame(loop);
+        canvas.focus({ preventScroll: true });
     }
 
     function endGame() {
         state = 'over';
         if (rafId) cancelAnimationFrame(rafId);
-        showModal('GAME OVER', 'FINAL SCORE', 'RESTART', 'CLOSE', score);
+        showModal('游戏结束', '最终得分', '重新开始', '关闭', score);
         btnRestart.onclick = start;
         btnLeave.onclick = () => { modal.classList.remove('show'); leave(); };
     }
@@ -695,6 +442,7 @@
         btnRestart.textContent = restartText;
         btnLeave.textContent = leaveText;
         modal.classList.add('show');
+        btnRestart.focus({ preventScroll: true });
     }
 
     function leave() {
@@ -703,13 +451,12 @@
     }
 
     btnStart.onclick = start;
-    btnRotate.addEventListener('click', rotate);
     btnPause.addEventListener('click', pause);
     btnRestart.addEventListener('click', start);
     btnLeave.addEventListener('click', leave);
 
     touchControls.addEventListener('click', (e) => {
-        const btn = e.target.closest('.px-touch-btn');
+        const btn = e.target.closest('.tetris-touch');
         if (!btn) return;
         const action = btn.dataset.action;
         if (action === 'left') move(-1);
@@ -773,13 +520,6 @@
 
     GameBridge.onVisibilityChange((hidden) => {
         if (hidden && state === 'running') pause();
-    });
-
-    // 视口变化时重算主区宽度
-    let resizeTimer = null;
-    window.addEventListener('resize', () => {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(updateBoardWidth, 100);
     });
 
     reset();
