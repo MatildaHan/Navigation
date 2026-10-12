@@ -22,7 +22,8 @@ const Apps = (() => {
         icon.setAttribute('aria-hidden', 'true');
         header.append(icon, el('span', '', item.名称));
         const preview = el('div', 'life-preview');
-        preview.append(el('p', 'preview-stat', item.分类 || '休闲'), el('p', 'preview-line', item.说明));
+        if (localTool) preview.append(el('p', 'preview-stat', item.分类 || '休闲'));
+        preview.append(el('p', 'preview-line', item.说明));
         const link = el('a', 'card-open');
         link.href = `#${key}`;
         link.setAttribute('aria-label', `打开${item.名称}`);
