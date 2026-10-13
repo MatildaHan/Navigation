@@ -181,6 +181,7 @@ function applyText(CFG) {
         'greetings.sub': CFG.greetings?.副标题,
         'quote.text': CFG.quote?.格言,
         'quote.author': CFG.quote?.作者,
+        'quote.source': CFG.quote?.出处,
     };
     document.querySelectorAll('[data-cfg-text]').forEach(node => {
         const v = map[node.dataset.cfgText];
@@ -437,6 +438,37 @@ function initMusicPlayer(CFG) {
         }))
         .filter(t => t.url);
 
+    const homeMeta = document.getElementById('home-music-meta');
+    const homeSeek = document.getElementById('home-music-seek');
+    const homeTime = document.getElementById('home-music-time');
+    const homeDuration = document.getElementById('home-music-duration');
+    const homeQueue = document.getElementById('home-music-queue');
+    const nextTitle = document.getElementById('home-music-next');
+    const followingTitle = document.getElementById('home-music-following');
+    const followingRow = document.getElementById('home-music-following-row');
+    if (homeMeta) homeMeta.textContent = `我的歌单 · ${playlist.length} 首`;
+    const formatHomeTime = value => {
+        const seconds = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+        return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    };
+    function syncHomeTimeline() {
+        const ready = Number.isFinite(audio.duration) && audio.duration > 0;
+        if (homeSeek) {
+            homeSeek.disabled = !ready || !!audio.error;
+            homeSeek.max = ready ? String(audio.duration) : '0';
+            homeSeek.value = String(ready ? Math.min(audio.currentTime, audio.duration) : 0);
+        }
+        if (homeTime) homeTime.textContent = formatHomeTime(audio.currentTime);
+        if (homeDuration) homeDuration.textContent = audio.error ? '加载失败' : ready ? formatHomeTime(audio.duration) : '待播放';
+    }
+    ['loadedmetadata', 'durationchange', 'timeupdate', 'emptied', 'error'].forEach(type => audio.addEventListener(type, syncHomeTimeline));
+    if (homeSeek) homeSeek.addEventListener('input', () => {
+        const value = Number(homeSeek.value);
+        if (Number.isFinite(value) && Number.isFinite(audio.duration) && audio.duration > 0) {
+            audio.currentTime = Math.max(0, Math.min(audio.duration, value));
+        }
+    });
+
     if (playlist.length === 0) {
         if (trackTitle) trackTitle.textContent = '暂无曲目';
         document.querySelectorAll('.player-controls button').forEach(b => { b.disabled = true; });
@@ -476,6 +508,11 @@ function initMusicPlayer(CFG) {
             trackTitle.title = t.title;
         }
         if (playerArt) playerArt.style.backgroundImage = t.art ? cssUrl(t.art) : '';
+        if (homeQueue) homeQueue.hidden = playlist.length < 2;
+        if (nextTitle) nextTitle.textContent = playlist[(i + 1) % playlist.length].title;
+        if (followingTitle) followingTitle.textContent = playlist[(i + 2) % playlist.length].title;
+        if (followingRow) followingRow.hidden = playlist.length < 3;
+        syncHomeTimeline();
         syncHeart();
         audio.dispatchEvent(new CustomEvent('trackchange', { detail: current }));
     }
