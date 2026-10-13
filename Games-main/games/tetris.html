@@ -10,7 +10,7 @@
 body.tetris-app .game-inner { padding: 12px; overflow: hidden; background: rgba(15, 34, 39, .86); }
 body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-width: 116px; --layout-gap: 24px; display: grid; grid-template-columns: var(--info-width) var(--board-width, 337.5px) var(--controls-width); gap: var(--layout-gap); align-items: center; justify-content: center; width: max-content; max-width: 100%; height: var(--board-height, 450px); min-height: 0; margin: auto; }
 .tetris-main { grid-column: 2; grid-row: 1; width: var(--board-width, 337.5px); }
-#tetris-canvas { display: block; width: 100%; height: var(--board-height, 450px); border: 1px solid var(--border); border-radius: 8px; background: #102125; touch-action: none; }
+#tetris-canvas { display: block; width: 100%; height: var(--board-height, 450px); border: 1px solid var(--border); border-radius: 0; background: #102125; touch-action: none; }
 #tetris-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tetris-info, .tetris-controls { display: grid; grid-template-rows: minmax(0, 1fr) 90px 34px; row-gap: 14px; height: 100%; min-height: 0; }
 .tetris-info { grid-column: 1; grid-row: 1; }
@@ -44,10 +44,10 @@ body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-w
 .tetris-modal .modal-actions .tetris-button { flex: 1; min-height: 40px; }
 body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90px)); }
 @media (max-width: 600px) {
-    body.tetris-app .game-inner { padding: 8px; background: linear-gradient(145deg,rgba(36,59,64,.88),rgba(15,34,39,.94)); }
+    body.tetris-app .game-inner { padding: 2px; background: linear-gradient(145deg,rgba(36,59,64,.88),rgba(15,34,39,.94)); }
     body.tetris-app .game-inner > .tetris-layout { --layout-gap: 8px; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr) auto; gap: var(--layout-gap); width: 100%; height: 100%; }
     .tetris-main { grid-column: 1 / -1; grid-row: 2; justify-self: center; align-self: center; }
-    #tetris-canvas { border-radius: 12px; border-color: rgba(190,215,215,.28); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+    #tetris-canvas { border-color: rgba(190,215,215,.28); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
     .tetris-info { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; height: auto; }
     .tetris-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 3px 8px; min-width: 0; flex: 1; }
     .tetris-stats > div, .tetris-stats .tetris-score { display: flex; align-items: baseline; gap: 4px; margin: 0; min-width: 0; }
@@ -61,7 +61,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     .tetris-controls { display: contents; }
     .tetris-actions { grid-column: 2; grid-row: 1; gap: 4px; }
     .tetris-actions .tetris-button { width: 44px; height: 48px; padding: 0; border-radius: 10px; }
-    .touch-controls { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-areas: 'left right rotate' 'down drop drop'; gap: 8px; width: 100%; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(255,255,255,.035); }
+    .touch-controls { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(4,minmax(44px,1fr)) minmax(56px,1.35fr); grid-template-areas: 'left right down rotate drop'; gap: 6px; width: 100%; padding: 4px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(255,255,255,.035); }
     .tetris-touch { height: 52px; min-height: 52px; border-radius: 12px; font-size: 24px; background: linear-gradient(160deg,rgba(81,115,123,.45),rgba(36,59,64,.8)); }
     .tetris-touch[data-action="drop"] { font-size: 16px; box-shadow: 0 4px 16px rgba(82,224,189,.12); }
     .tetris-key-hint { display: none; }
@@ -122,9 +122,9 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
             </div>
             <div class="touch-controls" id="touchControls" aria-label="方向与旋转操作">
                 <button class="tetris-touch" data-action="left" aria-label="向左移动">←</button>
-                <button class="tetris-touch" data-action="rotate" aria-label="旋转方块">↻</button>
                 <button class="tetris-touch" data-action="right" aria-label="向右移动">→</button>
                 <button class="tetris-touch" data-action="down" aria-label="向下移动">↓</button>
+                <button class="tetris-touch" data-action="rotate" aria-label="旋转方块">↻</button>
                 <button class="tetris-touch" data-action="drop" aria-label="快速落下方块">落下</button>
             </div>
             <p class="tetris-key-hint">方向键移动与旋转<br>空格落下 · P 暂停</p>

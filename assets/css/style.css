@@ -775,7 +775,7 @@ select.life-input option { background: #252525; color: #fff; }
 /* Tetris uses the mobile screen as a game workspace; other cards keep their size. */
 @media (max-width: 860px) {
     body:has(.main-board[data-app="game/tetris"]) { padding: max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
-    .main-board[data-app="game/tetris"] { height: calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom))); padding: 12px; border-radius: 20px; }
+    .main-board[data-app="game/tetris"] { height: calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom))); padding: 6px; border-radius: 20px; }
     .main-board[data-app="game/tetris"] .detail-view { gap: 10px; }
     .main-board[data-app="game/tetris"] .detail-header { gap: 8px; }
     .main-board[data-app="game/tetris"] .back-link { padding: 8px 4px; }
