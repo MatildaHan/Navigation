@@ -14,7 +14,7 @@ body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-w
 #tetris-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tetris-info, .tetris-controls { display: grid; grid-template-rows: minmax(0, 1fr) 90px 34px; row-gap: 14px; height: 100%; min-height: 0; }
 .tetris-info { grid-column: 1; grid-row: 1; }
-.tetris-controls { grid-column: 3; grid-row: 1; }
+.tetris-controls { grid-column: 3; grid-row: 1; grid-template-rows: minmax(0, 1fr) auto 34px; }
 .tetris-stats { display: grid; gap: 6px; align-self: center; }
 .tetris-stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tetris-stats dt, .tetris-next-label { font-size: 13px; color: var(--text-sub); }
@@ -29,36 +29,48 @@ body.tetris-app .game-inner > .tetris-layout { --info-width: 116px; --controls-w
 .tetris-button, .tetris-touch { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 32px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 8px; background: #243b40; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; touch-action: manipulation; }
 .tetris-button.primary { background: var(--accent); color: #06201a; border-color: transparent; }
 .tetris-button:disabled { opacity: .45; cursor: not-allowed; }
-.touch-controls { grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: '. rotate .' 'left down right'; gap: 6px; align-self: end; }
+.touch-controls { grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: '. rotate .' 'left down right' 'drop drop drop'; gap: 6px; align-self: end; }
 .tetris-touch { height: 32px; font-size: 18px; padding: 0; }
 .tetris-touch[data-action="left"] { grid-area: left; }
 .tetris-touch[data-action="rotate"] { grid-area: rotate; }
 .tetris-touch[data-action="right"] { grid-area: right; }
 .tetris-touch[data-action="down"] { grid-area: down; }
+.tetris-touch[data-action="drop"] { grid-area: drop; background: var(--accent); color: #06201a; border-color: transparent; font-size: 14px; font-weight: 600; }
+.tetris-touch:active:not(:disabled) { transform: translateY(1px); filter: brightness(.9); }
+.tetris-touch:disabled { opacity: .45; cursor: not-allowed; }
 .tetris-key-hint { grid-row: 3; color: var(--text-sub); font-size: 11px; line-height: 1.5; text-align: center; align-self: center; }
 .tetris-modal .modal-box { width: min(340px, calc(100% - 24px)); padding: 24px; }
 .tetris-modal .modal-actions { display: flex; flex-direction: row; gap: 8px; }
 .tetris-modal .modal-actions .tetris-button { flex: 1; min-height: 40px; }
 body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90px)); }
 @media (max-width: 600px) {
-    body.tetris-app .game-inner > .tetris-layout { --info-width: 76px; --layout-gap: 12px; --controls-height: 94px; grid-template-columns: var(--info-width) minmax(0, 1fr); grid-template-rows: var(--board-height) var(--controls-height); column-gap: var(--layout-gap); row-gap: var(--layout-gap); width: 100%; height: 100%; }
-    .tetris-main { justify-self: center; }
-    .tetris-info { grid-template-rows: minmax(0, 1fr) auto; row-gap: 8px; }
-    .tetris-stats { gap: 4px; }
-    .tetris-stats dt, .tetris-next-label { font-size: 11px; }
-    .tetris-stats dd { font-size: 13px; }
+    body.tetris-app .game-inner { padding: 8px; background: linear-gradient(145deg,rgba(36,59,64,.88),rgba(15,34,39,.94)); }
+    body.tetris-app .game-inner > .tetris-layout { --layout-gap: 8px; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto minmax(0,1fr) auto; gap: var(--layout-gap); width: 100%; height: 100%; }
+    .tetris-main { grid-column: 1 / -1; grid-row: 2; justify-self: center; align-self: center; }
+    #tetris-canvas { border-radius: 12px; border-color: rgba(190,215,215,.28); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+    .tetris-info { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; height: auto; }
+    .tetris-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 3px 8px; min-width: 0; flex: 1; }
+    .tetris-stats > div, .tetris-stats .tetris-score { display: flex; align-items: baseline; gap: 4px; margin: 0; min-width: 0; }
+    .tetris-stats dt { font-size: 10px; white-space: nowrap; }
+    .tetris-stats dd { font-size: 14px; overflow-wrap: anywhere; }
+    .tetris-score dd { margin: 0; color: var(--accent); font-size: 18px; font-weight: 600; }
     .tetris-stats .tetris-best { font-size: 10px; }
-    .tetris-score dd { font-size: 24px; }
-    #next-canvas { width: 56px; height: 56px; }
-    .tetris-controls { grid-column: 1 / -1; grid-row: 2; display: flex; align-items: center; justify-content: center; gap: 10px; height: auto; }
-    .tetris-actions { width: 94px; flex: none; }
-    .touch-controls { width: 132px; flex: none; align-self: center; }
-    .tetris-button, .tetris-touch { min-height: 44px; height: 44px; padding: 4px; }
+    .tetris-next { flex: none; gap: 2px; align-items: center; }
+    .tetris-next-label { font-size: 9px; line-height: 12px; }
+    #next-canvas { width: 32px; height: 32px; border-radius: 6px; }
+    .tetris-controls { display: contents; }
+    .tetris-actions { grid-column: 2; grid-row: 1; gap: 4px; }
+    .tetris-actions .tetris-button { width: 44px; height: 48px; padding: 0; border-radius: 10px; }
+    .touch-controls { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-areas: 'left right rotate' 'down drop drop'; gap: 8px; width: 100%; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(255,255,255,.035); }
+    .tetris-touch { height: 52px; min-height: 52px; border-radius: 12px; font-size: 24px; background: linear-gradient(160deg,rgba(81,115,123,.45),rgba(36,59,64,.8)); }
+    .tetris-touch[data-action="drop"] { font-size: 16px; box-shadow: 0 4px 16px rgba(82,224,189,.12); }
     .tetris-key-hint { display: none; }
+    body.tetris-app.standalone-app { padding: 8px max(8px,var(--safe-right)) max(8px,var(--safe-bottom)) max(8px,var(--safe-left)); }
+    body.tetris-app.standalone-app .game-inner { height: calc(100dvh - 64px - var(--safe-bottom)); }
 }
 @media (max-width: 600px) and (max-height: 360px) {
-    .tetris-stats .tetris-score { display: flex; margin-bottom: 0; }
-    .tetris-score dd { margin-top: 0; font-size: 16px; }
+    .tetris-touch { height: 44px; min-height: 44px; }
+    .touch-controls { gap: 6px; padding: 4px; }
 }
 @media (min-width: 601px) and (max-height: 300px) {
     body.tetris-app .game-inner > .tetris-layout { --info-width: 190px; --layout-gap: 12px; }
@@ -76,7 +88,12 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
 }
 @media (pointer: coarse) and (min-width: 601px) and (min-height: 301px) {
     .tetris-button, .tetris-touch { min-height: 44px; height: 44px; }
-    .tetris-info, .tetris-controls { grid-template-rows: minmax(0, 1fr) 94px 34px; }
+    .tetris-info { grid-template-rows: minmax(0, 1fr) 94px 34px; }
+    .tetris-controls { grid-template-rows: minmax(0, 1fr) auto 34px; }
+}
+@media (min-width: 601px) and (min-height: 240px) and (max-height: 300px) {
+    .tetris-button, .tetris-touch { min-height: 44px; height: 44px; }
+    .tetris-controls { grid-template-rows: 44px minmax(0,1fr) 34px; }
 }
 </style>
 </head>
@@ -108,6 +125,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
                 <button class="tetris-touch" data-action="rotate" aria-label="旋转方块">↻</button>
                 <button class="tetris-touch" data-action="right" aria-label="向右移动">→</button>
                 <button class="tetris-touch" data-action="down" aria-label="向下移动">↓</button>
+                <button class="tetris-touch" data-action="drop" aria-label="快速落下方块">落下</button>
             </div>
             <p class="tetris-key-hint">方向键移动与旋转<br>空格落下 · P 暂停</p>
         </aside>
@@ -186,12 +204,13 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
     const btnRestart = document.getElementById('btnRestart');
     const btnLeave = document.getElementById('btnLeave');
     const touchControls = document.getElementById('touchControls');
+    const touchButtons = [...touchControls.querySelectorAll('button')];
 
     let board, score, level, lines, current, next, dropCounter, lastTime, rafId, state;
     let bestScore = 0;
     try { const saved = Number(localStorage.getItem('tetrisBest')); if (Number.isSafeInteger(saved) && saved >= 0) bestScore = saved; } catch (e) {}
 
-    // Reserve both side columns, or the touch row on narrow screens, before fitting the canvas.
+    // Mobile reserves the actual status and touch rows; desktop keeps its side panels.
     const innerEl = document.querySelector('.game-inner');
     function updateBoardWidth() {
         const style = getComputedStyle(innerEl);
@@ -200,15 +219,18 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         const infoWidth = parseFloat(layoutStyle.getPropertyValue('--info-width')) || 0;
         const controlsWidth = parseFloat(layoutStyle.getPropertyValue('--controls-width')) || 0;
         const narrow = window.matchMedia('(max-width: 600px)').matches;
-        const controlsHeight = narrow ? parseFloat(layoutStyle.getPropertyValue('--controls-height')) + gap : 0;
+        const controlsHeight = narrow ? Math.max(document.querySelector('.tetris-info').getBoundingClientRect().height,
+            document.querySelector('.tetris-actions').getBoundingClientRect().height)
+            + touchControls.getBoundingClientRect().height + gap * 2 : 0;
         const widthBudget = innerEl.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-            - infoWidth - (narrow ? gap : controlsWidth + gap * 2);
+            - (narrow ? 0 : infoWidth + controlsWidth + gap * 2);
         const heightBudget = innerEl.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - controlsHeight;
         const boardW = Math.max(1, Math.floor(Math.min(widthBudget, heightBudget * COLS / ROWS)));
         layoutEl.style.setProperty('--board-width', boardW + 'px');
         layoutEl.style.setProperty('--board-height', boardW * ROWS / COLS + 'px');
     }
-    new ResizeObserver(updateBoardWidth).observe(innerEl);
+    const boardObserver = new ResizeObserver(updateBoardWidth);
+    [innerEl, document.querySelector('.tetris-info'), document.querySelector('.tetris-actions'), touchControls].forEach(node => boardObserver.observe(node));
     updateBoardWidth();
 
     function reset() {
@@ -228,6 +250,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         btnStart.setAttribute('aria-label', '开始游戏');
         btnStart.disabled = false;
         btnPause.disabled = true;
+        touchButtons.forEach(button => { button.disabled = true; });
         modal.classList.remove('show');
         draw();
         drawNext();
@@ -445,6 +468,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         btnStart.setAttribute('aria-label', '重新开始游戏');
         canvas.focus({ preventScroll: true });
         btnPause.disabled = false;
+        touchButtons.forEach(button => { button.disabled = false; });
     }
 
     function pause() {
@@ -492,8 +516,6 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
 
     btnStart.onclick = start;
     btnPause.addEventListener('click', pause);
-    btnRestart.addEventListener('click', start);
-    btnLeave.addEventListener('click', leave);
 
     touchControls.addEventListener('click', (e) => {
         const btn = e.target.closest('.tetris-touch');
@@ -503,6 +525,7 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         else if (action === 'right') move(1);
         else if (action === 'down') softDrop();
         else if (action === 'rotate') rotate();
+        else if (action === 'drop') hardDrop();
     });
 
     let touchStartX = 0, touchStartY = 0, touchMoved = false;
@@ -543,6 +566,8 @@ body.tetris-app.standalone-app .game-inner { height: min(560px, calc(100dvh - 90
         }
         if (state !== 'running') return;
         const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '];
+        // Space/Enter on a focused control must activate its native click only once.
+        if (e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
         if (keys.includes(e.key)) e.preventDefault();
         if (e.repeat && ['ArrowUp', ' '].includes(e.key)) return;
         switch (e.key) {
