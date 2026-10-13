@@ -16,21 +16,26 @@
     --bg-wallpaper: url('../images/background.jpg');
     --bg-blur: 8px;
     --glass-blur: 10px;
-    --board-height: min(560px, calc(100dvh - 100px));
+    --page-height: 100vh;
+    --board-height: min(560px, calc(var(--page-height) - 100px));
     /* 三行卡片共用高度：扣除面板内边距、边框和两处行间距。 */
     --card-row-height: calc((var(--board-height) - 34px - 24px) / 3);
+}
+@supports (height: 100dvh) {
+    :root { --page-height: 100dvh; }
 }
 
 /* ==========================================================================
    基础
    ========================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 [hidden] { display: none !important; }
 
 body {
     height: 100vh;
-    height: 100dvh;
+    height: var(--page-height);
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -577,7 +582,7 @@ body.wallpaper-alternate::after {
    响应式：小屏时收缩（保持大致比例）
    ========================================================================== */
 @media (max-width: 1080px) {
-    :root { --board-height: min(520px, calc(100dvh - 100px)); }
+    :root { --board-height: min(520px, calc(var(--page-height) - 100px)); }
     .desktop-container {
         width: 100%;
         max-width: calc(100vw - 24px);
@@ -600,11 +605,12 @@ body.wallpaper-alternate::after {
 /* 移动端：纵向堆叠 */
 @media (max-width: 860px) {
     :root {
-        --board-height: min(560px, calc(100dvh - 176px));
+        --page-height: 100vh;
+        --board-height: min(560px, calc(var(--page-height) - 176px));
         --card-row-height: 140px;
     }
     body {
-        height: 100dvh;
+        height: var(--page-height);
         overflow: hidden;
         padding: 16px 12px 96px;
         align-items: flex-start;
@@ -775,9 +781,21 @@ select.life-input option { background: #252525; color: #fff; }
 /* Mobile games share a full-height workspace; home and tool cards keep their size. */
 @media (max-width: 860px) {
     body:has(.main-board.has-game) { padding: max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
-    .main-board.has-game { height: calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom))); padding: 6px; border-radius: 20px; }
+    .main-board.has-game { height: calc(var(--page-height) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom))); padding: 6px; border-radius: 20px; }
     .main-board.has-game .detail-view { gap: 10px; }
     .main-board.has-game .detail-header { gap: 8px; }
     .main-board.has-game .back-link { padding: 8px 4px; }
     body:has(.main-board.has-game) .bottom-dock { display: none; }
+}
+
+/* Keep browser toolbar transitions from resizing the mobile workspace. */
+@media (max-width: 860px), (pointer: coarse) {
+    :root { --page-height: 100vh; }
+    body { touch-action: manipulation; }
+    body :is(input:not([type="range"]),textarea,select) { font-size: 16px; }
+}
+@supports (height: 100svh) {
+    @media (max-width: 860px), (pointer: coarse) {
+        :root { --page-height: 100svh; }
+    }
 }
