@@ -1,4 +1,4 @@
-/* Shared card-sized game workspaces. Game rules and board colors stay local. */
+/* Shared game workspaces. Game rules stay local. */
 body.game-detail .game-inner { padding: 12px; overflow: hidden; background: rgba(15,34,39,.86); }
 body.game-detail .game-inner > .game-layout { display: grid; grid-template-columns: minmax(0,1fr) 140px; gap: 24px; align-items: center; width: min(100%,calc((100dvh - 24px) * var(--game-board-ratio,1) + 164px)); height: 100%; min-height: 0; max-width: none; margin: 0; padding: 0; }
 body.game-detail .chess-layout { --game-board-ratio: .9; }
@@ -65,40 +65,101 @@ body.game-detail.standalone-app .game-inner { width: min(900px,100%); height: mi
 @media (min-height: 301px) {
     body.game-detail .sudoku-layout .game-rail { overflow: visible; }
 }
-@media (max-width: 600px) {
-    body.game-detail .game-inner > .game-layout { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) auto; gap: 10px; width: 100%; }
-    body.game-detail .game-rail { width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: none; overflow: visible; }
-    body.game-detail .game-rail :is(button,select,summary) { min-height: 44px; }
-    body.game-detail .game-rail > .ink-card { flex: 1 1 calc(50% - 6px); }
-    body.game-detail .game-rail > .ink-btn { flex: 1 1 calc(33% - 6px); }
-    body.game-detail .game-rail :is(.nono-btns,.mine-btns,.lo-btns,.lo-levels) { width: auto; flex: 1; flex-direction: row; }
-    body.game-detail .game-rail :is(.nono-btns,.mine-btns,.lo-btns,.lo-levels) button { flex: 1; padding-inline: 4px; }
-    body.game-detail :is(.nono-toolbar,.mine-info,.lo-info,.gc-info) { width: 100%; flex-direction: row; justify-content: space-between; gap: 6px; font-size: 12px; }
-    body.game-detail .game-rail :is(.mode-toggle,.color-picker) { flex: 1; width: auto; }
-    body.game-detail .sudoku-layout .game-rail { gap: 6px; }
-    body.game-detail .number-pad { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
-    body.game-detail .number-pad .num-btn { height: 44px; min-height: 44px; }
+@media (max-width: 860px) {
+    body.game-detail .game-inner { padding: 2px; background: linear-gradient(145deg,rgba(36,59,64,.88),rgba(15,34,39,.94)); }
+    body.game-detail .game-inner > .game-layout { width: min(100%,calc((100dvh - 4px) * var(--game-board-ratio,1) + 164px)); }
+    body.game-detail .game-inner > .game-zebra { width: 100%; }
+    body.game-detail :is(.chess-board,.gomoku-board,.sudoku-board,.nono-grid,.mine-grid-wrap,.lo-grid,.klotski-board,.gc-canvas-wrap,.gc-canvas-wrap canvas) { border-radius: 0; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+    body.game-detail .game-inner > .game-layout { grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: auto minmax(0,1fr) auto; gap: 8px 6px; width: 100%; }
+    body.game-detail .game-board-area { grid-column: 1 / -1; grid-row: 2; }
+    body.game-detail .game-rail { display: contents; }
+    body.game-detail .game-rail :is(button,select,summary) { min-height: 52px; border-radius: 12px; font-size: 13px; }
+    body.game-detail .game-rail button:active:not(:disabled) { filter: brightness(.9); }
+    body.game-detail .game-rail > .ink-card:first-child { grid-column: 1 / 3; grid-row: 1; align-self: center; font-size: 12px; }
+    body.game-detail .game-rail > .ink-card:nth-child(2) { grid-column: 3; grid-row: 1; }
+    body.game-detail .game-rail .card-title, body.game-detail .game-rail > .ink-card br { display: none; }
+    body.game-detail .game-rail > .ink-card:first-child b { margin-right: 8px; }
+    body.game-detail .gomoku-side > .ink-card:first-child { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+    body.game-detail .game-rail > .ink-btn { grid-row: 3; width: 100%; padding-inline: 4px; }
+    body.game-detail .game-rail > #btnUndo { grid-column: 1; }
+    body.game-detail .game-rail > #btnSwap { grid-column: 2; }
+    body.game-detail .game-rail > #btnNew { grid-column: 3; }
+    body.game-detail :is(.nono-toolbar,.mine-info,.lo-info,.klotski-info,.gc-info) { grid-column: 1 / -1; grid-row: 1; min-height: 44px; width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.035); font-size: 12px; }
+    body.game-detail .game-rail .nono-btns { grid-column: 1 / -1; grid-row: 3; width: 100%; flex-direction: row; flex-wrap: nowrap; gap: 6px; }
+    body.game-detail .game-rail .nono-btns button { flex: 1; padding-inline: 4px; }
+    body.game-detail .game-difficulty { grid-column: 1 / -1; grid-row: 1; }
+    body.game-detail .number-pad { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+    body.game-detail .number-pad .num-btn { height: 52px; min-height: 52px; }
     body.game-detail .number-pad .erase { grid-column: auto; }
-    body.game-detail .game-difficulty { flex: 1 1 100%; }
-    body.game-detail .game-difficulty .diff-list { top: auto; bottom: 50px; width: 100%; max-height: min(320px,max(88px,calc(100dvh - 200px))); }
-    body.game-detail .klotski-info { flex: 1; justify-content: center; }
-    body.game-detail #btnReset { flex: 1; }
-    body.game-detail .touch-dpad { flex: 1 1 100%; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: auto; }
+    body.game-detail .game-difficulty .diff-list { top: calc(100% + 6px); bottom: auto; width: 100%; max-height: min(320px,calc(100dvh - 100px)); }
+    body.game-detail .game-inner > :is(.mine-wrap,.lo-wrap) { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    body.game-detail .game-rail :is(.mode-toggle,.mine-btns,.lo-btns,.lo-levels) { display: contents; }
+    body.game-detail .mine-wrap .game-rail button { grid-row: 3; padding-inline: 2px; font-size: 12px; }
+    body.game-detail .mine-wrap [data-mode="dig"] { grid-column: 1; }
+    body.game-detail .mine-wrap [data-mode="flag"] { grid-column: 2; }
+    body.game-detail .mine-wrap #btnNew { grid-column: 3; }
+    body.game-detail .mine-wrap #btnLv { grid-column: 4; }
+    body.game-detail .klotski-info { grid-column: 1 / 3; justify-content: flex-start; }
+    body.game-detail .klotski-wrap #btnReset { grid-column: 3; grid-row: 1; width: 100%; padding-inline: 4px; }
+    body.game-detail .touch-dpad { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: auto; grid-template-areas: 'left right up down'; }
     body.game-detail .dpad-empty { display: none; }
-    body.game-detail .game-rail .dpad-btn { height: 44px; }
-    body.game-detail .game-rail .color-picker { flex: 1 1 100%; grid-template-columns: repeat(5,minmax(0,1fr)); }
-    body.game-detail .game-rail .color-swatch { height: 44px; }
+    body.game-detail .game-rail .dpad-btn { height: 52px; }
+    body.game-detail .dpad-btn[data-dir="left"] { grid-area: left; }
+    body.game-detail .dpad-btn[data-dir="right"] { grid-area: right; }
+    body.game-detail .dpad-btn[data-dir="up"] { grid-area: up; }
+    body.game-detail .dpad-btn[data-dir="down"] { grid-area: down; }
+    body.game-detail .block.cao { background: var(--accent); color: #06201a; }
+    body.game-detail .block.general { background: #33525b; color: var(--text); }
+    body.game-detail .block.soldier { background: #416778; color: var(--text); }
+    body.game-detail .lo-grid { padding: 0; background: transparent; }
+    body.game-detail .lo-cell.on { background: var(--accent); border-color: rgba(255,255,255,.3); box-shadow: inset 0 0 12px rgba(255,255,255,.12); }
+    body.game-detail .nono-clue { font-size: clamp(10px,calc(var(--cell) * .25),12px); }
+    body.game-detail .lo-wrap .game-rail button { grid-row: 3; width: 100%; padding-inline: 4px; }
+    body.game-detail .lo-level-btn:nth-child(1) { grid-column: 1; }
+    body.game-detail .lo-level-btn:nth-child(2) { grid-column: 2; }
+    body.game-detail .lo-level-btn:nth-child(3) { grid-column: 3; }
+    body.game-detail .lo-wrap #btnNew { grid-column: 4; }
+    body.game-detail .gc-info { grid-column: 1 / 3; justify-content: flex-start; flex-wrap: wrap; }
+    body.game-detail .gc-wrap #btnNew { grid-column: 3; grid-row: 1; width: 100%; }
+    body.game-detail .game-rail .color-picker { grid-column: 1 / -1; grid-row: 3; width: 100%; grid-template-columns: repeat(5,minmax(0,1fr)); padding: 4px; }
+    body.game-detail .game-rail .color-swatch { width: 100%; height: 52px; }
     body.game-detail .game-rail .color-swatch.eraser { grid-column: auto; }
-    body.game-detail .game-inner > .game-zebra { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) 44px 44px; gap: 8px; }
-    body.game-detail .zebra-table { min-width: 460px; }
+}
+/* Wide logic tables keep readable cells and local scrolling in either orientation. */
+@media (max-width: 600px) {
+    body.game-detail .game-inner:has(> .game-zebra) { padding: 2px; }
+    body.game-detail .game-inner > .game-zebra { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) auto 52px; gap: 8px; }
+    body.game-detail .zebra-main { grid-row: 1; }
+    body.game-detail .zebra-table { min-width: 600px; min-height: 320px; border-radius: 0; overflow: visible; }
+    body.game-detail .zebra-table :is(thead th,th[scope="row"]) { position: sticky; background: #203238; z-index: 1; }
+    body.game-detail .zebra-table thead th { top: 0; }
+    body.game-detail .zebra-table :is(thead th:first-child,th[scope="row"]) { left: 0; }
+    body.game-detail .zebra-table thead th:first-child { z-index: 2; }
+    body.game-detail .zebra-table select { min-height: 52px; height: 52px; font-size: 13px; }
     body.game-detail .zebra-main { flex-direction: column; gap: 4px; }
-    body.game-detail .zebra-table-wrap { flex: 1; height: auto; }
+    body.game-detail .zebra-table-wrap { flex: 1; height: auto; border-radius: 0; }
     body.game-detail .zebra-scroll-hint { display: block; flex: none; margin: 0; font-size: 11px; line-height: 18px; color: var(--text-sub); }
     body.game-detail .zebra-btns { grid-row: 3; }
-    body.game-detail .zebra-btns .btn { min-height: 44px; }
-    body.game-detail .game-clues { grid-column: 1; grid-row: 2; overflow: visible; height: 44px; }
-    body.game-detail .game-clues summary { height: 44px; }
-    body.game-detail .zebra-problem { position: absolute; bottom: 104px; left: 0; right: 0; z-index: 10; height: min(280px,calc(100% - 104px)); background: #203238; border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+    body.game-detail .zebra-btns .btn { min-height: 52px; border-radius: 12px; }
+    body.game-detail .game-clues { grid-column: 1; grid-row: 2; height: auto; max-height: min(260px,40dvh); overflow: hidden; }
+    body.game-detail .game-clues summary { height: 52px; padding: 16px 12px; border-radius: 12px; }
+    body.game-detail .zebra-problem { position: static; height: auto; max-height: min(208px,calc(40dvh - 52px)); background: #203238; border-radius: 0; }
+    body.game-detail.standalone-app { padding: max(8px,var(--safe-top)) max(8px,var(--safe-right)) max(8px,var(--safe-bottom)) max(8px,var(--safe-left)); }
+    body.game-detail.standalone-app .game-inner { height: calc(100dvh - 64px - var(--safe-top) - var(--safe-bottom)); }
+}
+@media (max-width: 860px) and (orientation: landscape) {
+    body.game-detail .game-rail { gap: 6px; flex-wrap: nowrap; }
+    body.game-detail .game-rail > :is(.ink-card,.ink-btn) { flex: 0 0 auto; }
+    body.game-detail .game-rail :is(button,select,summary), body.game-detail .zebra-btns .btn { min-height: 44px; }
+    body.game-detail .game-rail :is(.num-btn,.dpad-btn) { height: 44px; }
+    body.game-detail .game-rail .card-title, body.game-detail .game-rail > .ink-card br { display: none; }
+    body.game-detail .gomoku-side > .ink-card:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+    body.game-detail .mine-info { flex-direction: row; flex-wrap: wrap; gap: 4px; font-size: 11px; }
+    body.game-detail :is(.gc-info,.lo-info,.klotski-info) { flex-direction: row; flex-wrap: wrap; gap: 4px; font-size: 12px; }
+    body.game-detail .game-rail .lo-levels { flex-direction: row; gap: 4px; padding: 0; }
+    body.game-detail .game-rail .lo-levels button { flex: 1; padding-inline: 0; }
 }
 @media (pointer: coarse) and (min-width: 601px) {
     body.game-detail .game-rail :is(button,select,summary) { min-height: 44px; }
